@@ -2,16 +2,16 @@
 
 import { useMemo, useState } from "react";
 import {
-  AcademicCapIcon,
   Bars3Icon,
-  BoltIcon,
+  LightBulbIcon,
   ChevronDoubleLeftIcon,
   ChevronDoubleRightIcon,
-  HandRaisedIcon,
   HomeIcon,
   MagnifyingGlassIcon,
-  MapPinIcon,
   XMarkIcon,
+  TrophyIcon,
+  PaperAirplaneIcon,
+  GlobeAltIcon,
 } from "@heroicons/react/24/outline";
 import { DashboardView } from "@/modules/dashboard/views/dashboard-view";
 import { FindView } from "@/modules/find/views/find-view";
@@ -36,10 +36,10 @@ const navigation: {
   icon: typeof HomeIcon;
 }[] = [
   { id: "dashboard", label: "nav.dashboard", icon: HomeIcon },
-  { id: "find", label: "nav.find", icon: AcademicCapIcon },
-  { id: "mind", label: "nav.mind", icon: BoltIcon },
-  { id: "hand", label: "nav.hand", icon: HandRaisedIcon },
-  { id: "land", label: "nav.land", icon: MapPinIcon },
+  { id: "find", label: "nav.find", icon: GlobeAltIcon },
+  { id: "mind", label: "nav.mind", icon: LightBulbIcon },
+  { id: "hand", label: "nav.hand", icon: PaperAirplaneIcon },
+  { id: "land", label: "nav.land", icon: TrophyIcon },
 ];
 
 function Navigation({
