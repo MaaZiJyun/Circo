@@ -5,8 +5,6 @@ import {
   AcademicCapIcon,
   Bars3Icon,
   BoltIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
   HandRaisedIcon,
   HomeIcon,
   MagnifyingGlassIcon,
@@ -24,6 +22,7 @@ import type { MessageKey } from "@/shared/i18n/zh";
 import { activeItems } from "@/shared/model/app-state";
 import { useStore } from "@/shared/view-models/store-context";
 import { SettingsView } from "./settings-view";
+import { SidebarProfile } from "./sidebar-profile";
 import { IconButton, Input, LoadingState } from "./ui";
 
 export type AppSection =
@@ -35,7 +34,6 @@ const navigation: {
   icon: typeof HomeIcon;
 }[] = [
   { id: "dashboard", label: "nav.dashboard", icon: HomeIcon },
-  { id: "me", label: "nav.me", icon: ChartBarIcon },
   { id: "find", label: "nav.find", icon: AcademicCapIcon },
   { id: "mind", label: "nav.mind", icon: BoltIcon },
   { id: "hand", label: "nav.hand", icon: HandRaisedIcon },
@@ -92,13 +90,10 @@ function Sidebar({
         </div>
       </div>
       <Navigation section={section} setSection={setSection} />
-      <button
-        onClick={() => setSection("settings")}
-        className={`mt-auto flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium ${section === "settings" ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900"}`}
-      >
-        <Cog6ToothIcon className="size-5" />
-        {t("nav.settings")}
-      </button>
+      <SidebarProfile
+        active={section === "me" || section === "settings" ? section : null}
+        onNavigate={setSection}
+      />
     </aside>
   );
 }
@@ -229,7 +224,7 @@ export function AppShell() {
           onMouseDown={() => setMenuOpen(false)}
         >
           <aside
-            className="h-full w-72 cursor-default bg-white p-5 dark:bg-zinc-950"
+            className="flex h-full w-72 cursor-default flex-col bg-white p-5 dark:bg-zinc-950"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="mb-6 flex items-center justify-between">
@@ -245,6 +240,13 @@ export function AppShell() {
               section={section}
               setSection={setSection}
               close={() => setMenuOpen(false)}
+            />
+            <SidebarProfile
+              active={section === "me" || section === "settings" ? section : null}
+              onNavigate={(next) => {
+                setSection(next);
+                setMenuOpen(false);
+              }}
             />
           </aside>
         </div>
