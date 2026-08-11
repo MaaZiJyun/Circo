@@ -98,7 +98,7 @@ export function Dialog({
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4"
+      className="fixed inset-0 z-50 grid cursor-pointer place-items-center bg-black/55 p-4"
       role="presentation"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
@@ -106,7 +106,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
+        className="max-h-[90vh] w-full max-w-xl cursor-default overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
       >
         <header className="mb-5 flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">{title}</h2>

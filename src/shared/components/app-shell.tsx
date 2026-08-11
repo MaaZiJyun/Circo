@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   AcademicCapIcon,
   Bars3Icon,
-  BeakerIcon,
   BoltIcon,
   ChartBarIcon,
   Cog6ToothIcon,
@@ -226,11 +225,11 @@ export function AppShell() {
       <Sidebar section={section} setSection={setSection} />
       {menuOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/55 lg:hidden"
+          className="fixed inset-0 z-40 cursor-pointer bg-black/55 lg:hidden"
           onMouseDown={() => setMenuOpen(false)}
         >
           <aside
-            className="h-full w-72 bg-white p-5 dark:bg-zinc-950"
+            className="h-full w-72 cursor-default bg-white p-5 dark:bg-zinc-950"
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="mb-6 flex items-center justify-between">
