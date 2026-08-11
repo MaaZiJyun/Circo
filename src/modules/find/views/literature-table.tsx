@@ -124,7 +124,7 @@ export function LiteratureTable({
                   return;
                 onRead(source);
               }}
-              className={`cursor-grab select-none hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${source.readingStatus === "read" ? "opacity-75 hover:opacity-100" : ""} ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
+              className={`cursor-grab select-none hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${source.readingStatus === "read" ? "text-zinc-500 dark:text-zinc-400" : ""} ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
             >
               {selectionMode && (
                 <td className="p-3">
@@ -137,17 +137,13 @@ export function LiteratureTable({
                 </td>
               )}
               <td
-                className={`relative max-w-64 p-3 font-medium ${source.readingStatus !== "read" ? "pl-5" : ""}`}
+                className={`p-3 ${
+                  source.readingStatus === "read"
+                    ? "font-normal text-zinc-500 dark:text-zinc-400"
+                    : "font-semibold text-zinc-950 dark:text-zinc-50"
+                }`}
               >
-                <span>
-                  {source.readingStatus !== "read" && (
-                    <span
-                      className="absolute left-1.5 top-1/2 size-2.5 -translate-y-1/2 rounded-full bg-red-500 shadow-sm ring-2 ring-white dark:ring-zinc-950"
-                      aria-label={t("find.unread")}
-                    />
-                  )}
-                  <span>{source.title}</span>
-                </span>
+                <span>{source.title}</span>
               </td>
               <td className="p-3 text-zinc-600 dark:text-zinc-400">
                 {source.authors || "—"}
@@ -157,7 +153,7 @@ export function LiteratureTable({
                   new Date(source.createdAt),
                 )}
               </td>
-              <td className="max-w-48 p-3">{source.origin || "—"}</td>
+              <td className="p-3">{source.origin || "—"}</td>
               <td className="p-3">{source.publicationDate || "—"}</td>
               <td className="p-3">
                 <div className="flex flex-wrap gap-1">

@@ -259,20 +259,20 @@ export function InteractivePdfViewer({
           <ContextMenuItem
             disabled={!pendingText}
             onClick={() => {
-              if (pendingText) stageCapture(pendingText);
-              setMenu(null);
-            }}
-          >
-            {t("find.selectText")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            disabled={!pendingText}
-            onClick={() => {
               if (pendingText) void translateSelection(pendingText.content);
               setMenu(null);
             }}
           >
             {t("find.translateSelection")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={!pendingText}
+            onClick={() => {
+              if (pendingText) stageCapture(pendingText);
+              setMenu(null);
+            }}
+          >
+            {t("find.selectText")}
           </ContextMenuItem>
           <ContextMenuItem
             onClick={() => {
