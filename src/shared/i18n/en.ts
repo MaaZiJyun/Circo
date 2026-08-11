@@ -17,6 +17,8 @@ export const en: Record<MessageKey, string> = {
   "common.restore": "Restore",
   "common.edit": "Edit",
   "common.close": "Close",
+  "common.collapseSidebar": "Collapse sidebar",
+  "common.expandSidebar": "Expand sidebar",
   "common.search": "Search everything",
   "common.noData": "No data yet",
   "common.loading": "Loading local data…",

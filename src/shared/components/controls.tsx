@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef } from "react";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
@@ -93,10 +94,16 @@ export function Select({
   ...props
 }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <select
-      className={`min-h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 ${focusRing} ${className}`}
-      {...props}
-    />
+    <span className="relative block w-full">
+      <select
+        className={`peer min-h-11 w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-10 text-sm text-zinc-950 transition-colors hover:border-zinc-300 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:border-zinc-700 ${focusRing} ${className}`}
+        {...props}
+      />
+      <ChevronDownIcon
+        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400 peer-disabled:opacity-40"
+        aria-hidden="true"
+      />
+    </span>
   );
 }
 

@@ -5,6 +5,8 @@ import {
   AcademicCapIcon,
   Bars3Icon,
   BoltIcon,
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
   HandRaisedIcon,
   HomeIcon,
   MagnifyingGlassIcon,
@@ -44,10 +46,12 @@ function Navigation({
   section,
   setSection,
   close,
+  collapsed = false,
 }: {
   section: AppSection;
   setSection: (section: AppSection) => void;
   close?: () => void;
+  collapsed?: boolean;
 }) {
   const { t } = useI18n();
   return (
@@ -58,14 +62,16 @@ function Navigation({
         return (
           <button
             key={item.id}
+            aria-label={collapsed ? t(item.label) : undefined}
+            title={collapsed ? t(item.label) : undefined}
             onClick={() => {
               setSection(item.id);
               close?.();
             }}
-            className={`flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-colors ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50"}`}
+            className={`flex min-h-11 items-center rounded-xl text-sm font-medium transition-colors ${collapsed ? "justify-center px-0" : "gap-3 px-3"} ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50"}`}
           >
             <Icon className="size-5" aria-hidden="true" />
-            {t(item.label)}
+            {!collapsed && t(item.label)}
           </button>
         );
       })}
@@ -81,18 +87,43 @@ function Sidebar({
   setSection: (section: AppSection) => void;
 }) {
   const { t } = useI18n();
+  const [collapsed, setCollapsed] = useState(false);
+  const toggleLabel = collapsed
+    ? t("common.expandSidebar")
+    : t("common.collapseSidebar");
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-black lg:flex lg:flex-col">
-      <div className="mb-10 flex items-center gap-3 px-2">
-        <div>
-          <p className="text-3xl font-bold tracking-loose">{t("app.name")}</p>
-          <p className="text-xs text-zinc-500">{t("common.localOnly")}</p>
-        </div>
+    <aside
+      className={`hidden shrink-0 border-r border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-black lg:flex lg:flex-col ${collapsed ? "w-20 p-3" : "w-64 p-5"}`}
+    >
+      <div
+        className={`mb-10 flex items-center ${collapsed ? "justify-center" : "justify-between gap-3 px-2"}`}
+      >
+        {!collapsed && (
+          <div>
+            <p className="text-3xl font-bold tracking-loose">{t("app.name")}</p>
+            <p className="text-xs text-zinc-500">{t("common.localOnly")}</p>
+          </div>
+        )}
+        <IconButton
+          label={toggleLabel}
+          onClick={() => setCollapsed((value) => !value)}
+        >
+          {collapsed ? (
+            <ChevronDoubleRightIcon className="size-5" />
+          ) : (
+            <ChevronDoubleLeftIcon className="size-5" />
+          )}
+        </IconButton>
       </div>
-      <Navigation section={section} setSection={setSection} />
+      <Navigation
+        section={section}
+        setSection={setSection}
+        collapsed={collapsed}
+      />
       <SidebarProfile
         active={section === "me" || section === "settings" ? section : null}
         onNavigate={setSection}
+        collapsed={collapsed}
       />
     </aside>
   );
@@ -242,7 +273,9 @@ export function AppShell() {
               close={() => setMenuOpen(false)}
             />
             <SidebarProfile
-              active={section === "me" || section === "settings" ? section : null}
+              active={
+                section === "me" || section === "settings" ? section : null
+              }
               onNavigate={(next) => {
                 setSection(next);
                 setMenuOpen(false);

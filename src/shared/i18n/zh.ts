@@ -15,6 +15,8 @@ export const zh = {
   "common.restore": "恢复",
   "common.edit": "编辑",
   "common.close": "关闭",
+  "common.collapseSidebar": "收起侧边栏",
+  "common.expandSidebar": "展开侧边栏",
   "common.search": "搜索全部内容",
   "common.noData": "暂无数据",
   "common.loading": "正在加载本地数据…",
