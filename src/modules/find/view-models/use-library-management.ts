@@ -27,6 +27,7 @@ export function useLibraryManagement() {
   const { state, mutate } = useStore();
   const [activeListId, setActiveListId] = useState(DEFAULT_LIST_ID);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [draggedIds, setDraggedIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<LiteratureSort>("addedAt");
   const [sortDirection, setSortDirection] =
     useState<SortDirection>("descending");
@@ -220,6 +221,8 @@ export function useLibraryManagement() {
       setSelectedIds([]);
     },
     selectedIds,
+    draggedIds,
+    setDraggedIds,
     sortBy,
     setSortBy,
     sortDirection,

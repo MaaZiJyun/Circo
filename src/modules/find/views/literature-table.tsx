@@ -11,6 +11,7 @@ import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
 import type { useLibraryManagement } from "../view-models/use-library-management";
 import type { MenuPosition } from "./context-menu";
+import { literatureDragType } from "./library-drag";
 
 export function LiteratureTable({
   library,
@@ -67,6 +68,21 @@ export function LiteratureTable({
           {library.sources.map((source) => (
             <tr
               key={source.id}
+              draggable
+              onDragStart={(event) => {
+                cancelPress();
+                const ids = library.selectedIds.includes(source.id)
+                  ? library.selectedIds
+                  : [source.id];
+                library.setDraggedIds(ids);
+                event.dataTransfer.effectAllowed = "copy";
+                event.dataTransfer.setData(
+                  literatureDragType,
+                  JSON.stringify(ids),
+                );
+                event.dataTransfer.setData("text/plain", source.title);
+              }}
+              onDragEnd={() => library.setDraggedIds([])}
               onPointerDown={(event) => {
                 pointerType.current = event.pointerType;
                 if (event.button !== 0 || selectionMode) return;
@@ -97,7 +113,7 @@ export function LiteratureTable({
                 event.stopPropagation();
                 library.toggleSelected(source.id);
               }}
-              className={`select-none hover:bg-zinc-50 dark:hover:bg-zinc-900/60 ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
+              className={`cursor-grab select-none hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
             >
               {selectionMode && (
                 <td className="p-3">

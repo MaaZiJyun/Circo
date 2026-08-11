@@ -16,6 +16,7 @@ import {
   ContextMenuItem,
   type MenuPosition,
 } from "./context-menu";
+import { readDraggedLiterature } from "./library-drag";
 
 export function LibrarySidebar({
   library,
@@ -32,6 +33,7 @@ export function LibrarySidebar({
     list: LibraryList;
     position: MenuPosition;
   } | null>(null);
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null);
   const cancelPress = () => {
     if (pressTimer.current) clearTimeout(pressTimer.current);
     pressTimer.current = null;
@@ -39,8 +41,51 @@ export function LibrarySidebar({
   const openMenu = (list: LibraryList, position: MenuPosition) => {
     if (!list.system) setMenu({ list, position });
   };
+  const resolveDropTarget = (event: React.DragEvent) =>
+    document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-library-drop-id]")?.dataset.libraryDropId ??
+    null;
   return (
-    <aside className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
+    <aside
+      onDragEnterCapture={(event) => {
+        const listId = resolveDropTarget(event);
+        if (!listId) return;
+        event.preventDefault();
+        setDropTargetId(listId);
+      }}
+      onDragOverCapture={(event) => {
+        const listId = resolveDropTarget(event);
+        if (!listId) {
+          setDropTargetId(null);
+          return;
+        }
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        setDropTargetId(listId);
+      }}
+      onDragLeave={(event) => {
+        if (
+          event.relatedTarget instanceof Node &&
+          event.currentTarget.contains(event.relatedTarget)
+        )
+          return;
+        setDropTargetId(null);
+      }}
+      onDropCapture={(event) => {
+        const listId = resolveDropTarget(event);
+        if (!listId) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const ids = library.draggedIds.length
+          ? library.draggedIds
+          : readDraggedLiterature(event);
+        if (ids.length) library.addToList(ids, listId);
+        library.setDraggedIds([]);
+        setDropTargetId(null);
+      }}
+      className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950"
+    >
       <div className="mb-3 flex items-center justify-between px-2">
         <h2 className="font-semibold">{t("find.lists")}</h2>
         <IconButton label={t("find.createList")} onClick={onCreate}>
@@ -61,7 +106,10 @@ export function LibrarySidebar({
                       item.listIds.includes(list.id),
                     ).length;
           return (
-            <div key={list.id}>
+            <div
+              key={list.id}
+              data-library-drop-id={!list.system ? list.id : undefined}
+            >
               <button
                 onClick={() => library.setActiveListId(list.id)}
                 onPointerDown={(event) => {
@@ -85,6 +133,10 @@ export function LibrarySidebar({
                   openMenu(list, { x: event.clientX, y: event.clientY });
                 }}
                 className={`flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl px-3 text-left text-sm ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-200 dark:hover:bg-zinc-900"}`}
+                style={{
+                  backgroundColor:
+                    dropTargetId === list.id ? `${list.color}26` : undefined,
+                }}
               >
                 {list.system === "recent" ? (
                   <ClockIcon className="size-4 shrink-0" />
