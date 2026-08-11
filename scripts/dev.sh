@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if find . -name '._*' -type f >/dev/null 2>&1; then
+  find . -name '._*' -type f -delete
+  echo "Removed macOS resource fork files (._*) from the project directory."
+fi
+
 set -Eeuo pipefail
 
 project_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
