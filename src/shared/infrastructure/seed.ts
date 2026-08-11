@@ -7,6 +7,7 @@ export function createSeedState(): AppState {
     schemaVersion: 1,
     revision: 1,
     updatedAt: stamp,
+    profile: { name: "Me", avatarDataUrl: "" },
     cycles: [
       {
         id: "cycle_aug",

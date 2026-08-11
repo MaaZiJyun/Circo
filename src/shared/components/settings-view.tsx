@@ -10,6 +10,7 @@ import type { CollectionName } from "@/shared/model/app-state";
 import { useTheme } from "@/shared/theme/theme-context";
 import { useStore } from "@/shared/view-models/store-context";
 import { PageHeader, SectionHeader } from "./page-elements";
+import { ProfileSettings } from "./profile-settings";
 import { Alert, Button, Card, EmptyState, Field, Select } from "./ui";
 
 export function SettingsView() {
@@ -52,6 +53,7 @@ export function SettingsView() {
         title={t("settings.title")}
         subtitle={t("app.tagline")}
       />
+      <ProfileSettings />
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
           <SectionHeader title={t("settings.theme")} />

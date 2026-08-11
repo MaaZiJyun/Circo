@@ -38,6 +38,10 @@ function readSnapshot(database: Database.Database): AppState | null {
 function normalizeState(state: AppState): AppState {
   return {
     ...state,
+    profile: {
+      name: state.profile?.name?.trim() || "Me",
+      avatarDataUrl: state.profile?.avatarDataUrl ?? "",
+    },
     aiJobs: state.aiJobs ?? [],
     relations: state.relations ?? [],
     sources: state.sources.map((item) => ({

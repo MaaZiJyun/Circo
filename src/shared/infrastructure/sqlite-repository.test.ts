@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import type { AppState } from "@/shared/model/app-state";
 import { createSeedState } from "./seed";
 import { SqliteAppRepository } from "./sqlite-repository";
 
@@ -40,5 +41,18 @@ describe("SQLite repository", () => {
     await expect(
       repository.restore({ schemaVersion: 2 } as never),
     ).rejects.toThrow();
+  });
+
+  it("adds a default profile when restoring a legacy snapshot", async () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "circo-test-"));
+    directories.push(directory);
+    const repository = new SqliteAppRepository(
+      path.join(directory, "circo.db"),
+    );
+    const legacy = createSeedState() as Partial<AppState>;
+    delete legacy.profile;
+
+    const restored = await repository.restore(legacy as AppState);
+    expect(restored.profile).toEqual({ name: "Me", avatarDataUrl: "" });
   });
 });
