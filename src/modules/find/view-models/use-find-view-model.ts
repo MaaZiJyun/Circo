@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { LocalAssistant } from "@/shared/infrastructure/local-assistant";
+import { citationMetadata } from "../model/bibtex";
+import { emptyReadingReview } from "../model/reading-record";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { activeItems } from "@/shared/model/app-state";
 import type {
@@ -12,7 +14,6 @@ import type {
   SourceRecord,
 } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
-import { parseTags } from "@/shared/model/tags";
 import { useStore } from "@/shared/view-models/store-context";
 
 const assistant = new LocalAssistant();
@@ -67,21 +68,19 @@ export function useFindViewModel() {
     }));
   };
 
-  const importSource = async (
-    file: File,
-    title: string,
-    authors: string,
-    tagText: string,
-  ) => {
+  const importSource = async (file: File, citation: string) => {
+    const metadata = citationMetadata(citation);
     const id = createId("source");
     const stamp = now();
     const extension = file.name.split(".").pop()?.toLowerCase();
     const source: SourceRecord = {
       id,
-      title: title || file.name.replace(/\.[^.]+$/, ""),
-      authors,
-      year: String(new Date().getFullYear()),
-      origin: "",
+      title: metadata.title,
+      authors: metadata.authors,
+      year: metadata.publicationDate,
+      origin: metadata.origin,
+      citation,
+      category: metadata.category,
       fileName: file.name,
       fileToken: "",
       filePath: "",
@@ -91,12 +90,14 @@ export function useFindViewModel() {
       content: "",
       summary: "",
       guide: "",
-      tags: parseTags(tagText),
+      tags: metadata.tags,
       listIds: ["library_default"],
       favorite: false,
       rating: 0,
-      publicationDate: "",
+      publicationDate: metadata.publicationDate,
       readingStatus: "unread",
+      studyDurationMinutes: 0,
+      readingReview: emptyReadingReview(),
       conversionStatus: "processing",
       conversionMessage: "",
       createdAt: stamp,

@@ -61,6 +61,8 @@ export interface SourceRecord extends BaseEntity {
   authors: string;
   year: string;
   origin: string;
+  citation: string;
+  category: string;
   fileName: string;
   fileToken: string;
   filePath: string;
@@ -76,8 +78,25 @@ export interface SourceRecord extends BaseEntity {
   rating: number;
   publicationDate: string;
   readingStatus: "unread" | "reading" | "read";
+  readingStartedAt?: string;
+  readingCompletedAt?: string;
+  studyDurationMinutes: number;
+  readingReview: LiteratureReview;
   conversionStatus: "ready" | "processing" | "failed";
   conversionMessage: string;
+}
+
+export type LiteratureReviewType =
+  "review" | "discovery" | "method" | "application" | "validation" | "";
+
+export interface LiteratureReview {
+  type: LiteratureReviewType;
+  problem: string;
+  approach: string;
+  result: string;
+  limitation: string;
+  inspiration: string;
+  structure: string;
 }
 
 export interface LibraryList extends BaseEntity {

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { typeLabels } from "@/shared/i18n/domain-labels";
+import { parseBibTeX } from "../model/bibtex";
 import type { AnnotationInput } from "../view-models/use-find-view-model";
 import {
   Button,
@@ -20,26 +21,29 @@ export function ImportDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onImport: (
-    file: File,
-    title: string,
-    authors: string,
-    tags: string,
-  ) => Promise<void>;
+  onImport: (file: File, citation: string) => Promise<void>;
 }) {
   const { t } = useI18n();
-  const [title, setTitle] = useState("");
-  const [authors, setAuthors] = useState("");
-  const [tags, setTags] = useState("");
+  const [citation, setCitation] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const submit = async () => {
     const file = fileRef.current?.files?.[0];
     if (!file) return;
-    await onImport(file, title, authors, tags);
-    onClose();
-    setTitle("");
-    setAuthors("");
-    setTags("");
+    setError("");
+    try {
+      if (citation.trim()) parseBibTeX(citation);
+      setSubmitting(true);
+      await onImport(file, citation);
+      onClose();
+      setCitation("");
+      if (fileRef.current) fileRef.current.value = "";
+    } catch {
+      setError(t("find.invalidCitation"));
+    } finally {
+      setSubmitting(false);
+    }
   };
   return (
     <Dialog
@@ -53,25 +57,18 @@ export function ImportDialog({
         <Field label={t("find.file")}>
           <Input ref={fileRef} type="file" accept=".pdf,.md,.markdown,.txt" />
         </Field>
-        <Field label={t("common.title")}>
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
+        <Field label={t("find.citation")} hint={t("find.citationHint")}>
+          <Textarea
+            value={citation}
+            onChange={(event) => setCitation(event.target.value)}
+            placeholder="@ARTICLE{key, ...}"
+            className="min-h-48 font-mono"
           />
         </Field>
-        <Field label={t("find.authors")}>
-          <Input
-            value={authors}
-            onChange={(event) => setAuthors(event.target.value)}
-          />
-        </Field>
-        <Field label={t("common.tags")}>
-          <Input
-            value={tags}
-            onChange={(event) => setTags(event.target.value)}
-          />
-        </Field>
-        <Button onClick={() => void submit()}>{t("find.import")}</Button>
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        <Button disabled={submitting} onClick={() => void submit()}>
+          {submitting ? t("common.loading") : t("find.import")}
+        </Button>
       </div>
     </Dialog>
   );

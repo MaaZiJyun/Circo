@@ -18,11 +18,13 @@ export function LiteratureTable({
   selectionMode,
   onEnterSelection,
   onOpenMenu,
+  onRead,
 }: {
   library: ReturnType<typeof useLibraryManagement>;
   selectionMode: boolean;
   onEnterSelection: (source: SourceRecord) => void;
   onOpenMenu: (source: SourceRecord, position: MenuPosition) => void;
+  onRead: (source: SourceRecord) => void;
 }) {
   const { t, locale } = useI18n();
   const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -113,7 +115,16 @@ export function LiteratureTable({
                 event.stopPropagation();
                 library.toggleSelected(source.id);
               }}
-              className={`cursor-grab select-none hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
+              onClick={(event) => {
+                if (selectionMode) return;
+                if (
+                  event.target instanceof Element &&
+                  event.target.closest("button,input,select,a")
+                )
+                  return;
+                onRead(source);
+              }}
+              className={`cursor-grab select-none hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${source.readingStatus === "read" ? "opacity-75 hover:opacity-100" : ""} ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
             >
               {selectionMode && (
                 <td className="p-3">
@@ -125,18 +136,18 @@ export function LiteratureTable({
                   />
                 </td>
               )}
-              <td className="max-w-64 p-3 font-medium">
-                {source.fileToken ? (
-                  <a
-                    href={`/api/files/${source.fileToken}`}
-                    target="_blank"
-                    className="hover:underline"
-                  >
-                    {source.title}
-                  </a>
-                ) : (
-                  source.title
-                )}
+              <td
+                className={`relative max-w-64 p-3 font-medium ${source.readingStatus !== "read" ? "pl-5" : ""}`}
+              >
+                <span>
+                  {source.readingStatus !== "read" && (
+                    <span
+                      className="absolute left-1.5 top-1/2 size-2.5 -translate-y-1/2 rounded-full bg-red-500 shadow-sm ring-2 ring-white dark:ring-zinc-950"
+                      aria-label={t("find.unread")}
+                    />
+                  )}
+                  <span>{source.title}</span>
+                </span>
               </td>
               <td className="p-3 text-zinc-600 dark:text-zinc-400">
                 {source.authors || "—"}

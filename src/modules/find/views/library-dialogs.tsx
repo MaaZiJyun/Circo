@@ -130,6 +130,8 @@ export function EditLiteratureDialog({
     title: source.title,
     authors: source.authors,
     origin: source.origin,
+    citation: source.citation,
+    category: source.category,
     publicationDate: source.publicationDate,
     addedAt: source.createdAt.slice(0, 16),
     tags: source.tags.join(", "),
@@ -142,6 +144,8 @@ export function EditLiteratureDialog({
       title: draft.title.trim(),
       authors: draft.authors,
       origin: draft.origin,
+      citation: draft.citation,
+      category: draft.category,
       publicationDate: draft.publicationDate,
       createdAt: new Date(draft.addedAt).toISOString(),
       year: draft.publicationDate.slice(0, 4),
@@ -171,7 +175,9 @@ export function EditLiteratureDialog({
         {field("title", t("common.title"))}
         {field("authors", t("find.authors"))}
         {field("origin", t("find.origin"))}
-        {field("publicationDate", t("find.publicationDate"), "date")}
+        {field("citation", t("find.citation"))}
+        {field("category", t("find.category"))}
+        {field("publicationDate", t("find.publicationDate"))}
         {field("addedAt", t("find.addedAt"), "datetime-local")}
         {field("tags", t("common.tags"))}
         {field("rating", t("find.rating"), "number")}

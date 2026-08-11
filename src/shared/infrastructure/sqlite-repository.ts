@@ -5,6 +5,7 @@ import type { AppRepository, AppState } from "@/shared/model/app-state";
 import { isAppState } from "@/shared/model/app-state";
 import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
+import { emptyReadingReview } from "@/modules/find/model/reading-record";
 
 const systemLists = [
   {
@@ -94,6 +95,10 @@ function normalizeState(state: AppState): AppState {
       favorite: item.favorite ?? false,
       rating: item.rating ?? 0,
       publicationDate: item.publicationDate ?? item.year ?? "",
+      citation: item.citation ?? "",
+      category: item.category ?? "unknown",
+      studyDurationMinutes: item.studyDurationMinutes ?? 0,
+      readingReview: item.readingReview ?? emptyReadingReview(),
     })),
     ideas: state.ideas.map((item) => ({ ...item, tags: item.tags ?? [] })),
     projects: state.projects.map((item) => ({

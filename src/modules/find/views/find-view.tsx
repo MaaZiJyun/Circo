@@ -7,6 +7,7 @@ import { Button, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { LibraryList, SourceRecord } from "@/shared/model/entities";
 import { useFindViewModel } from "../view-models/use-find-view-model";
+import { startReading } from "../model/reading-record";
 import { useLibraryManagement } from "../view-models/use-library-management";
 import type {
   LiteratureSort,
@@ -25,6 +26,7 @@ import {
 } from "./context-menu";
 import { LibrarySidebar } from "./library-sidebar";
 import { LiteratureTable } from "./literature-table";
+import { ActiveLiteratureReader } from "./active-literature-reader";
 
 export function FindView() {
   const { t } = useI18n();
@@ -32,6 +34,7 @@ export function FindView() {
   const library = useLibraryManagement();
   const [dialog, setDialog] = useState<"import" | "list" | null>(null);
   const [editing, setEditing] = useState<SourceRecord | null>(null);
+  const [reading, setReading] = useState<SourceRecord | null>(null);
   const [editingList, setEditingList] = useState<LibraryList | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [addingIds, setAddingIds] = useState<string[]>([]);
@@ -52,6 +55,17 @@ export function FindView() {
       );
     }
   };
+  if (reading)
+    return (
+      <ActiveLiteratureReader
+        source={reading}
+        onBack={() => setReading(null)}
+        onUpdate={(change) => {
+          library.updateSource(reading.id, change);
+          setReading({ ...reading, ...change });
+        }}
+      />
+    );
   return (
     <div className="space-y-6">
       <PageHeader
@@ -173,6 +187,14 @@ export function FindView() {
             onOpenMenu={(source, position) =>
               setDocumentMenu({ source, position })
             }
+            onRead={(source) => {
+              const started = startReading(source, new Date().toISOString());
+              if (started !== source)
+                library.updateSource(source.id, {
+                  readingStartedAt: started.readingStartedAt,
+                });
+              setReading(started);
+            }}
           />
         </section>
       </div>
@@ -214,6 +236,19 @@ export function FindView() {
           position={documentMenu.position}
           onClose={() => setDocumentMenu(null)}
         >
+          <ContextMenuItem
+            disabled={!documentMenu.source.fileToken}
+            onClick={() => {
+              window.open(
+                `/api/files/${documentMenu.source.fileToken}`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+              setDocumentMenu(null);
+            }}
+          >
+            {t("find.openOriginal")}
+          </ContextMenuItem>
           <ContextMenuItem
             onClick={() => {
               setEditing(documentMenu.source);
