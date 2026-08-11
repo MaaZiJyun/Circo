@@ -64,6 +64,7 @@ describe("SQLite repository", () => {
     );
     const legacy = createSeedState() as Partial<AppState>;
     legacy.libraryLists = legacy.libraryLists?.slice(0, 2);
+    delete legacy.points;
     delete (legacy.sources?.[0] as Partial<AppState["sources"][number]>)
       .listIds;
 
@@ -74,5 +75,6 @@ describe("SQLite repository", () => {
       "marked",
     ]);
     expect(restored.sources[0].listIds).toEqual(["library_default"]);
+    expect(restored.points).toEqual([]);
   });
 });

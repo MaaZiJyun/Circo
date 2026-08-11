@@ -107,6 +107,18 @@ export interface LibraryList extends BaseEntity {
   system: "default" | "recent" | "marked" | null;
 }
 
+export interface ReferencePoint extends BaseEntity {
+  sourceId: string;
+  type: "text" | "image";
+  content: string;
+  contentPath: string;
+  date: string;
+  author: string;
+  note: string;
+  page: number;
+  location: { x: number; y: number; width: number; height: number };
+}
+
 export interface Annotation extends BaseEntity {
   sourceId: string;
   location: string;

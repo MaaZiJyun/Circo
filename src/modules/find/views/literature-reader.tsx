@@ -9,21 +9,33 @@ import {
 import { Button, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
+import type { ReferencePoint } from "@/shared/model/entities";
 import { completeReading } from "../model/reading-record";
 import { LiteratureDetailsPanel } from "./literature-details-panel";
 import { MarkdownPreview } from "./markdown-preview";
 import { ReadingReviewDialog } from "./reading-review-dialog";
+import {
+  InteractivePdfViewer,
+  type PointCapture,
+} from "./interactive-pdf-viewer";
+import { PointDialog } from "./point-dialog";
 
 export function LiteratureReader({
   source,
   onBack,
   onSave,
   onUpdate,
+  pointCount,
+  onCreatePoint,
 }: {
   source: SourceRecord;
   onBack: () => void;
   onSave: (content: string) => Promise<void>;
   onUpdate: (change: Partial<SourceRecord>) => void;
+  pointCount: number;
+  onCreatePoint: (
+    point: Omit<ReferencePoint, "id" | "createdAt" | "updatedAt">,
+  ) => void;
 }) {
   const { t } = useI18n();
   const [mode, setMode] = useState<"read" | "edit">("read");
@@ -33,6 +45,7 @@ export function LiteratureReader({
   const [error, setError] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [capture, setCapture] = useState<PointCapture | null>(null);
   const save = async () => {
     setSaving(true);
     setError("");
@@ -48,14 +61,17 @@ export function LiteratureReader({
   return (
     <div className="space-y-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3 md:w-2/3">
           <Button variant="ghost" onClick={onBack}>
             <ArrowLeftIcon className="size-4" />
-            {t("common.back")}
+            {/* {t("common.back")} */}
           </Button>
           <div className="min-w-0">
             <h1 className="truncate text-xl font-semibold">{source.title}</h1>
-            <p className="text-xs text-zinc-500">{t("find.markdownHint")}</p>
+            {/* <p className="text-xs text-zinc-500">{t("find.markdownHint")}</p> */}
+            <p className="mt-1 text-xs text-zinc-500">
+              {t("find.pointCount").replace("{count}", String(pointCount))}
+            </p>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -106,12 +122,13 @@ export function LiteratureReader({
           <div className="border-b border-zinc-200 bg-white px-4 py-2 text-sm font-medium dark:border-zinc-800 dark:bg-zinc-950">
             {t("find.pdfReference")}
           </div>
-          {source.fileToken ? (
-            <iframe
-              src={`/api/files/${source.fileToken}`}
-              title={`${source.title} PDF`}
-              className="h-[calc(100%-2.5rem)] w-full"
-            />
+          {source.fileToken && source.fileType === "pdf" ? (
+            <div className="h-[calc(100%-2.5rem)]">
+              <InteractivePdfViewer
+                url={`/api/files/${source.fileToken}`}
+                onCapture={setCapture}
+              />
+            </div>
           ) : (
             <p className="grid h-full place-items-center p-8 text-sm text-zinc-500">
               {t("find.originalUnavailable")}
@@ -157,6 +174,14 @@ export function LiteratureReader({
           onUpdate(completeReading(source, review, new Date().toISOString()))
         }
       />
+      {capture && (
+        <PointDialog
+          capture={capture}
+          source={source}
+          onClose={() => setCapture(null)}
+          onSave={onCreatePoint}
+        />
+      )}
     </div>
   );
 }

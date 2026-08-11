@@ -84,6 +84,7 @@ function normalizeState(state: AppState): AppState {
       ),
       ...existingLists.filter((item) => !systemListIds.has(item.id)),
     ],
+    points: state.points ?? [],
     sources: state.sources.map((item) => ({
       ...item,
       fileToken: item.fileToken ?? "",

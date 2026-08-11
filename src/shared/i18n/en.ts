@@ -24,7 +24,7 @@ export const en: Record<MessageKey, string> = {
   "common.noData": "No data yet",
   "common.loading": "Loading local data…",
   "common.saving": "Saving…",
-  "common.saved": "Saved to local SQLite",
+  "common.saved": "Saved",
   "common.error": "Something went wrong",
   "common.retry": "Retry",
   "common.confirmDelete": "Move this record to trash?",

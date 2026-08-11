@@ -23,7 +23,7 @@ export const zh = {
   "common.noData": "暂无数据",
   "common.loading": "正在加载本地数据…",
   "common.saving": "正在保存…",
-  "common.saved": "已保存到本地 SQLite",
+  "common.saved": "已保存",
   "common.error": "发生错误",
   "common.retry": "重试",
   "common.confirmDelete": "确定将此记录移至回收站吗？",

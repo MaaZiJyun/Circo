@@ -132,6 +132,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
+    points: [],
     sources: [
       {
         id: "source_multi",

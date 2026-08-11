@@ -7,7 +7,8 @@ import { getStoragePath } from "@/shared/infrastructure/storage-config";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const maxFileSize = 20 * 1024 * 1024;
+const maxConversionSize = 20 * 1024 * 1024;
+const maxUploadSize = 200 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
@@ -15,8 +16,6 @@ export async function POST(request: Request) {
     const file = form.get("file");
     if (!(file instanceof File))
       return Response.json({ error: "Missing file." }, { status: 422 });
-    if (file.size > maxFileSize)
-      return Response.json({ error: "File exceeds 20 MB." }, { status: 413 });
     const extension = file.name.split(".").pop()?.toLowerCase();
     if (!["md", "markdown", "txt", "pdf"].includes(extension ?? "")) {
       return Response.json(
@@ -24,6 +23,8 @@ export async function POST(request: Request) {
         { status: 415 },
       );
     }
+    if (file.size > maxUploadSize)
+      return Response.json({ error: "File exceeds 200 MB." }, { status: 413 });
     const identifier = randomUUID();
     const fileToken = `${identifier}.${extension ?? "bin"}`;
     const markdownToken = `${identifier}.md`;
@@ -40,6 +41,24 @@ export async function POST(request: Request) {
     );
     const filePath = path.join("library", fileToken);
     const markdownPath = path.join("library", "markdown", markdownToken);
+    if (file.size > maxConversionSize) {
+      const conversionError =
+        "PDF saved, but text extraction was skipped because the file exceeds 20 MB.";
+      await fs.writeFile(
+        path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
+        `<!-- ${conversionError} -->\n`,
+        "utf8",
+      );
+      return Response.json({
+        content: "",
+        pages: 0,
+        fileToken,
+        filePath,
+        markdownToken,
+        markdownPath,
+        conversionError,
+      });
+    }
     if (extension === "md" || extension === "markdown" || extension === "txt") {
       const content = new TextDecoder().decode(bytes);
       await fs.writeFile(

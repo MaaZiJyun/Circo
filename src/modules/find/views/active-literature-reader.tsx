@@ -1,16 +1,23 @@
 "use client";
 
 import type { SourceRecord } from "@/shared/model/entities";
+import type { ReferencePoint } from "@/shared/model/entities";
 import { LiteratureReader } from "./literature-reader";
 
 export function ActiveLiteratureReader({
   source,
   onBack,
   onUpdate,
+  pointCount,
+  onCreatePoint,
 }: {
   source: SourceRecord;
   onBack: () => void;
   onUpdate: (change: Partial<SourceRecord>) => void;
+  pointCount: number;
+  onCreatePoint: (
+    point: Omit<ReferencePoint, "id" | "createdAt" | "updatedAt">,
+  ) => void;
 }) {
   const saveMarkdown = async (content: string) => {
     if (source.markdownToken) {
@@ -32,6 +39,8 @@ export function ActiveLiteratureReader({
       onBack={onBack}
       onSave={saveMarkdown}
       onUpdate={onUpdate}
+      pointCount={pointCount}
+      onCreatePoint={onCreatePoint}
     />
   );
 }
