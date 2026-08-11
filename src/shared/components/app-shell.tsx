@@ -87,11 +87,8 @@ function Sidebar({
   return (
     <aside className="hidden w-64 shrink-0 border-r border-zinc-200 bg-zinc-50 p-5 dark:border-zinc-800 dark:bg-black lg:flex lg:flex-col">
       <div className="mb-10 flex items-center gap-3 px-2">
-        <span className="grid size-9 place-items-center rounded-xl text-zinc-950 text-white dark:text-zinc-50">
-          <BeakerIcon className="size-8" />
-        </span>
         <div>
-          <p className="font-semibold tracking-tight">{t("app.name")}</p>
+          <p className="text-3xl font-bold tracking-loose">{t("app.name")}</p>
           <p className="text-xs text-zinc-500">{t("common.localOnly")}</p>
         </div>
       </div>
