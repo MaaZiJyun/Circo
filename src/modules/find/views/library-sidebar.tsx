@@ -83,8 +83,10 @@ export function LibrarySidebar({
                   <ClockIcon className="size-4 shrink-0" />
                 ) : (
                   <FolderIcon
-                    className="size-4 shrink-0"
-                    style={{ color: active ? undefined : list.color }}
+                    className={`size-4 shrink-0 ${!active && list.system === "default" ? "text-zinc-700 dark:text-zinc-300" : ""}`}
+                    style={{
+                      color: !active && !list.system ? list.color : undefined,
+                    }}
                   />
                 )}
                 <span className="truncate">
