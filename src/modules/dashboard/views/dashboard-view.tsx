@@ -17,6 +17,7 @@ import {
 import { statusLabels, typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useDashboardViewModel } from "../view-models/use-dashboard-view-model";
+import { ContributionCalendar } from "./contribution-calendar";
 
 const loop: {
   id: AppSection;
@@ -37,7 +38,7 @@ export function DashboardView({
   const { t, formatDate, formatNumber } = useI18n();
   const viewModel = useDashboardViewModel();
   if (!viewModel) return null;
-  const { metrics, activeCycle, goals, recentArtifacts } = viewModel;
+  const { metrics, activeCycle, goals, recentArtifacts, sessions } = viewModel;
   const rate = (value: number | null) =>
     value === null
       ? t("common.noData")
@@ -81,6 +82,7 @@ export function DashboardView({
           value={formatNumber(metrics.activeProjects)}
         />
       </div>
+      <ContributionCalendar sessions={sessions} />
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <Card>
           <SectionHeader

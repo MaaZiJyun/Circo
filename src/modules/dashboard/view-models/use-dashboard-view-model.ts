@@ -26,6 +26,7 @@ export function useDashboardViewModel() {
       activeCycle,
       goals,
       recentArtifacts,
+      sessions: activeItems(state.sessions),
       metrics: calculateMetrics(state),
     };
   }, [state]);
