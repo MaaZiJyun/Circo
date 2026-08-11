@@ -6,6 +6,25 @@ import { isAppState } from "@/shared/model/app-state";
 import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
 
+const systemLists = [
+  {
+    id: "library_default",
+    name: "Default List",
+    note: "All imported literature",
+    tags: [],
+    color: "#18181b",
+    system: "default" as const,
+  },
+  {
+    id: "library_recent",
+    name: "Recently Added",
+    note: "Literature ordered by import time",
+    tags: [],
+    color: "#2563eb",
+    system: "recent" as const,
+  },
+];
+
 function openDatabase(databasePath: string) {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
   const database = new Database(databasePath);
@@ -34,6 +53,7 @@ function readSnapshot(database: Database.Database): AppState | null {
 }
 
 function normalizeState(state: AppState): AppState {
+  const stamp = state.updatedAt || new Date().toISOString();
   return {
     ...state,
     profile: {
@@ -42,10 +62,25 @@ function normalizeState(state: AppState): AppState {
     },
     aiJobs: state.aiJobs ?? [],
     relations: state.relations ?? [],
+    libraryLists:
+      state.libraryLists?.length > 0
+        ? state.libraryLists
+        : systemLists.map((item) => ({
+            ...item,
+            createdAt: stamp,
+            updatedAt: stamp,
+          })),
     sources: state.sources.map((item) => ({
       ...item,
       fileToken: item.fileToken ?? "",
+      filePath: item.filePath ?? "",
+      markdownToken: item.markdownToken ?? "",
+      markdownPath: item.markdownPath ?? "",
       tags: item.tags ?? [],
+      listIds: item.listIds ?? ["library_default"],
+      favorite: item.favorite ?? false,
+      rating: item.rating ?? 0,
+      publicationDate: item.publicationDate ?? item.year ?? "",
     })),
     ideas: state.ideas.map((item) => ({ ...item, tags: item.tags ?? [] })),
     projects: state.projects.map((item) => ({

@@ -21,6 +21,9 @@ interface ConversionResult {
   content?: string;
   pages?: number;
   fileToken?: string;
+  filePath?: string;
+  markdownToken?: string;
+  markdownPath?: string;
   conversionError?: string;
   error?: string;
 }
@@ -81,11 +84,18 @@ export function useFindViewModel() {
       origin: "",
       fileName: file.name,
       fileToken: "",
+      filePath: "",
+      markdownToken: "",
+      markdownPath: "",
       fileType: extension === "pdf" ? "pdf" : "markdown",
       content: "",
       summary: "",
       guide: "",
       tags: parseTags(tagText),
+      listIds: ["library_default"],
+      favorite: false,
+      rating: 0,
+      publicationDate: "",
       readingStatus: "unread",
       conversionStatus: "processing",
       conversionMessage: "",
@@ -110,6 +120,9 @@ export function useFindViewModel() {
       updateSource(id, {
         content: result.content ?? "",
         fileToken: result.fileToken ?? "",
+        filePath: result.filePath ?? "",
+        markdownToken: result.markdownToken ?? "",
+        markdownPath: result.markdownPath ?? "",
         conversionStatus: result.conversionError ? "failed" : "ready",
         conversionMessage: result.conversionError ?? String(result.pages ?? 0),
       });

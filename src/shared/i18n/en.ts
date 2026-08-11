@@ -1,4 +1,5 @@
 import type { MessageKey } from "./zh";
+import { findLibraryEn } from "./find-library-labels";
 
 export const en: Record<MessageKey, string> = {
   "app.name": "Circo",
@@ -144,6 +145,7 @@ export const en: Record<MessageKey, string> = {
     "Generated locally for this demo; no external request. Verify before use.",
   "find.openOriginal": "Open original file",
   "find.pagesMapped": "Pages mapped",
+  ...findLibraryEn,
   "mind.eyebrow": "Develop ideas",
   "mind.title": "Idea exploration lab",
   "mind.subtitle":

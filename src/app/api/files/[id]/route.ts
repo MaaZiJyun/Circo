@@ -16,11 +16,16 @@ export async function GET(
     );
   }
   try {
-    const file = await fs.readFile(getStoragePath("files", id));
+    let file: Buffer;
+    try {
+      file = await fs.readFile(getStoragePath("library", id));
+    } catch {
+      file = await fs.readFile(getStoragePath("files", id));
+    }
     const extension = id.split(".").pop()?.toLowerCase();
     const contentType =
       extension === "pdf" ? "application/pdf" : "text/plain; charset=utf-8";
-    return new Response(file, {
+    return new Response(new Uint8Array(file), {
       headers: { "Content-Type": contentType, "Content-Disposition": "inline" },
     });
   } catch {

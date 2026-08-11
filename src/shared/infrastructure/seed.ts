@@ -100,6 +100,28 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
+    libraryLists: [
+      {
+        id: "library_default",
+        name: "Default List",
+        note: "All imported literature",
+        tags: [],
+        color: "#18181b",
+        system: "default",
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+      {
+        id: "library_recent",
+        name: "Recently Added",
+        note: "Literature ordered by import time",
+        tags: [],
+        color: "#2563eb",
+        system: "recent",
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
+    ],
     sources: [
       {
         id: "source_multi",
@@ -109,6 +131,9 @@ export function createSeedState(): AppState {
         origin: "Local note",
         fileName: "multimodal.md",
         fileToken: "",
+        filePath: "",
+        markdownToken: "",
+        markdownPath: "",
         fileType: "markdown",
         content:
           "# Multimodal architecture\n\nA modular system can align signals while keeping domain encoders independent.",
@@ -117,6 +142,10 @@ export function createSeedState(): AppState {
         guide:
           "AI 草稿 · 来源：全文\n该方法强调模块边界与共享表示之间的平衡。内容待用户核实。",
         tags: ["架构", "多模态"],
+        listIds: ["library_default"],
+        favorite: true,
+        rating: 4,
+        publicationDate: "2026",
         readingStatus: "read",
         conversionStatus: "ready",
         conversionMessage: "Page 1 mapped",

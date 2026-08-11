@@ -24,19 +24,36 @@ export async function POST(request: Request) {
         { status: 415 },
       );
     }
-    const fileToken = `${randomUUID()}.${extension ?? "bin"}`;
-    const directory = getStoragePath("files");
-    await fs.mkdir(directory, { recursive: true });
+    const identifier = randomUUID();
+    const fileToken = `${identifier}.${extension ?? "bin"}`;
+    const markdownToken = `${identifier}.md`;
+    const directory = getStoragePath("library");
+    const markdownDirectory = getStoragePath("library", "markdown");
+    await Promise.all([
+      fs.mkdir(directory, { recursive: true }),
+      fs.mkdir(markdownDirectory, { recursive: true }),
+    ]);
     const bytes = new Uint8Array(await file.arrayBuffer());
     await fs.writeFile(
       path.join(/* turbopackIgnore: true */ directory, fileToken),
       bytes,
     );
+    const filePath = path.join("library", fileToken);
+    const markdownPath = path.join("library", "markdown", markdownToken);
     if (extension === "md" || extension === "markdown" || extension === "txt") {
+      const content = new TextDecoder().decode(bytes);
+      await fs.writeFile(
+        path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
+        content,
+        "utf8",
+      );
       return Response.json({
-        content: new TextDecoder().decode(bytes),
+        content,
         pages: 1,
         fileToken,
+        filePath,
+        markdownToken,
+        markdownPath,
       });
     }
     const parser = new PDFParse({ data: bytes });
@@ -45,21 +62,45 @@ export async function POST(request: Request) {
       const content = result.pages
         .map((page) => `<!-- Page ${page.num} -->\n\n${page.text.trim()}`)
         .join("\n\n");
+      await fs.writeFile(
+        path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
+        content,
+        "utf8",
+      );
       if (!content.trim())
         return Response.json({
           content: "",
           pages: result.total,
           fileToken,
+          filePath,
+          markdownToken,
+          markdownPath,
           conversionError: "No extractable text found.",
         });
-      return Response.json({ content, pages: result.total, fileToken });
+      return Response.json({
+        content,
+        pages: result.total,
+        fileToken,
+        filePath,
+        markdownToken,
+        markdownPath,
+      });
     } catch (error) {
+      const conversionError =
+        error instanceof Error ? error.message : "Conversion failed.";
+      await fs.writeFile(
+        path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
+        `<!-- PDF conversion failed: ${conversionError.replaceAll("--", "—")} -->\n`,
+        "utf8",
+      );
       return Response.json({
         content: "",
         pages: 0,
         fileToken,
-        conversionError:
-          error instanceof Error ? error.message : "Conversion failed.",
+        filePath,
+        markdownToken,
+        markdownPath,
+        conversionError,
       });
     } finally {
       await parser.destroy();

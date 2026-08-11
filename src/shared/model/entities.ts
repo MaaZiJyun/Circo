@@ -63,14 +63,29 @@ export interface SourceRecord extends BaseEntity {
   origin: string;
   fileName: string;
   fileToken: string;
+  filePath: string;
+  markdownToken: string;
+  markdownPath: string;
   fileType: "pdf" | "markdown" | "manual";
   content: string;
   summary: string;
   guide: string;
   tags: string[];
+  listIds: string[];
+  favorite: boolean;
+  rating: number;
+  publicationDate: string;
   readingStatus: "unread" | "reading" | "read";
   conversionStatus: "ready" | "processing" | "failed";
   conversionMessage: string;
+}
+
+export interface LibraryList extends BaseEntity {
+  name: string;
+  note: string;
+  tags: string[];
+  color: string;
+  system: "default" | "recent" | null;
 }
 
 export interface Annotation extends BaseEntity {
