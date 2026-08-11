@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #18181b;
+  --cursor-dot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='5' fill='%2318181b' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E");
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5' fill='%2318181b' stroke='%23fff' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --cursor-dot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='5' fill='%23fafafa' stroke='%2309090b' stroke-width='1'/%3E%3C/svg%3E");
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5' fill='%23fafafa' stroke='%2309090b' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--background);
+  color: var(--foreground);
 }
 
 body {
+  min-width: 320px;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  cursor: var(--cursor-dot) 7 7, auto;
+  font-family: var(--font-sans);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+a[href],
+[role="button"]:not([aria-disabled="true"]),
+label[for],
+select:not(:disabled),
+summary {
+  cursor: var(--cursor-pointer) 11 11, pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"],
+select:disabled {
+  cursor: var(--cursor-dot) 7 7, not-allowed;
+}
+
+.cursor-pointer {
+  cursor: var(--cursor-pointer) 11 11, pointer;
+}
+
+.cursor-default {
+  cursor: var(--cursor-dot) 7 7, auto;
+}
+
+input:not([type]),
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="text"],
+input[type="url"],
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}
+
+.textfield-cursor {
+  cursor: text !important;
+}
+
+::selection {
+  background: #18181b;
+  color: #ffffff;
+}
+
+.dark ::selection {
+  background: #fafafa;
+  color: #09090b;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .artifact-print,
+  .artifact-print * {
+    visibility: visible;
+  }
+
+  .artifact-print {
+    position: absolute;
+    inset: 0;
+    border: 0;
+    background: white;
+    color: black;
+  }
+
+  .artifact-print button,
+  .artifact-print textarea,
+  .artifact-print [role="tablist"] {
+    display: none;
+  }
 }

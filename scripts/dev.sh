@@ -27,5 +27,5 @@ fi
 
 ./scripts/db-init.sh
 
-echo "Starting Next.js at http://localhost:3000"
+echo "Starting Next.js at http://localhost:1204"
 exec npm run dev

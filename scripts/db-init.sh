@@ -13,5 +13,6 @@ fi
 
 mkdir -p "$database_dir"
 sqlite3 "$database_file" "PRAGMA journal_mode = WAL;" >/dev/null
+sqlite3 "$database_file" "CREATE TABLE IF NOT EXISTS app_snapshots (id INTEGER PRIMARY KEY CHECK (id = 1), schema_version INTEGER NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, updated_at TEXT NOT NULL); PRAGMA user_version = 1;" >/dev/null
 
 echo "SQLite database is ready at $database_file"
