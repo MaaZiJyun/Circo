@@ -63,7 +63,7 @@ describe("SQLite repository", () => {
       path.join(directory, "circo.db"),
     );
     const legacy = createSeedState() as Partial<AppState>;
-    delete legacy.libraryLists;
+    legacy.libraryLists = legacy.libraryLists?.slice(0, 2);
     delete (legacy.sources?.[0] as Partial<AppState["sources"][number]>)
       .listIds;
 
@@ -71,6 +71,7 @@ describe("SQLite repository", () => {
     expect(restored.libraryLists.map((item) => item.system)).toEqual([
       "default",
       "recent",
+      "marked",
     ]);
     expect(restored.sources[0].listIds).toEqual(["library_default"]);
   });

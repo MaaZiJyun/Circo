@@ -23,6 +23,14 @@ const systemLists = [
     color: "#2563eb",
     system: "recent" as const,
   },
+  {
+    id: "library_marked",
+    name: "Marked",
+    note: "All marked literature",
+    tags: [],
+    color: "#ef4444",
+    system: "marked" as const,
+  },
 ];
 
 function openDatabase(databasePath: string) {
@@ -54,6 +62,8 @@ function readSnapshot(database: Database.Database): AppState | null {
 
 function normalizeState(state: AppState): AppState {
   const stamp = state.updatedAt || new Date().toISOString();
+  const existingLists = state.libraryLists ?? [];
+  const systemListIds = new Set(systemLists.map((item) => item.id));
   return {
     ...state,
     profile: {
@@ -62,14 +72,17 @@ function normalizeState(state: AppState): AppState {
     },
     aiJobs: state.aiJobs ?? [],
     relations: state.relations ?? [],
-    libraryLists:
-      state.libraryLists?.length > 0
-        ? state.libraryLists
-        : systemLists.map((item) => ({
+    libraryLists: [
+      ...systemLists.map(
+        (item) =>
+          existingLists.find((existing) => existing.id === item.id) ?? {
             ...item,
             createdAt: stamp,
             updatedAt: stamp,
-          })),
+          },
+      ),
+      ...existingLists.filter((item) => !systemListIds.has(item.id)),
+    ],
     sources: state.sources.map((item) => ({
       ...item,
       fileToken: item.fileToken ?? "",

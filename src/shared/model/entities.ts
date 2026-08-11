@@ -85,7 +85,7 @@ export interface LibraryList extends BaseEntity {
   note: string;
   tags: string[];
   color: string;
-  system: "default" | "recent" | null;
+  system: "default" | "recent" | "marked" | null;
 }
 
 export interface Annotation extends BaseEntity {

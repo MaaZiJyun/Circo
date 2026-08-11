@@ -121,6 +121,16 @@ export function createSeedState(): AppState {
         createdAt: stamp,
         updatedAt: stamp,
       },
+      {
+        id: "library_marked",
+        name: "Marked",
+        note: "All marked literature",
+        tags: [],
+        color: "#ef4444",
+        system: "marked",
+        createdAt: stamp,
+        updatedAt: stamp,
+      },
     ],
     sources: [
       {

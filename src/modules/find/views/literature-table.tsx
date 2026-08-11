@@ -1,8 +1,11 @@
 "use client";
 
 import { useRef } from "react";
-import { StarIcon } from "@heroicons/react/24/outline";
-import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
+import { FlagIcon, StarIcon } from "@heroicons/react/24/outline";
+import {
+  FlagIcon as FlagSolidIcon,
+  StarIcon as StarSolidIcon,
+} from "@heroicons/react/24/solid";
 import { IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
@@ -151,9 +154,9 @@ export function LiteratureTable({
                   }
                 >
                   {source.favorite ? (
-                    <StarSolidIcon className="size-5 text-amber-400" />
+                    <FlagSolidIcon className="size-5 text-red-500" />
                   ) : (
-                    <StarIcon className="size-5" />
+                    <FlagIcon className="size-5" />
                   )}
                 </IconButton>
               </td>

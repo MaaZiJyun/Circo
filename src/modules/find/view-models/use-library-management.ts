@@ -8,6 +8,7 @@ import { useStore } from "@/shared/view-models/store-context";
 
 export const DEFAULT_LIST_ID = "library_default";
 export const RECENT_LIST_ID = "library_recent";
+export const MARKED_LIST_ID = "library_marked";
 const recentWindowMs = 7 * 24 * 60 * 60 * 1000;
 
 export function isRecentlyAdded(createdAt: string, timestamp = Date.now()) {
@@ -19,11 +20,16 @@ export type LibraryListInput = Pick<
   LibraryList,
   "name" | "note" | "tags" | "color"
 >;
+export type LiteratureSort = "addedAt" | "publicationDate" | "rating";
+export type SortDirection = "ascending" | "descending";
 
 export function useLibraryManagement() {
   const { state, mutate } = useStore();
   const [activeListId, setActiveListId] = useState(DEFAULT_LIST_ID);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<LiteratureSort>("addedAt");
+  const [sortDirection, setSortDirection] =
+    useState<SortDirection>("descending");
   const lists = useMemo(
     () => (state ? activeItems(state.libraryLists) : []),
     [state],
@@ -42,13 +48,22 @@ export function useLibraryManagement() {
         ? allSources
         : activeListId === RECENT_LIST_ID
           ? recentSources
-          : allSources.filter((source) =>
-              source.listIds.includes(activeListId),
-            );
-    return filtered
-      .slice()
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [activeListId, allSources, recentSources]);
+          : activeListId === MARKED_LIST_ID
+            ? allSources.filter((source) => source.favorite)
+            : allSources.filter((source) =>
+                source.listIds.includes(activeListId),
+              );
+    const direction = sortDirection === "ascending" ? 1 : -1;
+    return filtered.slice().sort((a, b) => {
+      const comparison =
+        sortBy === "rating"
+          ? a.rating - b.rating
+          : sortBy === "publicationDate"
+            ? a.publicationDate.localeCompare(b.publicationDate)
+            : a.createdAt.localeCompare(b.createdAt);
+      return comparison * direction;
+    });
+  }, [activeListId, allSources, recentSources, sortBy, sortDirection]);
   const selectedList = lists.find((item) => item.id === activeListId);
 
   const updateSource = (id: string, change: Partial<SourceRecord>) => {
@@ -106,7 +121,8 @@ export function useLibraryManagement() {
   };
 
   const addToList = (ids: string[], listId: string) => {
-    if (!listId || listId === RECENT_LIST_ID) return;
+    const target = lists.find((item) => item.id === listId);
+    if (!target || target.system) return;
     const stamp = now();
     mutate((current) => ({
       ...current,
@@ -204,6 +220,10 @@ export function useLibraryManagement() {
       setSelectedIds([]);
     },
     selectedIds,
+    sortBy,
+    setSortBy,
+    sortDirection,
+    setSortDirection,
     setSelectedIds,
     toggleSelected,
     updateSource,

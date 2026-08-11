@@ -3,11 +3,15 @@
 import { useState } from "react";
 import { PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { PageHeader } from "@/shared/components/page-elements";
-import { Button } from "@/shared/components/ui";
+import { Button, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { LibraryList, SourceRecord } from "@/shared/model/entities";
 import { useFindViewModel } from "../view-models/use-find-view-model";
 import { useLibraryManagement } from "../view-models/use-library-management";
+import type {
+  LiteratureSort,
+  SortDirection,
+} from "../view-models/use-library-management";
 import { ImportDialog } from "./find-dialogs";
 import {
   ChooseListDialog,
@@ -82,6 +86,37 @@ export function FindView() {
                 )}
               </p>
             </div>
+            {!selectionMode && (
+              <div className="flex items-center gap-2">
+                <Select
+                  aria-label={t("find.sortBy")}
+                  value={library.sortBy}
+                  onChange={(event) =>
+                    library.setSortBy(event.target.value as LiteratureSort)
+                  }
+                  className="w-36"
+                >
+                  <option value="addedAt">{t("find.addedAt")}</option>
+                  <option value="publicationDate">
+                    {t("find.publicationDate")}
+                  </option>
+                  <option value="rating">{t("find.rating")}</option>
+                </Select>
+                <Select
+                  aria-label={t("find.sortDirection")}
+                  value={library.sortDirection}
+                  onChange={(event) =>
+                    library.setSortDirection(
+                      event.target.value as SortDirection,
+                    )
+                  }
+                  className="w-28"
+                >
+                  <option value="ascending">{t("find.ascending")}</option>
+                  <option value="descending">{t("find.descending")}</option>
+                </Select>
+              </div>
+            )}
             {selectionMode && (
               <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm text-zinc-500">

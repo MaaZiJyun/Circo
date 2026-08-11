@@ -1,7 +1,12 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { ClockIcon, FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  ClockIcon,
+  FlagIcon,
+  FolderIcon,
+  PlusIcon,
+} from "@heroicons/react/24/outline";
 import { IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { LibraryList } from "@/shared/model/entities";
@@ -50,9 +55,11 @@ export function LibrarySidebar({
               ? library.allSources.length
               : list.system === "recent"
                 ? library.recentSources.length
-                : library.allSources.filter((item) =>
-                    item.listIds.includes(list.id),
-                  ).length;
+                : list.system === "marked"
+                  ? library.allSources.filter((item) => item.favorite).length
+                  : library.allSources.filter((item) =>
+                      item.listIds.includes(list.id),
+                    ).length;
           return (
             <div key={list.id}>
               <button
@@ -81,6 +88,8 @@ export function LibrarySidebar({
               >
                 {list.system === "recent" ? (
                   <ClockIcon className="size-4 shrink-0" />
+                ) : list.system === "marked" ? (
+                  <FlagIcon className="size-4 shrink-0" />
                 ) : (
                   <FolderIcon
                     className={`size-4 shrink-0 ${!active && list.system === "default" ? "text-zinc-700 dark:text-zinc-300" : ""}`}
