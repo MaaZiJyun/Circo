@@ -229,6 +229,13 @@ export const en: Record<MessageKey, string> = {
   "settings.system": "System",
   "settings.light": "Light",
   "settings.dark": "Dark",
+  "settings.storage": "Database and file storage",
+  "settings.databasePath": "SQLite database file path",
+  "settings.storageDirectory": "File storage directory",
+  "settings.choosePath": "Choose",
+  "settings.pickerUnavailable": "Unable to open the Finder path picker.",
+  "settings.storageHint":
+    "Enter absolute paths. Changing paths does not move existing data; a missing database is created automatically.",
   "settings.backup": "Data backup",
   "settings.exportBackup": "Export complete backup",
   "settings.restoreBackup": "Restore complete backup",

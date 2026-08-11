@@ -3,22 +3,26 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import AdmZip from "adm-zip";
 import { SqliteAppRepository } from "@/shared/infrastructure/sqlite-repository";
+import { getStorageConfig } from "@/shared/infrastructure/storage-config";
 import { isAppState } from "@/shared/model/app-state";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const repository = new SqliteAppRepository();
-const dataDirectory = path.join(process.cwd(), "data");
-
 export async function GET() {
   try {
+    const dataDirectory = getStorageConfig().storageDirectory;
     const state = await repository.load();
     const zip = new AdmZip();
     zip.addFile("circo.json", Buffer.from(JSON.stringify(state, null, 2)));
     for (const folder of ["files", "attachments"]) {
-      const localPath = path.join(dataDirectory, folder);
-      if (fs.existsSync(localPath)) zip.addLocalFolder(localPath, folder);
+      const localPath = path.join(
+        /* turbopackIgnore: true */ dataDirectory,
+        folder,
+      );
+      if (fs.existsSync(/* turbopackIgnore: true */ localPath))
+        zip.addLocalFolder(localPath, folder);
     }
     return new Response(new Uint8Array(zip.toBuffer()), {
       headers: {
@@ -33,6 +37,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const dataDirectory = getStorageConfig().storageDirectory;
   const temporary = path.join(dataDirectory, `restore-${randomUUID()}`);
   try {
     const form = await request.formData();
@@ -77,7 +82,10 @@ export async function POST(request: Request) {
     await repository.restore(parsed);
     for (const folder of ["files", "attachments"]) {
       const source = path.join(temporary, folder);
-      const destination = path.join(dataDirectory, folder);
+      const destination = path.join(
+        /* turbopackIgnore: true */ dataDirectory,
+        folder,
+      );
       if (fs.existsSync(source))
         fs.cpSync(source, destination, { recursive: true, force: true });
     }

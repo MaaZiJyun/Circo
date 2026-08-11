@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { getStoragePath } from "@/shared/infrastructure/storage-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,10 +19,10 @@ export async function POST(request: Request) {
       ? rawExtension
       : "bin";
     const fileToken = `${randomUUID()}.${extension}`;
-    const directory = path.join(process.cwd(), "data", "attachments");
+    const directory = getStoragePath("attachments");
     await fs.mkdir(directory, { recursive: true });
     await fs.writeFile(
-      path.join(directory, fileToken),
+      path.join(/* turbopackIgnore: true */ directory, fileToken),
       new Uint8Array(await file.arrayBuffer()),
     );
     return Response.json({ fileToken });

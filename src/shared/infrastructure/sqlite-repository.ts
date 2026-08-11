@@ -3,10 +3,8 @@ import path from "node:path";
 import Database from "better-sqlite3";
 import type { AppRepository, AppState } from "@/shared/model/app-state";
 import { isAppState } from "@/shared/model/app-state";
+import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
-
-const dataDirectory = path.join(process.cwd(), "data");
-const defaultDatabasePath = path.join(dataDirectory, "circo.db");
 
 function openDatabase(databasePath: string) {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
@@ -95,10 +93,14 @@ function writeSnapshot(database: Database.Database, state: AppState): AppState {
 }
 
 export class SqliteAppRepository implements AppRepository {
-  constructor(private readonly databasePath = defaultDatabasePath) {}
+  constructor(private readonly databasePath?: string) {}
+
+  private open() {
+    return openDatabase(this.databasePath ?? getStorageConfig().databasePath);
+  }
 
   async load(): Promise<AppState> {
-    const database = openDatabase(this.databasePath);
+    const database = this.open();
     try {
       const state = readSnapshot(database);
       if (state) return state;
@@ -112,7 +114,7 @@ export class SqliteAppRepository implements AppRepository {
 
   async save(state: AppState): Promise<AppState> {
     if (!isAppState(state)) throw new Error("Invalid application state.");
-    const database = openDatabase(this.databasePath);
+    const database = this.open();
     try {
       return database.transaction(() => writeSnapshot(database, state))();
     } finally {

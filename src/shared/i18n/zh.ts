@@ -221,6 +221,13 @@ export const zh = {
   "settings.system": "跟随系统",
   "settings.light": "白天",
   "settings.dark": "夜间",
+  "settings.storage": "数据库与文件存储",
+  "settings.databasePath": "SQLite 数据库文件地址",
+  "settings.storageDirectory": "文件存储目录",
+  "settings.choosePath": "选择",
+  "settings.pickerUnavailable": "无法打开 Finder 路径选择器。",
+  "settings.storageHint":
+    "请输入绝对路径。切换地址不会搬移现有数据；新数据库不存在时会自动创建。",
   "settings.backup": "数据备份",
   "settings.exportBackup": "导出完整备份",
   "settings.restoreBackup": "恢复完整备份",

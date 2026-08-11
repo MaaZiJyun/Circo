@@ -2,6 +2,7 @@ import { PDFParse } from "pdf-parse";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
+import { getStoragePath } from "@/shared/infrastructure/storage-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,10 +25,13 @@ export async function POST(request: Request) {
       );
     }
     const fileToken = `${randomUUID()}.${extension ?? "bin"}`;
-    const directory = path.join(process.cwd(), "data", "files");
+    const directory = getStoragePath("files");
     await fs.mkdir(directory, { recursive: true });
     const bytes = new Uint8Array(await file.arrayBuffer());
-    await fs.writeFile(path.join(directory, fileToken), bytes);
+    await fs.writeFile(
+      path.join(/* turbopackIgnore: true */ directory, fileToken),
+      bytes,
+    );
     if (extension === "md" || extension === "markdown" || extension === "txt") {
       return Response.json({
         content: new TextDecoder().decode(bytes),

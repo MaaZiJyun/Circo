@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import path from "node:path";
+import { getStoragePath } from "@/shared/infrastructure/storage-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,9 +16,7 @@ export async function GET(
     );
   }
   try {
-    const file = await fs.readFile(
-      path.join(process.cwd(), "data", "files", id),
-    );
+    const file = await fs.readFile(getStoragePath("files", id));
     const extension = id.split(".").pop()?.toLowerCase();
     const contentType =
       extension === "pdf" ? "application/pdf" : "text/plain; charset=utf-8";

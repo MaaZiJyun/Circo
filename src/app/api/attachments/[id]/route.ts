@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import path from "node:path";
+import { getStoragePath } from "@/shared/infrastructure/storage-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,9 +15,7 @@ export async function GET(
       { status: 400 },
     );
   try {
-    const file = await fs.readFile(
-      path.join(process.cwd(), "data", "attachments", id),
-    );
+    const file = await fs.readFile(getStoragePath("attachments", id));
     return new Response(file, {
       headers: {
         "Content-Type": "application/octet-stream",
