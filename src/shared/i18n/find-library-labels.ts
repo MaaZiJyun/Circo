@@ -76,6 +76,8 @@ export const findLibraryZh = {
   "find.startedAt": "首次打开",
   "find.completedAt": "完成阅读",
   "find.studyDuration": "学习时长",
+  "find.cite": "Cite",
+  "find.copyCitationFailed": "无法复制 Citation。",
 } as const;
 
 export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
@@ -158,4 +160,6 @@ export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
   "find.startedAt": "First opened",
   "find.completedAt": "Reading completed",
   "find.studyDuration": "Study duration",
+  "find.cite": "Cite",
+  "find.copyCitationFailed": "Unable to copy Citation.",
 };

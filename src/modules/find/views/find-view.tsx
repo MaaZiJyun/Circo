@@ -250,6 +250,23 @@ export function FindView() {
             {t("find.openOriginal")}
           </ContextMenuItem>
           <ContextMenuItem
+            disabled={!documentMenu.source.citation.trim()}
+            onClick={() => {
+              const citation = documentMenu.source.citation;
+              setDocumentMenu(null);
+              const copy = navigator.clipboard?.writeText(citation);
+              if (!copy) {
+                setOperationError(t("find.copyCitationFailed"));
+                return;
+              }
+              void copy.catch(() =>
+                setOperationError(t("find.copyCitationFailed")),
+              );
+            }}
+          >
+            {t("find.cite")}
+          </ContextMenuItem>
+          <ContextMenuItem
             onClick={() => {
               setEditing(documentMenu.source);
               setDocumentMenu(null);

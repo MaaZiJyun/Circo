@@ -189,14 +189,14 @@ export function LiteratureDetailsPanel({
           </div>
         ))}
       </div>
-      {source.citation && (
+      {/* {source.citation && (
         <div className="mx-5 mb-5 rounded-xl bg-zinc-100 p-4 dark:bg-zinc-900">
           <p className="mb-2 text-xs font-medium text-zinc-500">Citation</p>
           <pre className="whitespace-pre-wrap text-xs leading-5">
             {source.citation}
           </pre>
         </div>
-      )}
+      )} */}
       {source.readingStatus === "read" && (
         <div className="border-t border-zinc-200 p-5 dark:border-zinc-800">
           <div className="mb-4 flex flex-wrap items-center gap-2">

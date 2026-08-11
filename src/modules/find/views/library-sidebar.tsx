@@ -95,16 +95,18 @@ export function LibrarySidebar({
       <nav className="grid gap-1">
         {library.lists.map((list) => {
           const active = list.id === library.activeListId;
-          const count =
+          const items =
             list.system === "default"
-              ? library.allSources.length
+              ? library.allSources
               : list.system === "recent"
-                ? library.recentSources.length
+                ? library.recentSources
                 : list.system === "marked"
-                  ? library.allSources.filter((item) => item.favorite).length
+                  ? library.allSources.filter((item) => item.favorite)
                   : library.allSources.filter((item) =>
                       item.listIds.includes(list.id),
-                    ).length;
+                    );
+          const count = items.length;
+          const hasUnread = items.some((item) => item.readingStatus !== "read");
           return (
             <div
               key={list.id}
@@ -132,7 +134,7 @@ export function LibrarySidebar({
                   cancelPress();
                   openMenu(list, { x: event.clientX, y: event.clientY });
                 }}
-                className={`flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl px-3 text-left text-sm ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-200 dark:hover:bg-zinc-900"}`}
+                className={`relative flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl px-3 text-left text-sm ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-200 dark:hover:bg-zinc-900"}`}
                 style={{
                   backgroundColor:
                     dropTargetId === list.id ? `${list.color}26` : undefined,
@@ -154,6 +156,12 @@ export function LibrarySidebar({
                   {list.system ? t(`find.list.${list.system}`) : list.name}
                 </span>
                 <span className="ml-auto text-xs opacity-60">{count}</span>
+                {hasUnread && (
+                  <span
+                    className="absolute right-1 top-1 size-2 rounded-full bg-red-500 shadow-sm ring-2 ring-zinc-50 dark:ring-zinc-950"
+                    aria-label={t("find.unread")}
+                  />
+                )}
               </button>
             </div>
           );
