@@ -66,7 +66,7 @@ src/
 npm run dev:all
 ```
 
-浏览器打开 [http://localhost:3000](http://localhost:3000)。应用为单用户、无账号、本地运行模式。
+浏览器打开 [http://localhost:1204](http://localhost:1204)。应用为单用户、无账号、本地运行模式。
 
 也可以分步启动：
 
