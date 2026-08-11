@@ -11,6 +11,16 @@ import type {
 export const focusRing =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 dark:focus-visible:ring-zinc-50 dark:focus-visible:ring-offset-zinc-950";
 
+const textInputTypes = new Set([
+  "email",
+  "number",
+  "password",
+  "search",
+  "tel",
+  "text",
+  "url",
+]);
+
 export function Button({
   className = "",
   variant = "primary",
@@ -54,11 +64,13 @@ export function IconButton({
 export const Input = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement>
->(function Input({ className = "", ...props }, ref) {
+>(function Input({ className = "", type = "text", ...props }, ref) {
+  const cursorClass = textInputTypes.has(type) ? "textfield-cursor" : "";
   return (
     <input
       ref={ref}
-      className={`min-h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 ${focusRing} ${className}`}
+      type={type}
+      className={`min-h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm text-zinc-950 placeholder:text-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 ${focusRing} ${cursorClass} ${className}`}
       {...props}
     />
   );
@@ -70,7 +82,7 @@ export function Textarea({
 }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
     <textarea
-      className={`min-h-28 w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm leading-6 text-zinc-950 placeholder:text-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 ${focusRing} ${className}`}
+      className={`textfield-cursor min-h-28 w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm leading-6 text-zinc-950 placeholder:text-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 ${focusRing} ${className}`}
       {...props}
     />
   );

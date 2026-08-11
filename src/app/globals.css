@@ -5,11 +5,15 @@
 :root {
   --background: #ffffff;
   --foreground: #18181b;
+  --cursor-dot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='5' fill='%2318181b' stroke='%23fff' stroke-width='1'/%3E%3C/svg%3E");
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5' fill='%2318181b' stroke='%23fff' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
 .dark {
   --background: #09090b;
   --foreground: #fafafa;
+  --cursor-dot: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Ccircle cx='7' cy='7' r='5' fill='%23fafafa' stroke='%2309090b' stroke-width='1'/%3E%3C/svg%3E");
+  --cursor-pointer: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5' fill='%23fafafa' stroke='%2309090b' stroke-width='1.5'/%3E%3C/svg%3E");
 }
 
 @theme inline {
@@ -33,6 +37,7 @@ body {
   min-width: 320px;
   background: var(--background);
   color: var(--foreground);
+  cursor: var(--cursor-dot) 7 7, auto;
   font-family: var(--font-sans);
 }
 
@@ -50,13 +55,38 @@ a[href],
 label[for],
 select:not(:disabled),
 summary {
-  cursor: pointer;
+  cursor: var(--cursor-pointer) 11 11, pointer;
 }
 
 button:disabled,
 [role="button"][aria-disabled="true"],
 select:disabled {
-  cursor: not-allowed;
+  cursor: var(--cursor-dot) 7 7, not-allowed;
+}
+
+.cursor-pointer {
+  cursor: var(--cursor-pointer) 11 11, pointer;
+}
+
+.cursor-default {
+  cursor: var(--cursor-dot) 7 7, auto;
+}
+
+input:not([type]),
+input[type="email"],
+input[type="number"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="text"],
+input[type="url"],
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}
+
+.textfield-cursor {
+  cursor: text !important;
 }
 
 ::selection {
