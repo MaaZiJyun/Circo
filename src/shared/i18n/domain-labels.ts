@@ -1,0 +1,56 @@
+import type { MessageKey } from "./zh";
+
+export const statusLabels: Record<string, MessageKey> = {
+  active: "status.active",
+  completed: "status.completed",
+  archived: "status.archived",
+  notStarted: "status.notStarted",
+  unread: "status.unread",
+  reading: "status.reading",
+  read: "status.read",
+  inbox: "status.inbox",
+  exploring: "status.exploring",
+  candidate: "status.candidate",
+  converted: "status.converted",
+  paused: "status.paused",
+  concept: "status.concept",
+  planning: "status.planning",
+  todo: "status.todo",
+  doing: "status.doing",
+  done: "status.done",
+  draft: "status.draft",
+  review: "status.review",
+  final: "status.final",
+  published: "status.published",
+  ready: "status.ready",
+  processing: "status.processing",
+  failed: "status.failed",
+};
+
+export const typeLabels: Record<string, MessageKey> = {
+  success: "type.success",
+  error: "type.error",
+  general: "type.general",
+  positive: "type.positive",
+  negative: "type.negative",
+  neutral: "type.neutral",
+  progress: "type.progress",
+  decision: "type.decision",
+  problem: "type.problem",
+  conclusion: "type.conclusion",
+  paper: "type.paper",
+  poster: "type.poster",
+  slides: "type.slides",
+  social: "type.social",
+  blog: "type.blog",
+  custom: "type.custom",
+};
+
+export const categoryLabels: Record<string, MessageKey> = {
+  method: "category.method",
+  knowledge: "category.knowledge",
+  plan: "category.plan",
+  communication: "category.communication",
+  resource: "category.resource",
+  external: "category.external",
+};

@@ -17,6 +17,8 @@
 /data/*.db
 /data/*.db-shm
 /data/*.db-wal
+/data/files/
+/data/attachments/
 
 # next.js
 /.next/
