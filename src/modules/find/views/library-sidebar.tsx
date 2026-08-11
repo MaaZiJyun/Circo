@@ -1,23 +1,39 @@
 "use client";
 
-import {
-  ClockIcon,
-  FolderIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
+import { useRef, useState } from "react";
+import { ClockIcon, FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import type { LibraryList } from "@/shared/model/entities";
 import type { useLibraryManagement } from "../view-models/use-library-management";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  type MenuPosition,
+} from "./context-menu";
 
 export function LibrarySidebar({
   library,
   onCreate,
+  onEdit,
 }: {
   library: ReturnType<typeof useLibraryManagement>;
   onCreate: () => void;
+  onEdit: (list: LibraryList) => void;
 }) {
   const { t } = useI18n();
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [menu, setMenu] = useState<{
+    list: LibraryList;
+    position: MenuPosition;
+  } | null>(null);
+  const cancelPress = () => {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    pressTimer.current = null;
+  };
+  const openMenu = (list: LibraryList, position: MenuPosition) => {
+    if (!list.system) setMenu({ list, position });
+  };
   return (
     <aside className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="mb-3 flex items-center justify-between px-2">
@@ -30,16 +46,38 @@ export function LibrarySidebar({
         {library.lists.map((list) => {
           const active = list.id === library.activeListId;
           const count =
-            list.system === "default" || list.system === "recent"
+            list.system === "default"
               ? library.allSources.length
-              : library.allSources.filter((item) =>
-                  item.listIds.includes(list.id),
-                ).length;
+              : list.system === "recent"
+                ? library.recentSources.length
+                : library.allSources.filter((item) =>
+                    item.listIds.includes(list.id),
+                  ).length;
           return (
-            <div key={list.id} className="group flex items-center gap-1">
+            <div key={list.id}>
               <button
                 onClick={() => library.setActiveListId(list.id)}
-                className={`flex min-h-10 min-w-0 flex-1 items-center gap-2 rounded-xl px-3 text-left text-sm ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-200 dark:hover:bg-zinc-900"}`}
+                onPointerDown={(event) => {
+                  if (event.button !== 0 || list.system) return;
+                  cancelPress();
+                  pressTimer.current = setTimeout(
+                    () =>
+                      openMenu(list, {
+                        x: event.clientX,
+                        y: event.clientY,
+                      }),
+                    550,
+                  );
+                }}
+                onPointerUp={cancelPress}
+                onPointerCancel={cancelPress}
+                onPointerMove={cancelPress}
+                onContextMenu={(event) => {
+                  event.preventDefault();
+                  cancelPress();
+                  openMenu(list, { x: event.clientX, y: event.clientY });
+                }}
+                className={`flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl px-3 text-left text-sm ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-200 dark:hover:bg-zinc-900"}`}
               >
                 {list.system === "recent" ? (
                   <ClockIcon className="size-4 shrink-0" />
@@ -54,18 +92,6 @@ export function LibrarySidebar({
                 </span>
                 <span className="ml-auto text-xs opacity-60">{count}</span>
               </button>
-              {!list.system && (
-                <IconButton
-                  label={t("find.deleteList")}
-                  className="size-8 opacity-0 group-hover:opacity-100"
-                  onClick={() =>
-                    window.confirm(t("find.confirmDeleteList")) &&
-                    library.deleteList(list.id)
-                  }
-                >
-                  <TrashIcon className="size-4" />
-                </IconButton>
-              )}
             </div>
           );
         })}
@@ -74,6 +100,28 @@ export function LibrarySidebar({
         <p className="mt-4 border-t border-zinc-200 px-2 pt-3 text-xs text-zinc-500 dark:border-zinc-800">
           {library.selectedList.note}
         </p>
+      )}
+      {menu && (
+        <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
+          <ContextMenuItem
+            onClick={() => {
+              onEdit(menu.list);
+              setMenu(null);
+            }}
+          >
+            {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            danger
+            onClick={() => {
+              if (window.confirm(t("find.confirmDeleteList")))
+                library.deleteList(menu.list.id);
+              setMenu(null);
+            }}
+          >
+            {t("find.deleteList")}
+          </ContextMenuItem>
+        </ContextMenu>
       )}
     </aside>
   );

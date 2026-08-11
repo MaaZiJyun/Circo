@@ -1,20 +1,33 @@
 "use client";
 
-import { PencilSquareIcon, StarIcon } from "@heroicons/react/24/outline";
+import { useRef } from "react";
+import { StarIcon } from "@heroicons/react/24/outline";
 import { StarIcon as StarSolidIcon } from "@heroicons/react/24/solid";
 import { IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
 import type { useLibraryManagement } from "../view-models/use-library-management";
+import type { MenuPosition } from "./context-menu";
 
 export function LiteratureTable({
   library,
-  onEdit,
+  selectionMode,
+  onEnterSelection,
+  onOpenMenu,
 }: {
   library: ReturnType<typeof useLibraryManagement>;
-  onEdit: (source: SourceRecord) => void;
+  selectionMode: boolean;
+  onEnterSelection: (source: SourceRecord) => void;
+  onOpenMenu: (source: SourceRecord, position: MenuPosition) => void;
 }) {
   const { t, locale } = useI18n();
+  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressedId = useRef<string | null>(null);
+  const pointerType = useRef("");
+  const cancelPress = () => {
+    if (pressTimer.current) clearTimeout(pressTimer.current);
+    pressTimer.current = null;
+  };
   const allSelected =
     library.sources.length > 0 &&
     library.sources.every((item) => library.selectedIds.includes(item.id));
@@ -23,18 +36,20 @@ export function LiteratureTable({
       <table className="w-full min-w-[1100px] text-left text-sm">
         <thead className="bg-zinc-50 text-xs text-zinc-500 dark:bg-zinc-900">
           <tr>
-            <th className="w-12 p-3">
-              <input
-                type="checkbox"
-                aria-label={t("find.selectAll")}
-                checked={allSelected}
-                onChange={() =>
-                  library.setSelectedIds(
-                    allSelected ? [] : library.sources.map((item) => item.id),
-                  )
-                }
-              />
-            </th>
+            {selectionMode && (
+              <th className="w-12 p-3">
+                <input
+                  type="checkbox"
+                  aria-label={t("find.selectAll")}
+                  checked={allSelected}
+                  onChange={() =>
+                    library.setSelectedIds(
+                      allSelected ? [] : library.sources.map((item) => item.id),
+                    )
+                  }
+                />
+              </th>
+            )}
             <th className="p-3">{t("common.title")}</th>
             <th className="p-3">{t("find.authors")}</th>
             <th className="p-3">{t("find.addedAt")}</th>
@@ -43,23 +58,54 @@ export function LiteratureTable({
             <th className="p-3">{t("common.tags")}</th>
             <th className="p-3">{t("find.favorite")}</th>
             <th className="p-3">{t("find.rating")}</th>
-            <th className="w-12 p-3" />
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
           {library.sources.map((source) => (
             <tr
               key={source.id}
-              className="hover:bg-zinc-50 dark:hover:bg-zinc-900/60"
+              onPointerDown={(event) => {
+                pointerType.current = event.pointerType;
+                if (event.button !== 0 || selectionMode) return;
+                cancelPress();
+                pressTimer.current = setTimeout(() => {
+                  longPressedId.current = source.id;
+                  onEnterSelection(source);
+                }, 550);
+              }}
+              onPointerUp={cancelPress}
+              onPointerCancel={cancelPress}
+              onPointerMove={cancelPress}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                cancelPress();
+                if (pointerType.current === "touch") return;
+                onOpenMenu(source, { x: event.clientX, y: event.clientY });
+              }}
+              onClickCapture={(event) => {
+                if (longPressedId.current === source.id) {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  longPressedId.current = null;
+                  return;
+                }
+                if (!selectionMode) return;
+                event.preventDefault();
+                event.stopPropagation();
+                library.toggleSelected(source.id);
+              }}
+              className={`select-none hover:bg-zinc-50 dark:hover:bg-zinc-900/60 ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
             >
-              <td className="p-3">
-                <input
-                  type="checkbox"
-                  aria-label={source.title}
-                  checked={library.selectedIds.includes(source.id)}
-                  onChange={() => library.toggleSelected(source.id)}
-                />
-              </td>
+              {selectionMode && (
+                <td className="p-3">
+                  <input
+                    type="checkbox"
+                    aria-label={source.title}
+                    checked={library.selectedIds.includes(source.id)}
+                    readOnly
+                  />
+                </td>
+              )}
               <td className="max-w-64 p-3 font-medium">
                 {source.fileToken ? (
                   <a
@@ -129,14 +175,6 @@ export function LiteratureTable({
                     </button>
                   ))}
                 </div>
-              </td>
-              <td className="p-3">
-                <IconButton
-                  label={t("common.edit")}
-                  onClick={() => onEdit(source)}
-                >
-                  <PencilSquareIcon className="size-4" />
-                </IconButton>
               </td>
             </tr>
           ))}

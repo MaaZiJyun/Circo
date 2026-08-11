@@ -3,6 +3,7 @@ export const findLibraryZh = {
   "find.list.default": "默认列表",
   "find.list.recent": "最近添加",
   "find.createList": "新建列表",
+  "find.editList": "编辑列表",
   "find.deleteList": "删除列表",
   "find.confirmDeleteList": "确定删除此列表吗？文献文件不会被删除。",
   "find.listName": "名称",
@@ -20,6 +21,8 @@ export const findLibraryZh = {
     "确定删除所选文献吗？原文件和 Markdown 文件也会永久删除。",
   "find.literatureCount": "共 {count} 篇文献",
   "find.selectedCount": "已选择 {count} 项",
+  "find.noCustomLists": "暂无自定义列表",
+  "find.deleteOriginal": "删除源文件",
 } as const;
 
 export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
@@ -27,6 +30,7 @@ export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
   "find.list.default": "Default List",
   "find.list.recent": "Recently Added",
   "find.createList": "Create list",
+  "find.editList": "Edit list",
   "find.deleteList": "Delete list",
   "find.confirmDeleteList": "Delete this list? Literature files will be kept.",
   "find.listName": "Name",
@@ -44,4 +48,6 @@ export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
     "Delete the selected literature? The original and Markdown files will also be permanently deleted.",
   "find.literatureCount": "{count} items",
   "find.selectedCount": "{count} selected",
+  "find.noCustomLists": "No custom lists",
+  "find.deleteOriginal": "Delete source file",
 };

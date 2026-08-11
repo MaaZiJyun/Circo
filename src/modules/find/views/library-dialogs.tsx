@@ -3,24 +3,26 @@
 import { useState } from "react";
 import { Button, Dialog, Field, Input } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { SourceRecord } from "@/shared/model/entities";
+import type { LibraryList, SourceRecord } from "@/shared/model/entities";
 import { parseTags } from "@/shared/model/tags";
 import type { LibraryListInput } from "../view-models/use-library-management";
 
-export function CreateListDialog({
+export function ListDialog({
   open,
+  list,
   onClose,
   onSave,
 }: {
   open: boolean;
+  list?: LibraryList;
   onClose: () => void;
   onSave: (input: LibraryListInput) => void;
 }) {
   const { t } = useI18n();
-  const [name, setName] = useState("");
-  const [note, setNote] = useState("");
-  const [tags, setTags] = useState("");
-  const [color, setColor] = useState("#2563eb");
+  const [name, setName] = useState(list?.name ?? "");
+  const [note, setNote] = useState(list?.note ?? "");
+  const [tags, setTags] = useState(list?.tags.join(", ") ?? "");
+  const [color, setColor] = useState(list?.color ?? "#2563eb");
   const submit = () => {
     if (!name.trim()) return;
     onSave({ name: name.trim(), note, tags: parseTags(tags), color });
@@ -32,7 +34,7 @@ export function CreateListDialog({
   return (
     <Dialog
       open={open}
-      title={t("find.createList")}
+      title={list ? t("find.editList") : t("find.createList")}
       closeLabel={t("common.close")}
       onClose={onClose}
     >
@@ -68,6 +70,52 @@ export function CreateListDialog({
   );
 }
 
+export function ChooseListDialog({
+  open,
+  lists,
+  onClose,
+  onChoose,
+}: {
+  open: boolean;
+  lists: LibraryList[];
+  onClose: () => void;
+  onChoose: (listId: string) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <Dialog
+      open={open}
+      title={t("find.addToList")}
+      closeLabel={t("common.close")}
+      onClose={onClose}
+    >
+      <div className="grid gap-2">
+        {lists.map((list) => (
+          <button
+            key={list.id}
+            className="flex min-h-11 items-center gap-3 rounded-xl border border-zinc-200 px-3 text-left text-sm hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+            onClick={() => {
+              onChoose(list.id);
+              onClose();
+            }}
+          >
+            <span
+              className="size-3 rounded-full"
+              style={{ backgroundColor: list.color }}
+            />
+            {list.name}
+          </button>
+        ))}
+        {!lists.length && (
+          <p className="py-6 text-center text-sm text-zinc-500">
+            {t("find.noCustomLists")}
+          </p>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
 export function EditLiteratureDialog({
   source,
   onClose,
@@ -87,6 +135,7 @@ export function EditLiteratureDialog({
     tags: source.tags.join(", "),
     rating: String(source.rating),
   });
+  const [favorite, setFavorite] = useState(source.favorite);
   const submit = () => {
     if (!draft.title.trim()) return;
     onSave(source.id, {
@@ -98,6 +147,7 @@ export function EditLiteratureDialog({
       year: draft.publicationDate.slice(0, 4),
       tags: parseTags(draft.tags),
       rating: Math.min(5, Math.max(0, Number(draft.rating) || 0)),
+      favorite,
     });
     onClose();
   };
@@ -125,6 +175,14 @@ export function EditLiteratureDialog({
         {field("addedAt", t("find.addedAt"), "datetime-local")}
         {field("tags", t("common.tags"))}
         {field("rating", t("find.rating"), "number")}
+        <Field label={t("find.favorite")}>
+          <input
+            type="checkbox"
+            checked={favorite}
+            onChange={(event) => setFavorite(event.target.checked)}
+            className="size-5"
+          />
+        </Field>
         <Button className="sm:col-span-2" onClick={submit}>
           {t("common.save")}
         </Button>
