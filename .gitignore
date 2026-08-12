@@ -19,6 +19,7 @@
 /data/*.db-wal
 /data/files/
 /data/attachments/
+/data/models/
 
 # next.js
 /.next/
