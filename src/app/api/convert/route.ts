@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getStoragePath } from "@/shared/infrastructure/storage-config";
+import { pdfTextToMarkdown } from "@/server/pdf-to-markdown";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -77,16 +78,20 @@ export async function POST(request: Request) {
     }
     const parser = new PDFParse({ data: bytes });
     try {
-      const result = await parser.getText();
-      const content = result.pages
-        .map((page) => `<!-- Page ${page.num} -->\n\n${page.text.trim()}`)
-        .join("\n\n");
+      const result = await parser.getText({
+        cellSeparator: "\t",
+        lineEnforce: true,
+        pageJoiner: "",
+        parseHyperlinks: true,
+      });
+      const hasExtractableText = result.pages.some((page) => page.text.trim());
+      const content = pdfTextToMarkdown(result.pages);
       await fs.writeFile(
         path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
         content,
         "utf8",
       );
-      if (!content.trim())
+      if (!hasExtractableText)
         return Response.json({
           content: "",
           pages: result.total,
