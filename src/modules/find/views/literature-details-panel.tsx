@@ -178,7 +178,6 @@ export function LiteratureDetailsPanel({
           }}
         >
           <PencilSquareIcon className="size-4" />
-          {t("common.edit")}
         </Button>
       </div>
       <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4">

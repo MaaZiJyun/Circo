@@ -3,12 +3,55 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getStoragePath } from "@/shared/infrastructure/storage-config";
+import { pdfTextToMarkdown } from "@/server/pdf-to-markdown";
+import { pdfAssetUrl } from "@/server/pdf-assets";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const maxConversionSize = 20 * 1024 * 1024;
 const maxUploadSize = 200 * 1024 * 1024;
+const maxExtractedImages = 40;
+const maxExtractedImageBytes = 50 * 1024 * 1024;
+
+async function savePdfImages(
+  parser: PDFParse,
+  identifier: string,
+  markdownDirectory: string,
+) {
+  const result = await parser.getImage({
+    imageBuffer: true,
+    imageDataUrl: false,
+    imageThreshold: 120,
+  });
+  const images = new Map<number, string[]>();
+  let count = 0;
+  let totalBytes = 0;
+  const assetDirectory = identifier;
+  const assetPath = path.join(markdownDirectory, assetDirectory);
+  for (const page of result.pages) {
+    for (const image of page.images) {
+      if (
+        !image.data.length ||
+        count >= maxExtractedImages ||
+        totalBytes + image.data.length > maxExtractedImageBytes
+      )
+        continue;
+      count += 1;
+      totalBytes += image.data.length;
+      const token = `${page.pageNumber}-${count}.png`;
+      await fs.mkdir(assetPath, { recursive: true });
+      await fs.writeFile(
+        path.join(/* turbopackIgnore: true */ assetPath, token),
+        image.data,
+      );
+      const pageImages = images.get(page.pageNumber) ?? [];
+      pageImages.push(pdfAssetUrl(assetDirectory, token));
+      images.set(page.pageNumber, pageImages);
+    }
+  }
+  return images;
+}
 
 export async function POST(request: Request) {
   try {
@@ -77,16 +120,30 @@ export async function POST(request: Request) {
     }
     const parser = new PDFParse({ data: bytes });
     try {
-      const result = await parser.getText();
-      const content = result.pages
-        .map((page) => `<!-- Page ${page.num} -->\n\n${page.text.trim()}`)
-        .join("\n\n");
+      const result = await parser.getText({
+        cellSeparator: "\t",
+        lineEnforce: true,
+        pageJoiner: "",
+        parseHyperlinks: true,
+      });
+      const tables = await parser.getTable();
+      const images = await savePdfImages(
+        parser,
+        identifier,
+        markdownDirectory,
+      );
+      const hasExtractableContent =
+        result.pages.some((page) => page.text.trim()) || images.size > 0;
+      const content = pdfTextToMarkdown(result.pages, {
+        images,
+        tables: tables.pages,
+      });
       await fs.writeFile(
         path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
         content,
         "utf8",
       );
-      if (!content.trim())
+      if (!hasExtractableContent)
         return Response.json({
           content: "",
           pages: result.total,

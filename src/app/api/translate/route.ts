@@ -1,29 +1,22 @@
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+import { translateLocally } from "@/server/local-translator";
+
 const maxInputLength = 5_000;
-const maxSegmentBytes = 450;
+const maxSegmentLength = 400;
 
-function splitUtf8(text: string) {
-  const encoder = new TextEncoder();
+function splitText(text: string) {
   const segments: string[] = [];
-  let segment = "";
-  for (const character of text) {
-    if (encoder.encode(segment + character).length > maxSegmentBytes) {
-      if (segment) segments.push(segment);
-      segment = character;
-    } else {
-      segment += character;
+  for (const paragraph of text.split(/(\n+)/)) {
+    if (!paragraph || /^\n+$/.test(paragraph)) {
+      if (paragraph) segments.push(paragraph);
+      continue;
     }
+    for (let offset = 0; offset < paragraph.length; offset += maxSegmentLength)
+      segments.push(paragraph.slice(offset, offset + maxSegmentLength));
   }
-  if (segment) segments.push(segment);
   return segments;
-}
-
-interface MyMemoryResponse {
-  responseData?: { translatedText?: string };
-  responseStatus?: number | string;
-  responseDetails?: string;
 }
 
 export async function POST(request: Request) {
@@ -47,20 +40,13 @@ export async function POST(request: Request) {
         { status: 422 },
       );
 
-    const langpair = target === "zh-CN" ? "en|zh-CN" : "zh-CN|en";
     const translations: string[] = [];
-    for (const segment of splitUtf8(text.trim())) {
-      const url = new URL("https://api.mymemory.translated.net/get");
-      url.searchParams.set("q", segment);
-      url.searchParams.set("langpair", langpair);
-      const response = await fetch(url, { cache: "no-store" });
-      const result = (await response.json()) as MyMemoryResponse;
-      const translated = result.responseData?.translatedText;
-      if (!response.ok || !translated || Number(result.responseStatus) >= 400)
-        throw new Error(
-          result.responseDetails || "Translation service unavailable.",
-        );
-      translations.push(translated);
+    for (const segment of splitText(text.trim())) {
+      translations.push(
+        /^\n+$/.test(segment)
+          ? segment
+          : await translateLocally(segment, target),
+      );
     }
     return Response.json({ translation: translations.join("") });
   } catch (error) {
