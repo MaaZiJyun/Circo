@@ -11,7 +11,6 @@ import {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const maxConversionSize = 20 * 1024 * 1024;
 const maxUploadSize = 200 * 1024 * 1024;
 const maxExtractedImages = 40;
 const maxExtractedImageBytes = 50 * 1024 * 1024;
@@ -86,24 +85,6 @@ export async function POST(request: Request) {
     );
     const filePath = path.join("library", fileToken);
     const markdownPath = path.join("library", "markdown", markdownToken);
-    if (file.size > maxConversionSize) {
-      const conversionError =
-        "PDF saved, but text extraction was skipped because the file exceeds 20 MB.";
-      await fs.writeFile(
-        path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
-        `<!-- ${conversionError} -->\n`,
-        "utf8",
-      );
-      return Response.json({
-        content: "",
-        pages: 0,
-        fileToken,
-        filePath,
-        markdownToken,
-        markdownPath,
-        conversionError,
-      });
-    }
     if (extension === "md" || extension === "markdown" || extension === "txt") {
       const content = new TextDecoder().decode(bytes);
       await fs.writeFile(
