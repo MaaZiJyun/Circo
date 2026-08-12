@@ -27,6 +27,42 @@ export function MarkdownPreview({ content }: { content: string }) {
             </h2>
           );
         }
+        const image = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+        if (image)
+          return (
+            // Extracted PDF images have intrinsic dimensions unavailable in Markdown.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={index}
+              src={image[2]}
+              alt={image[1]}
+              loading="lazy"
+              className="mx-auto max-h-[36rem] max-w-full rounded-lg border border-zinc-200 object-contain dark:border-zinc-800"
+            />
+          );
+        if (/^\|(?:\s*:?-+:?\s*\|)+$/.test(line)) return null;
+        if (/^\|.*\|$/.test(line)) {
+          const cells = line
+            .slice(1, -1)
+            .split(/(?<!\\)\|/)
+            .map((cell) => cell.trim().replaceAll("\\|", "|"));
+          return (
+            <div
+              key={index}
+              className="grid min-w-max border-x border-b border-zinc-200 first:border-t dark:border-zinc-700"
+              style={{ gridTemplateColumns: `repeat(${cells.length}, minmax(8rem, 1fr))` }}
+            >
+              {cells.map((cell, cellIndex) => (
+                <div
+                  key={cellIndex}
+                  className="border-r border-zinc-200 px-3 py-1.5 last:border-r-0 dark:border-zinc-700"
+                >
+                  {cell}
+                </div>
+              ))}
+            </div>
+          );
+        }
         if (/^[-*]\s+/.test(line))
           return (
             <div key={index} className="flex gap-2 pl-3">

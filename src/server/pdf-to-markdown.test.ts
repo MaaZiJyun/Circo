@@ -35,4 +35,23 @@ describe("PDF text to Markdown", () => {
     expect(markdown).toContain("| --- | --- |");
     expect(markdown).toContain("| Circo | 95 |");
   });
+
+  it("includes detected tables and extracted images on their source page", () => {
+    const markdown = pdfTextToMarkdown(
+      [{ num: 2, text: "Results" }],
+      {
+        images: new Map([[2, ["/api/files/aabbccdd-2-1.png"]]]),
+        tables: [
+          {
+            num: 2,
+            tables: [[ ["Method", "Score"], ["Circo", "95"] ]],
+          },
+        ],
+      },
+    );
+    expect(markdown).toContain("| Method | Score |");
+    expect(markdown).toContain(
+      "![Page 2 image 1](/api/files/aabbccdd-2-1.png)",
+    );
+  });
 });

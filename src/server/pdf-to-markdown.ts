@@ -1,4 +1,9 @@
-import type { PageTextResult } from "pdf-parse";
+import type { PageTableResult, PageTextResult } from "pdf-parse";
+
+export interface PdfMarkdownAssets {
+  images?: Map<number, string[]>;
+  tables?: PageTableResult[];
+}
 
 const bullet = /^[•●▪◦‣·]\s*/;
 const unorderedList = /^[-*+]\s+/;
@@ -45,8 +50,7 @@ function headingFor(line: string, firstContent: boolean) {
   return null;
 }
 
-function markdownTable(lines: string[]) {
-  const rows = lines.map((line) => line.split("\t").map((cell) => cell.trim()));
+function markdownTable(rows: string[][]) {
   const width = Math.max(...rows.map((row) => row.length));
   const padded = rows.map((row) => [
     ...row,
@@ -84,7 +88,12 @@ function convertPage(
     paragraph = [];
   };
   const flushTable = () => {
-    if (table.length) output.push(markdownTable(table));
+    if (table.length)
+      output.push(
+        markdownTable(
+          table.map((line) => line.split("\t").map((cell) => cell.trim())),
+        ),
+      );
     table = [];
   };
 
@@ -124,12 +133,31 @@ function convertPage(
   return output.join("\n\n");
 }
 
-export function pdfTextToMarkdown(pages: PageTextResult[]) {
+function extractedTables(page: PageTableResult | undefined, content: string) {
+  if (!page) return [];
+  return page.tables
+    .filter((table) => table.length >= 2 && table.some((row) => row.length >= 2))
+    .filter((table) => !content.includes(markdownTable(table).split("\n")[0]))
+    .map(markdownTable);
+}
+
+export function pdfTextToMarkdown(
+  pages: PageTextResult[],
+  assets: PdfMarkdownAssets = {},
+) {
   const repeatedEdges = repeatedPageEdges(pages);
+  const tables = new Map(assets.tables?.map((page) => [page.num, page]));
   let hasDocumentContent = false;
   return pages
     .map((page) => {
-      const content = convertPage(page, repeatedEdges, !hasDocumentContent);
+      const body = convertPage(page, repeatedEdges, !hasDocumentContent);
+      const additions = [
+        ...extractedTables(tables.get(page.num), body),
+        ...(assets.images?.get(page.num) ?? []).map(
+          (source, index) => `![Page ${page.num} image ${index + 1}](${source})`,
+        ),
+      ];
+      const content = [body, ...additions].filter(Boolean).join("\n\n");
       if (content) hasDocumentContent = true;
       return `<!-- Page ${page.num} -->${content ? `\n\n${content}` : ""}`;
     })

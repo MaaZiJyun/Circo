@@ -62,26 +62,6 @@ export function DashboardView({
           </>
         }
       />
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label={t("dashboard.totalTime")}
-          value={`${formatNumber(metrics.totalMinutes / 60, { maximumFractionDigits: 1 })} ${t("common.hours")}`}
-        />
-        <StatCard
-          label={t("dashboard.effectiveRate")}
-          value={rate(metrics.effectiveRate)}
-          hint={t("dashboard.metricEffective")}
-        />
-        <StatCard
-          label={t("dashboard.completionRate")}
-          value={rate(metrics.completionRate)}
-          hint={t("dashboard.metricCompletion")}
-        />
-        <StatCard
-          label={t("dashboard.activeProjects")}
-          value={formatNumber(metrics.activeProjects)}
-        />
-      </div>
       <ContributionCalendar sessions={sessions} />
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <Card>
