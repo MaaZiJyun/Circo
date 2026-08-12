@@ -7,8 +7,10 @@ import type {
   EventReason,
   Goal,
   Idea,
+  LibraryList,
   ProjectLog,
   ProjectRecord,
+  ReferencePoint,
   Relation,
   SourceRecord,
   TaskRecord,
@@ -25,6 +27,8 @@ export interface AppState {
   sessions: WorkSession[];
   events: EventReason[];
   sources: SourceRecord[];
+  libraryLists: LibraryList[];
+  points: ReferencePoint[];
   annotations: Annotation[];
   ideas: Idea[];
   projects: ProjectRecord[];
@@ -79,6 +83,8 @@ export function isAppState(value: unknown): value is AppState {
     Array.isArray(item.cycles) &&
     Array.isArray(item.goals) &&
     Array.isArray(item.sources) &&
+    (item.libraryLists === undefined || Array.isArray(item.libraryLists)) &&
+    (item.points === undefined || Array.isArray(item.points)) &&
     Array.isArray(item.ideas) &&
     Array.isArray(item.projects) &&
     Array.isArray(item.artifacts) &&

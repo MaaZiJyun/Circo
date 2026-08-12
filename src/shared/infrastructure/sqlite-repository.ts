@@ -5,6 +5,34 @@ import type { AppRepository, AppState } from "@/shared/model/app-state";
 import { isAppState } from "@/shared/model/app-state";
 import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
+import { emptyReadingReview } from "@/modules/find/model/reading-record";
+
+const systemLists = [
+  {
+    id: "library_default",
+    name: "Default List",
+    note: "All imported literature",
+    tags: [],
+    color: "#18181b",
+    system: "default" as const,
+  },
+  {
+    id: "library_recent",
+    name: "Recently Added",
+    note: "Literature ordered by import time",
+    tags: [],
+    color: "#2563eb",
+    system: "recent" as const,
+  },
+  {
+    id: "library_marked",
+    name: "Marked",
+    note: "All marked literature",
+    tags: [],
+    color: "#ef4444",
+    system: "marked" as const,
+  },
+];
 
 function openDatabase(databasePath: string) {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
@@ -34,6 +62,9 @@ function readSnapshot(database: Database.Database): AppState | null {
 }
 
 function normalizeState(state: AppState): AppState {
+  const stamp = state.updatedAt || new Date().toISOString();
+  const existingLists = state.libraryLists ?? [];
+  const systemListIds = new Set(systemLists.map((item) => item.id));
   return {
     ...state,
     profile: {
@@ -42,10 +73,33 @@ function normalizeState(state: AppState): AppState {
     },
     aiJobs: state.aiJobs ?? [],
     relations: state.relations ?? [],
+    libraryLists: [
+      ...systemLists.map(
+        (item) =>
+          existingLists.find((existing) => existing.id === item.id) ?? {
+            ...item,
+            createdAt: stamp,
+            updatedAt: stamp,
+          },
+      ),
+      ...existingLists.filter((item) => !systemListIds.has(item.id)),
+    ],
+    points: state.points ?? [],
     sources: state.sources.map((item) => ({
       ...item,
       fileToken: item.fileToken ?? "",
+      filePath: item.filePath ?? "",
+      markdownToken: item.markdownToken ?? "",
+      markdownPath: item.markdownPath ?? "",
       tags: item.tags ?? [],
+      listIds: item.listIds ?? ["library_default"],
+      favorite: item.favorite ?? false,
+      rating: item.rating ?? 0,
+      publicationDate: item.publicationDate ?? item.year ?? "",
+      citation: item.citation ?? "",
+      category: item.category ?? "unknown",
+      studyDurationMinutes: item.studyDurationMinutes ?? 0,
+      readingReview: item.readingReview ?? emptyReadingReview(),
     })),
     ideas: state.ideas.map((item) => ({ ...item, tags: item.tags ?? [] })),
     projects: state.projects.map((item) => ({

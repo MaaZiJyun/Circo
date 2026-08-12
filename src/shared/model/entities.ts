@@ -61,16 +61,62 @@ export interface SourceRecord extends BaseEntity {
   authors: string;
   year: string;
   origin: string;
+  citation: string;
+  category: string;
   fileName: string;
   fileToken: string;
+  filePath: string;
+  markdownToken: string;
+  markdownPath: string;
   fileType: "pdf" | "markdown" | "manual";
   content: string;
   summary: string;
   guide: string;
   tags: string[];
+  listIds: string[];
+  favorite: boolean;
+  rating: number;
+  publicationDate: string;
   readingStatus: "unread" | "reading" | "read";
+  readingStartedAt?: string;
+  readingCompletedAt?: string;
+  studyDurationMinutes: number;
+  readingReview: LiteratureReview;
   conversionStatus: "ready" | "processing" | "failed";
   conversionMessage: string;
+}
+
+export type LiteratureReviewType =
+  "review" | "discovery" | "method" | "application" | "validation" | "";
+
+export interface LiteratureReview {
+  type: LiteratureReviewType;
+  problem: string;
+  approach: string;
+  result: string;
+  limitation: string;
+  inspiration: string;
+  structure: string;
+}
+
+export interface LibraryList extends BaseEntity {
+  name: string;
+  note: string;
+  tags: string[];
+  color: string;
+  system: "default" | "recent" | "marked" | null;
+}
+
+export interface ReferencePoint extends BaseEntity {
+  sourceId: string;
+  type: "text" | "image";
+  content: string;
+  contentPath: string;
+  date: string;
+  author: string;
+  note: string;
+  page: number;
+  location: { x: number; y: number; width: number; height: number };
 }
 
 export interface Annotation extends BaseEntity {

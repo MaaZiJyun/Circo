@@ -13,12 +13,9 @@
 # testing
 /coverage
 
-# local SQLite database
-/data/*.db
-/data/*.db-shm
-/data/*.db-wal
-/data/files/
-/data/attachments/
+# local application storage
+/data/
+/storage/
 
 # next.js
 /.next/
