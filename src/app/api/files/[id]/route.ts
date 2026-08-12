@@ -9,18 +9,29 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
-  if (!/^[a-f0-9-]+\.(pdf|md|markdown|txt)$/i.test(id)) {
+  if (!/^[a-f0-9-]+\.(pdf|md|markdown|txt|png|jpe?g)$/i.test(id)) {
     return Response.json(
       { error: "Invalid file identifier." },
       { status: 400 },
     );
   }
   try {
-    const file = await fs.readFile(getStoragePath("files", id));
+    let file: Buffer;
+    try {
+      file = await fs.readFile(getStoragePath("library", id));
+    } catch {
+      file = await fs.readFile(getStoragePath("files", id));
+    }
     const extension = id.split(".").pop()?.toLowerCase();
     const contentType =
-      extension === "pdf" ? "application/pdf" : "text/plain; charset=utf-8";
-    return new Response(file, {
+      extension === "pdf"
+        ? "application/pdf"
+        : extension === "png"
+          ? "image/png"
+          : extension === "jpg" || extension === "jpeg"
+            ? "image/jpeg"
+            : "text/plain; charset=utf-8";
+    return new Response(new Uint8Array(file), {
       headers: { "Content-Type": contentType, "Content-Disposition": "inline" },
     });
   } catch {

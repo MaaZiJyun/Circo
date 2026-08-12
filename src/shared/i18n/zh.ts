@@ -1,3 +1,5 @@
+import { findLibraryZh } from "./find-library-labels";
+
 export const zh = {
   "app.name": "Circo",
   "app.tagline": "让每一次投入都有来处与去处",
@@ -21,7 +23,7 @@ export const zh = {
   "common.noData": "暂无数据",
   "common.loading": "正在加载本地数据…",
   "common.saving": "正在保存…",
-  "common.saved": "已保存到本地 SQLite",
+  "common.saved": "已保存",
   "common.error": "发生错误",
   "common.retry": "重试",
   "common.confirmDelete": "确定将此记录移至回收站吗？",
@@ -139,6 +141,7 @@ export const zh = {
   "find.aiNotice": "本地演示生成，不会发送外部请求；输出为待核实草稿。",
   "find.openOriginal": "打开原文件",
   "find.pagesMapped": "已映射页数",
+  ...findLibraryZh,
   "mind.eyebrow": "发展想法",
   "mind.title": "灵感与推演实验室",
   "mind.subtitle": "从一句记录开始，沿不同方向验证它的价值。",

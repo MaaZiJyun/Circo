@@ -55,4 +55,26 @@ describe("SQLite repository", () => {
     const restored = await repository.restore(legacy as AppState);
     expect(restored.profile).toEqual({ name: "Me", avatarDataUrl: "" });
   });
+
+  it("adds library metadata when restoring a legacy snapshot", async () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "circo-test-"));
+    directories.push(directory);
+    const repository = new SqliteAppRepository(
+      path.join(directory, "circo.db"),
+    );
+    const legacy = createSeedState() as Partial<AppState>;
+    legacy.libraryLists = legacy.libraryLists?.slice(0, 2);
+    delete legacy.points;
+    delete (legacy.sources?.[0] as Partial<AppState["sources"][number]>)
+      .listIds;
+
+    const restored = await repository.restore(legacy as AppState);
+    expect(restored.libraryLists.map((item) => item.system)).toEqual([
+      "default",
+      "recent",
+      "marked",
+    ]);
+    expect(restored.sources[0].listIds).toEqual(["library_default"]);
+    expect(restored.points).toEqual([]);
+  });
 });
