@@ -33,7 +33,9 @@ body {
   min-width: 320px;
   background: var(--background);
   color: var(--foreground);
-  cursor: var(--cursor-dot) 7 7, auto;
+  cursor:
+    var(--cursor-dot) 7 7,
+    auto;
   font-family: var(--font-sans);
 }
 
@@ -51,21 +53,29 @@ a[href],
 label[for],
 select:not(:disabled),
 summary {
-  cursor: var(--cursor-pointer) 11 11, pointer;
+  cursor:
+    var(--cursor-pointer) 11 11,
+    pointer;
 }
 
 button:disabled,
 [role="button"][aria-disabled="true"],
 select:disabled {
-  cursor: var(--cursor-dot) 7 7, not-allowed;
+  cursor:
+    var(--cursor-dot) 7 7,
+    not-allowed;
 }
 
 .cursor-pointer {
-  cursor: var(--cursor-pointer) 11 11, pointer;
+  cursor:
+    var(--cursor-pointer) 11 11,
+    pointer;
 }
 
 .cursor-default {
-  cursor: var(--cursor-dot) 7 7, auto;
+  cursor:
+    var(--cursor-dot) 7 7,
+    auto;
 }
 
 input:not([type]),
@@ -83,6 +93,19 @@ textarea,
 
 .textfield-cursor {
   cursor: text !important;
+}
+
+.pdf-interactive-page > div span {
+  position: absolute;
+  color: transparent;
+  white-space: pre;
+  transform-origin: 0 0;
+  cursor: text;
+}
+
+.pdf-interactive-page > div span::selection {
+  background: rgb(59 130 246 / 0.35);
+  color: transparent;
 }
 
 ::selection {

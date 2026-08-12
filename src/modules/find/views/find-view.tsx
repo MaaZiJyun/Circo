@@ -2,88 +2,269 @@
 
 import { useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { PageHeader, SectionHeader } from "@/shared/components/page-elements";
-import { Badge, Button, Card, EmptyState } from "@/shared/components/ui";
-import { statusLabels } from "@/shared/i18n/domain-labels";
+import { PageHeader } from "@/shared/components/page-elements";
+import { Button } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import type {
+  LibraryList,
+  ReferencePoint,
+  SourceRecord,
+} from "@/shared/model/entities";
 import { useFindViewModel } from "../view-models/use-find-view-model";
-import { AnnotationDialog, ImportDialog } from "./find-dialogs";
-import { SourceWorkspace } from "./source-workspace";
+import { startReading } from "../model/reading-record";
+import { useLibraryManagement } from "../view-models/use-library-management";
+import { ImportDialog } from "./find-dialogs";
+import {
+  ChooseListDialog,
+  EditLiteratureDialog,
+  ListDialog,
+} from "./library-dialogs";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  type MenuPosition,
+} from "./context-menu";
+import { LibrarySidebar } from "./library-sidebar";
+import { LibraryWorkspace } from "./library-workspace";
+import { ActiveLiteratureReader } from "./active-literature-reader";
+import { FindModeSwitch, type FindMode } from "./find-mode-switch";
+import { ReferenceSidebar, ReferenceWorkspace } from "./reference-workspace";
+import { ReferencePointDialog } from "./reference-point-dialog";
 
 export function FindView() {
   const { t } = useI18n();
-  const vm = useFindViewModel();
-  const [dialog, setDialog] = useState<"import" | "annotation" | null>(null);
+  const find = useFindViewModel();
+  const library = useLibraryManagement();
+  const [dialog, setDialog] = useState<"import" | "list" | null>(null);
+  const [editing, setEditing] = useState<SourceRecord | null>(null);
+  const [reading, setReading] = useState<SourceRecord | null>(null);
+  const [editingList, setEditingList] = useState<LibraryList | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [addingIds, setAddingIds] = useState<string[]>([]);
+  const [documentMenu, setDocumentMenu] = useState<{
+    source: SourceRecord;
+    position: MenuPosition;
+  } | null>(null);
+  const [operationError, setOperationError] = useState("");
+  const [mode, setMode] = useState<FindMode>("library");
+  const [pointDialog, setPointDialog] = useState<ReferencePoint | "new" | null>(
+    null,
+  );
+  const customLists = library.lists.filter((item) => !item.system);
+  const deleteSources = async (ids: string[]) => {
+    if (!window.confirm(t("find.confirmDeleteFiles"))) return;
+    setOperationError("");
+    try {
+      await library.deleteSources(ids);
+    } catch (error) {
+      setOperationError(
+        error instanceof Error ? error.message : t("common.error"),
+      );
+    }
+  };
+  if (reading)
+    return (
+      <ActiveLiteratureReader
+        source={reading}
+        onBack={() => setReading(null)}
+        onUpdate={(change) => {
+          library.updateSource(reading.id, change);
+          setReading({ ...reading, ...change });
+        }}
+        pointCount={
+          library.points.filter((point) => point.sourceId === reading.id).length
+        }
+        onCreatePoint={library.createPoint}
+      />
+    );
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         eyebrow={t("find.eyebrow")}
         title={t("find.title")}
         subtitle={t("find.subtitle")}
         actions={
-          <Button onClick={() => setDialog("import")}>
+          <Button
+            disabled={mode === "reference" && !library.allSources.length}
+            onClick={() =>
+              mode === "library" ? setDialog("import") : setPointDialog("new")
+            }
+          >
             <PlusIcon className="size-4" />
-            {t("find.import")}
+            {t(mode === "library" ? "find.import" : "find.addPoint")}
           </Button>
         }
       />
-      <div className="grid gap-5 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <Card>
-          <SectionHeader title={t("find.library")} />
-          {vm.sources.length ? (
-            <div className="grid gap-2">
-              {vm.sources.map((source) => (
-                <button
-                  key={source.id}
-                  onClick={() => vm.setSelectedId(source.id)}
-                  className={`rounded-xl border p-3 text-left transition-colors ${vm.selected?.id === source.id ? "border-zinc-950 bg-zinc-50 dark:border-zinc-50 dark:bg-zinc-900" : "border-zinc-200 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"}`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium">{source.title}</p>
-                    <Badge
-                      tone={
-                        source.conversionStatus === "failed"
-                          ? "danger"
-                          : source.conversionStatus === "processing"
-                            ? "warning"
-                            : "success"
-                      }
-                    >
-                      {t(statusLabels[source.conversionStatus])}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-xs text-zinc-500">
-                    {source.authors || source.fileName}
-                  </p>
-                </button>
-              ))}
-            </div>
+      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
+        <div className="space-y-3">
+          <FindModeSwitch mode={mode} onChange={setMode} />
+          {mode === "library" ? (
+            <LibrarySidebar
+              library={library}
+              onCreate={() => setDialog("list")}
+              onEdit={setEditingList}
+            />
           ) : (
-            <EmptyState title={t("common.noData")} />
+            <ReferenceSidebar points={library.points} />
           )}
-        </Card>
-        {vm.selected ? (
-          <SourceWorkspace
-            key={vm.selected.id}
-            vm={vm}
-            openAnnotation={() => setDialog("annotation")}
+        </div>
+        {mode === "library" ? (
+          <LibraryWorkspace
+            library={library}
+            selectionMode={selectionMode}
+            operationError={operationError}
+            onEnterSelection={(source) => {
+              setSelectionMode(true);
+              library.setSelectedIds([source.id]);
+            }}
+            onOpenMenu={(source, position) =>
+              setDocumentMenu({ source, position })
+            }
+            onRead={(source) => {
+              const started = startReading(source, new Date().toISOString());
+              if (started !== source)
+                library.updateSource(source.id, {
+                  readingStartedAt: started.readingStartedAt,
+                });
+              setReading(started);
+            }}
+            onAddSelected={() => setAddingIds(library.selectedIds)}
+            onDeleteSelected={() => void deleteSources(library.selectedIds)}
+            onCloseSelection={() => {
+              setSelectionMode(false);
+              library.setSelectedIds([]);
+            }}
           />
         ) : (
-          <Card>
-            <EmptyState title={t("common.noData")} />
-          </Card>
+          <ReferenceWorkspace
+            points={library.points}
+            sources={library.allSources}
+            onEdit={setPointDialog}
+            onDelete={(point) => {
+              if (window.confirm(t("find.confirmDeletePoint")))
+                library.deletePoint(point.id);
+            }}
+          />
         )}
       </div>
       <ImportDialog
         open={dialog === "import"}
         onClose={() => setDialog(null)}
-        onImport={vm.importSource}
+        onImport={find.importSource}
       />
-      <AnnotationDialog
-        open={dialog === "annotation"}
+      {pointDialog && (
+        <ReferencePointDialog
+          key={pointDialog === "new" ? "new" : pointDialog.id}
+          point={pointDialog === "new" ? undefined : pointDialog}
+          sources={library.allSources}
+          onClose={() => setPointDialog(null)}
+          onSave={(input) => {
+            if (pointDialog === "new") library.createPoint(input);
+            else library.updatePoint(pointDialog.id, input);
+          }}
+        />
+      )}
+      <ListDialog
+        open={dialog === "list"}
         onClose={() => setDialog(null)}
-        onSave={vm.addAnnotation}
+        onSave={library.createList}
       />
+      {editingList && (
+        <ListDialog
+          key={editingList.id}
+          open
+          list={editingList}
+          onClose={() => setEditingList(null)}
+          onSave={(input) => library.updateList(editingList.id, input)}
+        />
+      )}
+      <ChooseListDialog
+        open={addingIds.length > 0}
+        lists={customLists}
+        onClose={() => setAddingIds([])}
+        onChoose={(listId) => library.addToList(addingIds, listId)}
+      />
+      {editing && (
+        <EditLiteratureDialog
+          key={editing.id}
+          source={editing}
+          onClose={() => setEditing(null)}
+          onSave={library.updateSource}
+          onReplaceFile={library.replaceSourceFile}
+        />
+      )}
+      {documentMenu && (
+        <ContextMenu
+          position={documentMenu.position}
+          onClose={() => setDocumentMenu(null)}
+        >
+          <ContextMenuItem
+            disabled={!documentMenu.source.fileToken}
+            onClick={() => {
+              window.open(
+                `/api/files/${documentMenu.source.fileToken}`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+              setDocumentMenu(null);
+            }}
+          >
+            {t("find.openOriginal")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={!documentMenu.source.citation.trim()}
+            onClick={() => {
+              const citation = documentMenu.source.citation;
+              setDocumentMenu(null);
+              const copy = navigator.clipboard?.writeText(citation);
+              if (!copy) {
+                setOperationError(t("find.copyCitationFailed"));
+                return;
+              }
+              void copy.catch(() =>
+                setOperationError(t("find.copyCitationFailed")),
+              );
+            }}
+          >
+            {t("find.cite")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            onClick={() => {
+              setEditing(documentMenu.source);
+              setDocumentMenu(null);
+            }}
+          >
+            {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            onClick={() => {
+              setAddingIds([documentMenu.source.id]);
+              setDocumentMenu(null);
+            }}
+          >
+            {t("find.addToList")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={library.selectedList?.system !== null}
+            onClick={() => {
+              library.removeFromList([documentMenu.source.id]);
+              setDocumentMenu(null);
+            }}
+          >
+            {t("find.removeFromList")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            danger
+            onClick={() => {
+              const id = documentMenu.source.id;
+              setDocumentMenu(null);
+              void deleteSources([id]);
+            }}
+          >
+            {t("find.deleteOriginal")}
+          </ContextMenuItem>
+        </ContextMenu>
+      )}
     </div>
   );
 }
