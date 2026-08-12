@@ -1,229 +1,238 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
-  ArrowRightIcon,
+  ArrowUturnLeftIcon,
   BeakerIcon,
+  PencilSquareIcon,
   PlusIcon,
-  SparklesIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  type MenuPosition,
+} from "@/modules/find/views/context-menu";
 import { PageHeader, SectionHeader } from "@/shared/components/page-elements";
 import {
   Alert,
   Badge,
   Button,
   Card,
+  Dialog,
   EmptyState,
-  Field,
-  IconButton,
-  Input,
   Select,
-  Textarea,
 } from "@/shared/components/ui";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { MessageKey } from "@/shared/i18n/zh";
 import type { Idea } from "@/shared/model/entities";
-import { parseTags } from "@/shared/model/tags";
+import { canPromoteIdea } from "../model/idea-evaluation";
+import { sortIdeas, type IdeaSort } from "../model/idea-sorting";
+import type { IdeaInput } from "../view-models/use-mind-view-model";
 import { useMindViewModel } from "../view-models/use-mind-view-model";
+import { IdeaComposer, IdeaFields } from "./idea-form";
+import {
+  EvaluationSummary,
+  IdeaEvaluationDialog,
+} from "./idea-evaluation-dialog";
 
-const methods: { value: Idea["method"]; label: MessageKey }[] = [
-  { value: "combine", label: "mind.combine" },
-  { value: "transfer", label: "mind.transfer" },
-  { value: "alternative", label: "mind.alternative" },
-  { value: "premise", label: "mind.premise" },
-  { value: "followUp", label: "mind.followUp" },
-  { value: "macro", label: "mind.macro" },
-  { value: "micro", label: "mind.micro" },
-];
+const inputFromIdea = (idea: Idea): IdeaInput => ({
+  title: idea.title,
+  definition: idea.definition || idea.content,
+  reason: idea.reason || "",
+  date: idea.date || idea.createdAt.slice(0, 10),
+  tags: idea.tags,
+});
 
-function ScoreEditor({
+function IdeaCard({
   idea,
-  onChange,
+  onEdit,
+  onDelete,
+  onConvert,
+  onEvaluate,
 }: {
   idea: Idea;
-  onChange: (scores: Idea["scores"]) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onConvert: () => void;
+  onEvaluate: () => void;
 }) {
   const { t } = useI18n();
-  const items: { key: keyof Idea["scores"]; label: MessageKey }[] = [
-    { key: "value", label: "mind.value" },
-    { key: "feasibility", label: "mind.feasibility" },
-    { key: "novelty", label: "mind.novelty" },
-    { key: "cost", label: "mind.cost" },
-    { key: "risk", label: "mind.risk" },
-  ];
+  const [expanded, setExpanded] = useState(false);
+  const [menu, setMenu] = useState<MenuPosition | null>(null);
+  const runMenuAction = (action: () => void) => {
+    setMenu(null);
+    action();
+  };
   return (
-    <div className="grid gap-2">
-      {items.map((item) => (
-        <label
-          key={item.key}
-          className="grid grid-cols-[80px_1fr_20px] items-center gap-2 text-xs text-zinc-500"
+    <article
+      className="flex flex-col rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
+      onContextMenu={(event) => {
+        event.preventDefault();
+        setMenu({ x: event.clientX, y: event.clientY });
+      }}
+    >
+      <h3>
+        <button
+          className="w-full cursor-pointer rounded-md text-left font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-50"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
         >
-          <span>{t(item.label)}</span>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={idea.scores[item.key]}
-            onChange={(event) =>
-              onChange({
-                ...idea.scores,
-                [item.key]: Number(event.target.value),
-              })
+          {idea.title}
+        </button>
+      </h3>
+      <div className="mt-2 space-y-3 text-sm leading-6">
+        <div>
+          <p className="text-xs font-medium text-zinc-400">
+            {t("mind.definition")}
+          </p>
+          <p
+            className={`${expanded ? "" : "line-clamp-3"} text-zinc-600 dark:text-zinc-300`}
+          >
+            {idea.definition || idea.content}
+          </p>
+        </div>
+        {expanded && (idea.reason || "").trim() && (
+          <div>
+            <p className="text-xs font-medium text-zinc-400">
+              {t("mind.reason")}
+            </p>
+            <p className="line-clamp-3 text-zinc-600 dark:text-zinc-300">
+              {idea.reason}
+            </p>
+          </div>
+        )}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        <span className="text-xs text-zinc-500">
+          {idea.date || idea.createdAt.slice(0, 10)}
+        </span>
+        {idea.tags.map((tag) => (
+          <Badge key={tag}>{tag}</Badge>
+        ))}
+        <Badge tone={idea.evaluation ? "info" : "neutral"}>
+          {t("mind.scoreLabel")}: {idea.evaluation?.totalScore ?? "—"}
+        </Badge>
+      </div>
+      {expanded && (
+        <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+          <Badge
+            tone={
+              idea.status === "promoted" || idea.status === "converted"
+                ? "success"
+                : "neutral"
             }
-          />
-          <span>{idea.scores[item.key]}</span>
-        </label>
-      ))}
-    </div>
+          >
+            {t(statusLabels[idea.status])}
+          </Badge>
+          <EvaluationSummary idea={idea} />
+        </div>
+      )}
+      {menu && (
+        <ContextMenu position={menu} onClose={() => setMenu(null)}>
+          <ContextMenuItem onClick={() => runMenuAction(onEdit)}>
+            <PencilSquareIcon className="size-4" />
+            {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem danger onClick={() => runMenuAction(onDelete)}>
+            <TrashIcon className="size-4" />
+            {t("common.delete")}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => runMenuAction(onEvaluate)}>
+            <ArrowUturnLeftIcon className="size-4" />
+            {idea.evaluation ? t("mind.reevaluate") : t("mind.evaluate")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={
+              !canPromoteIdea(idea.evaluation) ||
+              idea.status === "promoted" ||
+              idea.status === "converted"
+            }
+            title={
+              !canPromoteIdea(idea.evaluation)
+                ? t("mind.notEvaluated")
+                : undefined
+            }
+            onClick={() => runMenuAction(onConvert)}
+          >
+            <BeakerIcon className="size-4" />
+            {t("mind.toProject")}
+          </ContextMenuItem>
+        </ContextMenu>
+      )}
+    </article>
   );
 }
 
 export function MindView() {
   const { t } = useI18n();
   const vm = useMindViewModel();
-  const [capture, setCapture] = useState("");
-  const [captureTags, setCaptureTags] = useState("");
-  const [input, setInput] = useState("");
-  const [method, setMethod] = useState<Idea["method"]>("combine");
-  const submitCapture = () => {
-    vm.addIdea(capture, "capture", parseTags(captureTags));
-    setCapture("");
-    setCaptureTags("");
+  const [composing, setComposing] = useState(false);
+  const [evaluating, setEvaluating] = useState<Idea | null>(null);
+  const [editing, setEditing] = useState<Idea | null>(null);
+  const [editInput, setEditInput] = useState<IdeaInput | null>(null);
+  const [sort, setSort] = useState<IdeaSort>("dateDesc");
+  const sortedIdeas = useMemo(
+    () => sortIdeas(vm.ideas, sort),
+    [sort, vm.ideas],
+  );
+
+  const edit = (idea: Idea) => {
+    setEditing(idea);
+    setEditInput(inputFromIdea(idea));
   };
+  const saveEdit = () => {
+    if (!editing || !editInput) return;
+    vm.updateIdea(editing.id, editInput);
+    setEditing(null);
+    setEditInput(null);
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow={t("mind.eyebrow")}
         title={t("mind.title")}
         subtitle={t("mind.subtitle")}
-      />
-      <div className="grid gap-5 xl:grid-cols-2">
-        <Card>
-          <SectionHeader title={t("mind.quickCapture")} />
-          <Field label={t("mind.ideaContent")}>
-            <Textarea
-              value={capture}
-              onChange={(event) => setCapture(event.target.value)}
-              placeholder={t("mind.ideaContent")}
-            />
-          </Field>
-          <Field label={t("common.tags")}>
-            <Input
-              value={captureTags}
-              onChange={(event) => setCaptureTags(event.target.value)}
-            />
-          </Field>
-          <Button
-            className="mt-3"
-            disabled={!capture.trim()}
-            onClick={submitCapture}
-          >
+        actions={
+          <Button onClick={() => setComposing(true)}>
             <PlusIcon className="size-4" />
-            {t("common.add")}
+            {t("dashboard.addIdea")}
           </Button>
-        </Card>
-        <Card>
-          <SectionHeader title={t("mind.lab")} />
-          <div className="grid gap-4">
-            <Field label={t("mind.method")}>
-              <Select
-                value={method}
-                onChange={(event) =>
-                  setMethod(event.target.value as Idea["method"])
-                }
-              >
-                {methods.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {t(item.label)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label={t("mind.input")}>
-              <Textarea
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                placeholder={t("mind.input")}
-              />
-            </Field>
-            <Button
-              disabled={!input.trim() || vm.busy}
-              onClick={() => void vm.explore(input, method)}
-            >
-              <SparklesIcon className="size-4" />
-              {t("mind.run")}
-            </Button>
-            {vm.candidate && (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                  <BeakerIcon className="size-4" />
-                  {t("mind.candidate")}
-                </div>
-                <p className="mt-3 text-sm leading-6">{vm.candidate}</p>
-                <p className="mt-3 text-xs opacity-70">
-                  {t("mind.basis")}: {vm.candidateInput}
-                </p>
-                <Button className="mt-4" onClick={vm.acceptCandidate}>
-                  {t("mind.accept")}
-                </Button>
-              </div>
-            )}
-          </div>
-        </Card>
-      </div>
+        }
+      />
       <Card>
-        <SectionHeader title={t("mind.library")} />
+        <SectionHeader
+          title={t("mind.library")}
+          action={
+            <div className="w-28 shrink-0">
+              <Select
+                aria-label={t("mind.sort")}
+                value={sort}
+                onChange={(event) => setSort(event.target.value as IdeaSort)}
+              >
+                <option value="dateDesc">{t("mind.sortDateDesc")}</option>
+                <option value="dateAsc">{t("mind.sortDateAsc")}</option>
+                <option value="scoreDesc">{t("mind.sortScoreDesc")}</option>
+                <option value="scoreAsc">{t("mind.sortScoreAsc")}</option>
+              </Select>
+            </div>
+          }
+        />
         {vm.ideas.length ? (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {vm.ideas.map((idea) => (
-              <article
+            {sortedIdeas.map((idea) => (
+              <IdeaCard
                 key={idea.id}
-                className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <Badge
-                    tone={
-                      idea.status === "converted"
-                        ? "success"
-                        : idea.status === "candidate"
-                          ? "info"
-                          : "neutral"
-                    }
-                  >
-                    {t(statusLabels[idea.status])}
-                  </Badge>
-                  <IconButton
-                    label={t("common.delete")}
-                    onClick={() =>
-                      window.confirm(t("common.confirmDelete")) &&
-                      vm.deleteIdea(idea.id)
-                    }
-                  >
-                    <TrashIcon className="size-4" />
-                  </IconButton>
-                </div>
-                <h3 className="mt-3 font-medium">{idea.title}</h3>
-                <p className="mt-2 line-clamp-3 text-sm leading-6 text-zinc-500">
-                  {idea.content}
-                </p>
-                <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-                  <ScoreEditor
-                    idea={idea}
-                    onChange={(scores) => vm.updateScores(idea.id, scores)}
-                  />
-                </div>
-                <Button
-                  variant="secondary"
-                  className="mt-4 w-full"
-                  disabled={idea.status === "converted"}
-                  onClick={() => vm.convertToProject(idea)}
-                >
-                  {t("mind.toProject")}
-                  <ArrowRightIcon className="size-4" />
-                </Button>
-              </article>
+                idea={idea}
+                onEdit={() => edit(idea)}
+                onDelete={() =>
+                  window.confirm(t("common.confirmDelete")) &&
+                  vm.deleteIdea(idea.id)
+                }
+                onConvert={() => vm.convertToProject(idea)}
+                onEvaluate={() => setEvaluating(idea)}
+              />
             ))}
           </div>
         ) : (
@@ -231,6 +240,59 @@ export function MindView() {
         )}
       </Card>
       <Alert>{t("find.aiNotice")}</Alert>
+      <Dialog
+        open={composing}
+        title={t("mind.quickCapture")}
+        closeLabel={t("common.close")}
+        onClose={() => setComposing(false)}
+      >
+        <IdeaComposer
+          lists={vm.libraryLists}
+          busy={vm.busy}
+          sourceCount={(listId) => vm.sourcesForList(listId).length}
+          onGenerate={vm.generateIdea}
+          onSave={(input, method, listId) =>
+            vm.saveIdea(
+              input,
+              method,
+              listId
+                ? vm.sourcesForList(listId).map((source) => source.id)
+                : [],
+            )
+          }
+          onSaved={() => setComposing(false)}
+        />
+      </Dialog>
+      {evaluating && (
+        <IdeaEvaluationDialog
+          key={evaluating.id}
+          idea={evaluating}
+          onClose={() => setEvaluating(null)}
+          onSave={(id, answers, killCondition) => {
+            vm.saveEvaluation(id, answers, killCondition);
+            setEvaluating(null);
+          }}
+        />
+      )}
+      <Dialog
+        open={!!editing}
+        title={t("mind.edit")}
+        closeLabel={t("common.close")}
+        onClose={() => setEditing(null)}
+      >
+        {editInput && <IdeaFields value={editInput} onChange={setEditInput} />}
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setEditing(null)}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            disabled={!editInput?.title.trim() || !editInput.definition.trim()}
+            onClick={saveEdit}
+          >
+            {t("common.save")}
+          </Button>
+        </div>
+      </Dialog>
     </div>
   );
 }

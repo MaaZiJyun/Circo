@@ -10,8 +10,8 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
   TrophyIcon,
-  PaperAirplaneIcon,
-  GlobeAltIcon,
+  NewspaperIcon,
+  BeakerIcon,
 } from "@heroicons/react/24/outline";
 import { DashboardView } from "@/modules/dashboard/views/dashboard-view";
 import { FindView } from "@/modules/find/views/find-view";
@@ -36,9 +36,9 @@ const navigation: {
   icon: typeof HomeIcon;
 }[] = [
   { id: "dashboard", label: "nav.dashboard", icon: HomeIcon },
-  { id: "find", label: "nav.find", icon: GlobeAltIcon },
+  { id: "find", label: "nav.find", icon: NewspaperIcon },
   { id: "mind", label: "nav.mind", icon: LightBulbIcon },
-  { id: "hand", label: "nav.hand", icon: PaperAirplaneIcon },
+  { id: "hand", label: "nav.hand", icon: BeakerIcon },
   { id: "land", label: "nav.land", icon: TrophyIcon },
 ];
 

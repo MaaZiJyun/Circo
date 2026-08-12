@@ -130,8 +130,22 @@ export interface Annotation extends BaseEntity {
 export interface Idea extends BaseEntity {
   title: string;
   content: string;
+  definition: string;
+  reason: string;
+  date: string;
   status:
-    "inbox" | "exploring" | "candidate" | "converted" | "paused" | "archived";
+    | "inbox"
+    | "spark"
+    | "exploring"
+    | "explore"
+    | "validate"
+    | "candidate"
+    | "converted"
+    | "promoted"
+    | "park"
+    | "rejected"
+    | "paused"
+    | "archived";
   method:
     | "capture"
     | "combine"
@@ -150,6 +164,23 @@ export interface Idea extends BaseEntity {
     cost: number;
     risk: number;
   };
+  evaluation?: IdeaEvaluation;
+}
+
+export type IdeaDimension =
+  "value" | "relevance" | "feasibility" | "testability" | "opportunity";
+
+export interface IdeaEvaluation {
+  answers: number[];
+  killCondition: string;
+  totalScore: number;
+  dimensionScores: Record<IdeaDimension, number>;
+  level: "strong" | "promising" | "uncertain" | "weak" | "poor";
+  gateFailures: IdeaDimension[];
+  strength: string;
+  weakness: string;
+  nextStep: string;
+  evaluatedAt: string;
 }
 
 export interface ProjectRecord extends BaseEntity {

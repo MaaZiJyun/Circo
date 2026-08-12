@@ -1,35 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { PageHeader } from "@/shared/components/page-elements";
 import { Button, Card, EmptyState, Select } from "@/shared/components/ui";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectRecord } from "@/shared/model/entities";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
-import { LogDialog, ProjectDialog, TaskDialog } from "./hand-dialogs";
+import { LogDialog, TaskDialog } from "./hand-dialogs";
 import { AttachmentDialog } from "./attachment-dialog";
 import { ProjectWorkspace } from "./project-workspace";
 
 export function HandView() {
   const { t } = useI18n();
   const vm = useHandViewModel();
-  const [dialog, setDialog] = useState<
-    "project" | "task" | "log" | "attachment" | null
-  >(null);
+  const [dialog, setDialog] = useState<"task" | "log" | "attachment" | null>(
+    null,
+  );
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow={t("hand.eyebrow")}
         title={t("hand.title")}
         subtitle={t("hand.subtitle")}
-        actions={
-          <Button onClick={() => setDialog("project")}>
-            <PlusIcon className="size-4" />
-            {t("hand.newProject")}
-          </Button>
-        }
       />
       {vm.projects.length ? (
         <>
@@ -92,19 +86,10 @@ export function HandView() {
         <Card>
           <EmptyState
             title={t("common.noData")}
-            action={
-              <Button onClick={() => setDialog("project")}>
-                {t("hand.newProject")}
-              </Button>
-            }
+            description={t("hand.projectGateHint")}
           />
         </Card>
       )}
-      <ProjectDialog
-        open={dialog === "project"}
-        onClose={() => setDialog(null)}
-        onSave={vm.addProject}
-      />
       <TaskDialog
         open={dialog === "task"}
         onClose={() => setDialog(null)}

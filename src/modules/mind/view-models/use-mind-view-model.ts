@@ -10,8 +10,9 @@ import type {
   ProjectRecord,
   Relation,
 } from "@/shared/model/entities";
-import { addDays, createId, now } from "@/shared/model/factories";
+import { addDays, createId, now, today } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
+import { canPromoteIdea, evaluateIdea } from "../model/idea-evaluation";
 
 const assistant = new LocalAssistant();
 const defaultScores = {
@@ -22,13 +23,17 @@ const defaultScores = {
   risk: 3,
 };
 
+export interface IdeaInput {
+  title: string;
+  definition: string;
+  reason: string;
+  date: string;
+  tags: string[];
+}
+
 export function useMindViewModel() {
   const { state, mutate, softDelete } = useStore();
   const { locale } = useI18n();
-  const [candidate, setCandidate] = useState("");
-  const [candidateInput, setCandidateInput] = useState("");
-  const [candidateMethod, setCandidateMethod] =
-    useState<Idea["method"]>("combine");
   const [busy, setBusy] = useState(false);
   const ideas = useMemo(
     () =>
@@ -39,22 +44,39 @@ export function useMindViewModel() {
         : [],
     [state],
   );
+  const libraryLists = useMemo(
+    () => (state ? activeItems(state.libraryLists) : []),
+    [state],
+  );
 
-  const addIdea = (
-    content: string,
+  const sourcesForList = (listId: string) => {
+    if (!state) return [];
+    const list = state.libraryLists.find((item) => item.id === listId);
+    const sources = activeItems(state.sources);
+    if (list?.system === "default" || list?.system === "recent") return sources;
+    if (list?.system === "marked")
+      return sources.filter((source) => source.favorite);
+    return sources.filter((source) => source.listIds.includes(listId));
+  };
+
+  const saveIdea = (
+    input: IdeaInput,
     method: Idea["method"] = "capture",
-    tags: string[] = [],
+    sourceIds: string[] = [],
   ) => {
-    if (!content.trim()) return;
+    if (!input.title.trim() || !input.definition.trim()) return;
     const stamp = now();
     const idea: Idea = {
       id: createId("idea"),
-      title: content.trim().slice(0, 42),
-      content: content.trim(),
-      status: method === "capture" ? "inbox" : "candidate",
+      title: input.title.trim(),
+      content: input.definition.trim(),
+      definition: input.definition.trim(),
+      reason: input.reason.trim(),
+      date: input.date || today(),
+      status: method === "capture" ? "spark" : "explore",
       method,
-      sourceIds: [],
-      tags,
+      sourceIds,
+      tags: input.tags.filter(Boolean),
       scores: defaultScores,
       createdAt: stamp,
       updatedAt: stamp,
@@ -62,33 +84,77 @@ export function useMindViewModel() {
     mutate((current) => ({ ...current, ideas: [...current.ideas, idea] }));
   };
 
-  const explore = async (input: string, method: Idea["method"]) => {
-    if (!input.trim()) return;
+  const generateIdea = async (
+    listId: string,
+    method: Idea["method"],
+    focus: string,
+  ): Promise<IdeaInput | null> => {
+    const sources = sourcesForList(listId);
+    if (!sources.length) return null;
     setBusy(true);
-    const output = await assistant.explore(input, method, locale);
-    setCandidate(output);
-    setCandidateInput(input);
-    setCandidateMethod(method);
-    const stamp = now();
-    const job: AIJob = {
-      id: createId("ai"),
-      taskType: "idea",
-      entityId: "candidate",
-      inputLabel: input,
-      output,
-      status: "success",
-      provider: "local-demo",
-      createdAt: stamp,
-      updatedAt: stamp,
-    };
-    mutate((current) => ({ ...current, aiJobs: [...current.aiJobs, job] }));
-    setBusy(false);
+    try {
+      const evidence = sources
+        .slice(0, 5)
+        .map((source) =>
+          `${source.title}: ${source.summary || source.content}`.slice(0, 240),
+        )
+        .join("\n");
+      const prompt = focus.trim() ? `${focus.trim()}\n\n${evidence}` : evidence;
+      const output = await assistant.explore(prompt, method, locale);
+      const list = libraryLists.find((item) => item.id === listId);
+      const title =
+        focus.trim() || `${list?.name ?? "Library"} · ${sources[0].title}`;
+      const reason =
+        locale === "zh-CN"
+          ? `基于 Library List「${list?.name ?? ""}」中的 ${sources.length} 篇文献，使用所选推演方式生成。`
+          : `Generated from ${sources.length} source(s) in “${list?.name ?? "Library"}” using the selected exploration method.`;
+      const draft = {
+        title: title.slice(0, 80),
+        definition: output,
+        reason,
+        date: today(),
+        tags: [...new Set(sources.flatMap((source) => source.tags))].slice(
+          0,
+          8,
+        ),
+      };
+      const stamp = now();
+      const job: AIJob = {
+        id: createId("ai"),
+        taskType: "idea",
+        entityId: "draft",
+        inputLabel: list?.name ?? title,
+        output,
+        status: "success",
+        provider: "local-demo",
+        createdAt: stamp,
+        updatedAt: stamp,
+      };
+      mutate((current) => ({ ...current, aiJobs: [...current.aiJobs, job] }));
+      return draft;
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const acceptCandidate = () => {
-    addIdea(candidate, candidateMethod);
-    setCandidate("");
-    setCandidateInput("");
+  const updateIdea = (id: string, input: IdeaInput) => {
+    mutate((current) => ({
+      ...current,
+      ideas: current.ideas.map((idea) =>
+        idea.id === id
+          ? {
+              ...idea,
+              title: input.title.trim(),
+              content: input.definition.trim(),
+              definition: input.definition.trim(),
+              reason: input.reason.trim(),
+              date: input.date,
+              tags: input.tags.filter(Boolean),
+              updatedAt: now(),
+            }
+          : idea,
+      ),
+    }));
   };
 
   const updateScores = (id: string, scores: Idea["scores"]) => {
@@ -100,13 +166,38 @@ export function useMindViewModel() {
     }));
   };
 
+  const saveEvaluation = (
+    id: string,
+    answers: number[],
+    killCondition: string,
+  ) => {
+    const evaluation = evaluateIdea(answers, killCondition);
+    const status: Idea["status"] =
+      evaluation.level === "poor"
+        ? "rejected"
+        : evaluation.level === "weak"
+          ? "park"
+          : evaluation.level === "strong" && !evaluation.gateFailures.length
+            ? "validate"
+            : "explore";
+    mutate((current) => ({
+      ...current,
+      ideas: current.ideas.map((idea) =>
+        idea.id === id
+          ? { ...idea, evaluation, status, updatedAt: now() }
+          : idea,
+      ),
+    }));
+  };
+
   const convertToProject = (idea: Idea) => {
+    if (!canPromoteIdea(idea.evaluation)) return;
     const stamp = now();
     const projectId = createId("project");
     const project: ProjectRecord = {
       id: projectId,
       name: idea.title,
-      purpose: idea.content,
+      purpose: idea.definition || idea.content,
       expected: "",
       startDate: stamp.slice(0, 10),
       endDate: addDays(new Date(), 30),
@@ -132,7 +223,7 @@ export function useMindViewModel() {
       projects: [...current.projects, project],
       ideas: current.ideas.map((item) =>
         item.id === idea.id
-          ? { ...item, status: "converted", updatedAt: stamp }
+          ? { ...item, status: "promoted", updatedAt: stamp }
           : item,
       ),
       relations: [...current.relations, relation],
@@ -141,13 +232,14 @@ export function useMindViewModel() {
 
   return {
     ideas,
-    candidate,
-    candidateInput,
+    libraryLists,
     busy,
-    addIdea,
-    explore,
-    acceptCandidate,
+    sourcesForList,
+    saveIdea,
+    generateIdea,
+    updateIdea,
     updateScores,
+    saveEvaluation,
     convertToProject,
     deleteIdea: (id: string) => softDelete("ideas", id),
   };

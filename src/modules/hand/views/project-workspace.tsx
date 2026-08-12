@@ -19,7 +19,7 @@ import { statusLabels, typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
 
-type DialogName = "project" | "task" | "log" | "attachment" | null;
+type DialogName = "task" | "log" | "attachment" | null;
 
 export function ProjectWorkspace({
   vm,
