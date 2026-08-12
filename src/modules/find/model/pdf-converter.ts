@@ -1,5 +1,9 @@
 import type { PageTableResult, PageTextResult } from "pdf-parse";
 
+export function pdfAssetUrl(directory: string, image: string) {
+  return `/api/markdown-assets/${encodeURIComponent(directory)}/${encodeURIComponent(image)}`;
+}
+
 export interface PdfMarkdownAssets {
   images?: Map<number, string[]>;
   tables?: PageTableResult[];
