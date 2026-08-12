@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { pdfTextToMarkdown } from "./pdf-to-markdown";
+import { pdfAssetUrl, pdfTextToMarkdown } from "./pdf-converter";
 
 describe("PDF text to Markdown", () => {
+  it("builds an encoded URL for an extracted image", () => {
+    expect(
+      pdfAssetUrl("3806cc10-6b9c-4047-9d3b-a3646bd10a40", "1-1.png"),
+    ).toBe(
+      "/api/markdown-assets/3806cc10-6b9c-4047-9d3b-a3646bd10a40/1-1.png",
+    );
+  });
   it("creates headings, paragraphs, lists, and page anchors", () => {
     const markdown = pdfTextToMarkdown([
       {

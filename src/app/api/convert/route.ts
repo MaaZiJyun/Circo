@@ -3,8 +3,10 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getStoragePath } from "@/shared/infrastructure/storage-config";
-import { pdfTextToMarkdown } from "@/server/pdf-to-markdown";
-import { pdfAssetUrl } from "@/server/pdf-assets";
+import {
+  pdfAssetUrl,
+  pdfTextToMarkdown,
+} from "@/modules/find/model/pdf-converter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
