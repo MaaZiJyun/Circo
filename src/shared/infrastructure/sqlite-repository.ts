@@ -109,8 +109,12 @@ function normalizeState(state: AppState): AppState {
     profile: {
       name: state.profile?.name?.trim() || "Me",
       avatarDataUrl: state.profile?.avatarDataUrl ?? "",
+      ...(state.profile?.birthDate
+        ? { birthDate: state.profile.birthDate }
+        : {}),
     },
     aiJobs: state.aiJobs ?? [],
+    messages: state.messages ?? [],
     relations: state.relations ?? [],
     libraryLists: [
       ...systemLists.map(

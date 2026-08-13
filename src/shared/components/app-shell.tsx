@@ -12,6 +12,7 @@ import {
   TrophyIcon,
   NewspaperIcon,
   BeakerIcon,
+  EnvelopeIcon,
 } from "@heroicons/react/24/outline";
 import { DashboardView } from "@/modules/dashboard/views/dashboard-view";
 import { FindView } from "@/modules/find/views/find-view";
@@ -19,6 +20,7 @@ import { HandView } from "@/modules/hand/views/hand-view";
 import { LandView } from "@/modules/land/views/land-view";
 import { MeView } from "@/modules/me/views/me-view";
 import { MindView } from "@/modules/mind/views/mind-view";
+import { MessagesView } from "@/modules/messages/views/messages-view";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
 import { useStore } from "@/shared/view-models/store-context";
@@ -28,7 +30,7 @@ import { SidebarProfile } from "./sidebar-profile";
 import { IconButton, Input, LoadingState } from "./ui";
 
 export type AppSection =
-  "dashboard" | "me" | "find" | "mind" | "hand" | "land" | "settings";
+  "dashboard" | "me" | "find" | "mind" | "hand" | "land" | "messages" | "settings";
 
 const navigation: {
   id: AppSection;
@@ -40,6 +42,7 @@ const navigation: {
   { id: "mind", label: "nav.mind", icon: LightBulbIcon },
   { id: "hand", label: "nav.hand", icon: BeakerIcon },
   { id: "land", label: "nav.land", icon: TrophyIcon },
+  { id: "messages", label: "nav.messages", icon: EnvelopeIcon },
 ];
 
 function Navigation({
@@ -155,6 +158,7 @@ export function AppShell() {
     mind: <MindView />,
     hand: <HandView />,
     land: <LandView />,
+    messages: <MessagesView />,
     settings: <SettingsView />,
   };
   return (

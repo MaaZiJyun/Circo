@@ -91,6 +91,16 @@ export function ProfileSettings() {
               onKeyDown={(event) => event.key === "Enter" && saveName()}
             />
           </Field>
+          <Field label={t("dashboard.birthDate")}>
+            <Input
+              type="date"
+              value={state.profile.birthDate ?? ""}
+              max={new Date().toISOString().slice(0, 10)}
+              onChange={(event) => updateProfile({
+                birthDate: event.target.value || undefined,
+              })}
+            />
+          </Field>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <Button onClick={saveName}>{t("common.save")}</Button>
         </div>

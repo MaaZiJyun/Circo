@@ -9,6 +9,7 @@ export function createSeedState(): AppState {
     revision: 1,
     updatedAt: stamp,
     profile: { name: "Me", avatarDataUrl: "" },
+    messages: [],
     cycles: [
       {
         id: "cycle_aug",

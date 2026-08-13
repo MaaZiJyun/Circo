@@ -19,6 +19,7 @@ import type {
   TaskRecord,
   WorkSession,
 } from "./entities";
+import type { FutureMessage } from "./message";
 
 export interface AppState {
   schemaVersion: 1;
@@ -44,6 +45,7 @@ export interface AppState {
   artifacts: Artifact[];
   relations: Relation[];
   aiJobs: AIJob[];
+  messages: FutureMessage[];
 }
 
 export type CollectionName = Exclude<
@@ -54,6 +56,7 @@ export type CollectionName = Exclude<
 export interface UserProfile {
   name: string;
   avatarDataUrl: string;
+  birthDate?: string;
 }
 
 export type AppEntity = AppState[CollectionName][number];
@@ -75,7 +78,8 @@ function isProfile(value: unknown) {
     profile.name.length <= 60 &&
     typeof avatar === "string" &&
     avatar.length <= 3_000_000 &&
-    (avatar === "" || /^data:image\/(jpeg|png|webp);base64,/.test(avatar))
+    (avatar === "" || /^data:image\/(jpeg|png|webp);base64,/.test(avatar)) &&
+    (profile.birthDate === undefined || /^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate))
   );
 }
 
@@ -97,7 +101,8 @@ export function isAppState(value: unknown): value is AppState {
     Array.isArray(item.projects) &&
     (item.dailyTasks === undefined || Array.isArray(item.dailyTasks)) &&
     Array.isArray(item.artifacts) &&
-    Array.isArray(item.aiJobs)
+    Array.isArray(item.aiJobs) &&
+    (item.messages === undefined || Array.isArray(item.messages))
   );
 }
 

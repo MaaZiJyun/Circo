@@ -1,8 +1,7 @@
-import type { MessageKey } from "./zh"; import { findLibraryEn } from "./find-library-labels";
-import { mindEn } from "./mind-labels";
+import type { MessageKey } from "./zh"; import { findLibraryEn } from "./find-library-labels"; import { mindEn } from "./mind-labels";
 import { meHomeEn } from "./me-home-labels";
 import { handLibraryEn } from "./hand-library-labels";
-import { dashboardCountdownEn } from "./dashboard-countdown-labels";
+import { dashboardCountdownEn } from "./dashboard-countdown-labels"; import { messageEn } from "./message-labels";
 export const en: Record<MessageKey, string> = {
   "app.name": "Circo",
   "app.tagline": "Give every effort an origin and a destination",
@@ -13,6 +12,7 @@ export const en: Record<MessageKey, string> = {
   "nav.hand": "Hand",
   "nav.land": "Land",
   "nav.settings": "Settings",
+  ...messageEn,
   "common.add": "New",
   "common.save": "Save",
   "common.cancel": "Cancel",

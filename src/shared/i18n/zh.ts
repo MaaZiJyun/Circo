@@ -3,6 +3,7 @@ import { mindZh } from "./mind-labels";
 import { meHomeZh } from "./me-home-labels";
 import { handLibraryZh } from "./hand-library-labels";
 import { dashboardCountdownZh } from "./dashboard-countdown-labels";
+import { messageZh } from "./message-labels";
 
 export const zh = {
   "app.name": "Circo",
@@ -14,6 +15,7 @@ export const zh = {
   "nav.hand": "行动",
   "nav.land": "结果",
   "nav.settings": "设置",
+  ...messageZh,
   "common.add": "新建",
   "common.save": "保存",
   "common.cancel": "取消",
