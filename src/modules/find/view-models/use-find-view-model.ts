@@ -213,6 +213,7 @@ export function useFindViewModel() {
       status: "spark",
       method: "capture",
       sourceIds: [selected.id],
+      listIds: [],
       tags: selected.tags,
       scores: { value: 3, feasibility: 3, novelty: 3, cost: 3, risk: 3 },
       createdAt: stamp,

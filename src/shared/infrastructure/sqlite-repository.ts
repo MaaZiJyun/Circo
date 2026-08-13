@@ -34,6 +34,39 @@ const systemLists = [
   },
 ];
 
+const systemProjectLists = [
+  {
+    id: "project_list_default",
+    name: "All Projects",
+    note: "All projects",
+    color: "#18181b",
+    system: "default" as const,
+  },
+  {
+    id: "project_list_recent",
+    name: "Recently Added",
+    note: "Projects added in the last seven days",
+    color: "#2563eb",
+    system: "recent" as const,
+  },
+];
+const systemIdeaLists = [
+  {
+    id: "idea_list_default",
+    name: "All Ideas",
+    note: "All ideas",
+    color: "#18181b",
+    system: "default" as const,
+  },
+  {
+    id: "idea_list_recent",
+    name: "Recently Added",
+    note: "Ideas added in the last seven days",
+    color: "#2563eb",
+    system: "recent" as const,
+  },
+];
+
 function openDatabase(databasePath: string) {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
   const database = new Database(databasePath);
@@ -65,6 +98,12 @@ function normalizeState(state: AppState): AppState {
   const stamp = state.updatedAt || new Date().toISOString();
   const existingLists = state.libraryLists ?? [];
   const systemListIds = new Set(systemLists.map((item) => item.id));
+  const existingProjectLists = state.projectLists ?? [];
+  const existingIdeaLists = state.ideaLists ?? [];
+  const systemProjectListIds = new Set(
+    systemProjectLists.map((item) => item.id),
+  );
+  const systemIdeaListIds = new Set(systemIdeaLists.map((item) => item.id));
   return {
     ...state,
     profile: {
@@ -84,6 +123,30 @@ function normalizeState(state: AppState): AppState {
       ),
       ...existingLists.filter((item) => !systemListIds.has(item.id)),
     ],
+    projectLists: [
+      ...systemProjectLists.map(
+        (item) =>
+          existingProjectLists.find((existing) => existing.id === item.id) ?? {
+            ...item,
+            createdAt: stamp,
+            updatedAt: stamp,
+          },
+      ),
+      ...existingProjectLists.filter(
+        (item) => !systemProjectListIds.has(item.id),
+      ),
+    ],
+    ideaLists: [
+      ...systemIdeaLists.map(
+        (item) =>
+          existingIdeaLists.find((existing) => existing.id === item.id) ?? {
+            ...item,
+            createdAt: stamp,
+            updatedAt: stamp,
+          },
+      ),
+      ...existingIdeaLists.filter((item) => !systemIdeaListIds.has(item.id)),
+    ],
     points: state.points ?? [],
     sources: state.sources.map((item) => ({
       ...item,
@@ -101,12 +164,36 @@ function normalizeState(state: AppState): AppState {
       studyDurationMinutes: item.studyDurationMinutes ?? 0,
       readingReview: item.readingReview ?? emptyReadingReview(),
     })),
-    ideas: state.ideas.map((item) => ({ ...item, tags: item.tags ?? [] })),
-    projects: state.projects.map((item) => ({
+    ideas: state.ideas.map((item) => ({
       ...item,
+      listIds: item.listIds ?? [],
       tags: item.tags ?? [],
     })),
-    logs: state.logs.map((item) => ({ ...item, tags: item.tags ?? [] })),
+    projects: state.projects.map((item) => ({
+      ...item,
+      score: item.score ?? 50,
+      listIds: item.listIds ?? [],
+      tags: item.tags ?? [],
+    })),
+    dailyTasks: (state.dailyTasks ?? []).map((item) => ({
+      ...item,
+      description: item.description ?? "",
+      dueAt: item.dueAt ?? `${item.date}T23:59`,
+      estimatedMinutes: item.estimatedMinutes ?? 30,
+      expectedOutput: item.expectedOutput ?? "",
+      importance: item.importance ?? 50,
+    })),
+    tasks: state.tasks.map((item) => ({
+      ...item,
+      description: item.description ?? "",
+      expectedOutput: item.expectedOutput ?? "",
+    })),
+    logs: state.logs.map((item) => ({
+      ...item,
+      period: item.period ?? "day",
+      filePath: item.filePath ?? `project/${item.projectId}/logs/${item.id}.md`,
+      tags: item.tags ?? [],
+    })),
     attachments: state.attachments.map((item) => ({
       ...item,
       fileToken: item.fileToken ?? "",

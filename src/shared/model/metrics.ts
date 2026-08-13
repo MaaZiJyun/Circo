@@ -18,9 +18,10 @@ export function calculateMetrics(state: AppState): GrowthMetrics {
   const effectiveMinutes = sessions
     .filter((item) => item.effective)
     .reduce((total, item) => total + item.minutes, 0);
-  const dueTasks = activeItems(state.tasks).filter(
-    (item) => item.dueDate <= new Date().toISOString().slice(0, 10),
-  );
+  const dueTasks = activeItems(state.tasks).filter((item) => {
+    const due = Date.parse(item.dueDate);
+    return Number.isFinite(due) && due <= Date.now();
+  });
   const completedTasks = dueTasks.filter((item) => item.status === "done");
 
   return {

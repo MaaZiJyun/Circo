@@ -76,6 +76,7 @@ export function useMindViewModel() {
       status: method === "capture" ? "spark" : "explore",
       method,
       sourceIds,
+      listIds: [],
       tags: input.tags.filter(Boolean),
       scores: defaultScores,
       createdAt: stamp,
@@ -203,7 +204,9 @@ export function useMindViewModel() {
       endDate: addDays(new Date(), 30),
       status: "planning",
       ideaIds: [idea.id],
+      listIds: [],
       tags: idea.tags,
+      score: idea.evaluation!.totalScore,
       createdAt: stamp,
       updatedAt: stamp,
     };

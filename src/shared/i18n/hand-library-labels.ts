@@ -1,0 +1,36 @@
+export const handLibraryZh = {
+  "hand.lists": "Project List",
+  "hand.createList": "新建列表",
+  "hand.editList": "编辑列表",
+  "hand.deleteList": "删除列表",
+  "hand.confirmDeleteList": "确定删除这个 Project List 吗？项目不会被删除。",
+  "hand.listName": "列表名称",
+  "hand.listNote": "列表说明",
+  "hand.listColor": "列表颜色",
+  "hand.list.default": "全部项目",
+  "hand.list.recent": "最近添加",
+  "hand.selectedCount": "已选择 {count} 个项目",
+  "hand.selectAll": "选择全部项目",
+  "hand.addToList": "添加到列表",
+  "hand.removeFromList": "从当前列表移除",
+  "hand.noCustomLists": "暂无自定义 Project List",
+} as const;
+
+export const handLibraryEn: Record<keyof typeof handLibraryZh, string> = {
+  "hand.lists": "Project Lists",
+  "hand.createList": "Create list",
+  "hand.editList": "Edit list",
+  "hand.deleteList": "Delete list",
+  "hand.confirmDeleteList":
+    "Delete this Project List? Projects will not be deleted.",
+  "hand.listName": "List name",
+  "hand.listNote": "List note",
+  "hand.listColor": "List color",
+  "hand.list.default": "All Projects",
+  "hand.list.recent": "Recently Added",
+  "hand.selectedCount": "{count} projects selected",
+  "hand.selectAll": "Select all projects",
+  "hand.addToList": "Add to list",
+  "hand.removeFromList": "Remove from current list",
+  "hand.noCustomLists": "No custom Project Lists",
+};

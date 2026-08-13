@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ClockIcon, PlusIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import {
+  MagnifyingGlassIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import {
   PageHeader,
   SectionHeader,
@@ -12,54 +16,33 @@ import {
   Button,
   Card,
   EmptyState,
-  Field,
+  IconButton,
   Input,
-  Textarea,
 } from "@/shared/components/ui";
-import { categoryLabels, typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import { useMeViewModel } from "../view-models/use-me-view-model";
-import { CycleDialog } from "./cycle-dialog";
-import { GoalProgress } from "./goal-progress";
-import { EventDialog, SessionDialog } from "./me-forms";
-import { GoalDialog } from "./goal-dialog";
+import { useDailyTaskCache } from "../view-models/use-daily-task-cache";
+import {
+  CreateDailyTaskDialog,
+  RetrieveTaskDialog,
+} from "./daily-task-dialogs";
+import { TaskQuadrant } from "./task-quadrant";
 
 export function MeView() {
-  const { t, formatDate, formatNumber } = useI18n();
-  const vm = useMeViewModel();
-  const [dialog, setDialog] = useState<
-    "cycle" | "goal" | "session" | "event" | null
-  >(null);
-  const [timerTitle, setTimerTitle] = useState("");
-  const [timerOutput, setTimerOutput] = useState("");
+  const { t, formatNumber } = useI18n();
+  const vm = useDailyTaskCache();
+  const [dialog, setDialog] = useState<"retrieve" | "create" | null>(null);
   if (!vm) return null;
-  const formatTimer = `${String(Math.floor(vm.timerSeconds / 60)).padStart(2, "0")}:${String(vm.timerSeconds % 60).padStart(2, "0")}`;
   const rate = (value: number | null) =>
     value === null
       ? t("common.noData")
       : formatNumber(value, { style: "percent", maximumFractionDigits: 0 });
+  const completed = vm.dailyTasks.filter((item) => item.completed).length;
   return (
     <div className="space-y-8">
       <PageHeader
         eyebrow={t("me.eyebrow")}
-        title={t("me.title")}
-        subtitle={t("me.subtitle")}
-        actions={
-          <>
-            <Button onClick={() => setDialog("cycle")} variant="ghost">
-              <PlusIcon className="size-4" />
-              {t("me.newCycle")}
-            </Button>
-            <Button onClick={() => setDialog("session")} variant="secondary">
-              <ClockIcon className="size-4" />
-              {t("me.logTime")}
-            </Button>
-            <Button onClick={() => setDialog("goal")}>
-              <PlusIcon className="size-4" />
-              {t("me.newGoal")}
-            </Button>
-          </>
-        }
+        title={t("me.profileTitle")}
+        subtitle={t("me.profileSubtitle")}
       />
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
@@ -77,202 +60,110 @@ export function MeView() {
           hint={t("dashboard.metricCompletion")}
         />
       </div>
-      <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-        <Card>
-          <SectionHeader title={t("me.timer")} />
-          <p className="text-sm text-zinc-500">
-            {vm.timerRunning ? t("me.timerRunning") : t("me.timerReady")}
-          </p>
-          <p className="my-6 font-mono text-5xl font-semibold tabular-nums">
-            {formatTimer}
-          </p>
-          <div className="grid gap-3">
-            <Field label={t("me.sessionTitle")}>
-              <Input
-                value={timerTitle}
-                onChange={(event) => setTimerTitle(event.target.value)}
-              />
-            </Field>
-            {vm.timerSeconds > 0 && (
-              <Field label={t("me.output")}>
-                <Input
-                  value={timerOutput}
-                  onChange={(event) => setTimerOutput(event.target.value)}
-                />
-              </Field>
-            )}
-            <div className="flex gap-2">
-              {vm.timerSeconds === 0 ? (
-                <Button
-                  disabled={!timerTitle.trim()}
-                  onClick={() => vm.setTimerRunning(true)}
-                >
-                  {t("me.start")}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={() => vm.setTimerRunning(!vm.timerRunning)}
-                  >
-                    {vm.timerRunning ? t("me.pause") : t("me.start")}
-                  </Button>
-                  <Button
-                    disabled={!timerTitle.trim()}
-                    onClick={() => {
-                      vm.finishTimer(timerTitle, timerOutput);
-                      setTimerTitle("");
-                      setTimerOutput("");
-                    }}
-                  >
-                    {t("me.finish")}
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </Card>
-        <Card>
-          <SectionHeader title={t("me.goals")} />
-          {vm.goals.length ? (
-            <div className="grid gap-5">
-              {vm.goals.map((goal) => (
-                <GoalProgress
-                  key={goal.id}
-                  goal={goal}
-                  update={(value) => vm.updateGoal(goal.id, value)}
-                  remove={() =>
-                    window.confirm(t("common.confirmDelete")) &&
-                    vm.deleteGoal(goal.id)
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <EmptyState title={t("common.noData")} />
-          )}
-        </Card>
-      </div>
-      <div className="grid gap-5 xl:grid-cols-2">
-        <Card>
-          <SectionHeader title={t("me.sessions")} />
-          {vm.sessions.length ? (
-            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {vm.sessions.slice(0, 6).map((session) => (
-                <div key={session.id} className="flex items-center gap-3 py-3">
-                  <span
-                    className={`size-2 rounded-full ${session.effective ? "bg-green-500" : "bg-yellow-500"}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
-                      {session.title}
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {formatDate(session.startedAt)} · {session.minutes}{" "}
-                      {t("common.minutes")}
-                    </p>
-                  </div>
-                  <span className="text-xs text-zinc-500">
-                    {session.output}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState title={t("common.noData")} />
-          )}
-        </Card>
-        <Card>
-          <SectionHeader
-            title={t("me.events")}
-            action={
-              <Button variant="ghost" onClick={() => setDialog("event")}>
-                <PlusIcon className="size-4" />
-                {t("me.recordEvent")}
-              </Button>
-            }
-          />
-          {vm.events.length ? (
-            <div className="grid gap-3">
-              {vm.events.slice(0, 5).map((event) => (
-                <div
-                  key={event.id}
-                  className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
-                >
-                  <div className="flex gap-2">
-                    <Badge
-                      tone={
-                        event.type === "success"
-                          ? "success"
-                          : event.type === "error"
-                            ? "danger"
-                            : "info"
-                      }
-                    >
-                      {t(typeLabels[event.type])}
-                    </Badge>
-                    <Badge>{t(categoryLabels[event.category])}</Badge>
-                  </div>
-                  <p className="mt-2 text-sm font-medium">{event.phenomenon}</p>
-                  <p className="mt-1 text-xs leading-5 text-zinc-500">
-                    {event.reason}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState title={t("common.noData")} />
-          )}
-        </Card>
-      </div>
       <Card>
         <SectionHeader
-          title={t("me.review")}
+          title={t("me.dailyCache")}
           action={
-            <Button variant="secondary" onClick={vm.generateReview}>
-              <SparklesIcon className="size-4" />
-              {t("me.generateReview")}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => setDialog("retrieve")}>
+                <MagnifyingGlassIcon className="size-4" />
+                {t("me.dailyRetrieve")}
+              </Button>
+              <Button onClick={() => setDialog("create")}>
+                <PlusIcon className="size-4" />
+                {t("me.dailyCreate")}
+              </Button>
+            </div>
           }
         />
-        <Textarea
-          value={vm.cycle?.review ?? ""}
-          readOnly
-          className="min-h-48 font-mono"
-        />
-        {vm.cycle?.status === "active" && (
-          <Button
-            className="mt-3"
-            variant="secondary"
-            onClick={vm.archiveCycle}
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <Input
+            className="w-44"
+            type="date"
+            value={vm.date}
+            onChange={(event) => vm.setDate(event.target.value)}
+          />
+          <Badge
+            tone={
+              completed === vm.dailyTasks.length && completed > 0
+                ? "success"
+                : "neutral"
+            }
           >
-            {t("me.archiveCycle")}
-          </Button>
+            {completed} / {vm.dailyTasks.length}
+          </Badge>
+        </div>
+        {vm.dailyTasks.length ? (
+          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+            {vm.dailyTasks.map((item) => (
+              <div key={item.id} className="flex items-center gap-3 py-3">
+                <input
+                  className="size-5"
+                  type="checkbox"
+                  checked={item.completed}
+                  onChange={() => vm.toggle(item)}
+                />
+                <div className="min-w-0 flex-1">
+                  <p
+                    className={`text-sm font-medium ${item.completed ? "text-zinc-400 line-through" : ""}`}
+                  >
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-zinc-500">
+                    {item.sourceTaskId
+                      ? `${t("me.fromProject")}: ${vm.projectName(item.projectId)}`
+                      : t("me.independentTask")}
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {t("me.taskDueAt")}: {item.dueAt.replace("T", " ")} ·{" "}
+                    {t("me.taskEstimate")}: {item.estimatedMinutes}{" "}
+                    {t("common.minutes")}
+                  </p>
+                  {item.description && (
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {item.description}
+                    </p>
+                  )}
+                  {item.expectedOutput && (
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {t("me.taskExpectedOutput")}: {item.expectedOutput}
+                    </p>
+                  )}
+                </div>
+                <IconButton
+                  label={t("common.delete")}
+                  onClick={() => vm.deleteTask(item.id)}
+                >
+                  <TrashIcon className="size-4" />
+                </IconButton>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title={t("me.dailyEmpty")}
+            description={t("me.dailyEmptyHint")}
+          />
         )}
       </Card>
-      <CycleDialog
-        open={dialog === "cycle"}
-        onClose={() => setDialog(null)}
-        onSave={vm.addCycle}
-      />
-      <GoalDialog
-        open={dialog === "goal"}
-        onClose={() => setDialog(null)}
-        onSave={vm.addGoal}
-        today={vm.today}
-      />
-      <SessionDialog
-        open={dialog === "session"}
-        onClose={() => setDialog(null)}
-        onSave={vm.addSession}
-        goals={vm.goals}
-        projects={vm.projects}
+      <Card>
+        <SectionHeader title={t("me.taskQuadrant")} />
+        <TaskQuadrant tasks={vm.dailyTasks} coordinates={vm.coordinates} />
+      </Card>
+      <RetrieveTaskDialog
+        open={dialog === "retrieve"}
         tasks={vm.tasks}
-      />
-      <EventDialog
-        open={dialog === "event"}
+        projectName={vm.projectName}
+        existingIds={vm.dailyTasks.flatMap((item) =>
+          item.sourceTaskId ? [item.sourceTaskId] : [],
+        )}
         onClose={() => setDialog(null)}
-        onSave={vm.addEvent}
+        onChoose={(task) => vm.retrieve(task)}
+      />
+      <CreateDailyTaskDialog
+        open={dialog === "create"}
+        onClose={() => setDialog(null)}
+        onSave={vm.addIndependent}
       />
     </div>
   );

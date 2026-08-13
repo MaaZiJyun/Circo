@@ -1,6 +1,8 @@
 import type { MessageKey } from "./zh";
 import { findLibraryEn } from "./find-library-labels";
 import { mindEn } from "./mind-labels";
+import { meHomeEn } from "./me-home-labels";
+import { handLibraryEn } from "./hand-library-labels";
 
 export const en: Record<MessageKey, string> = {
   "app.name": "Circo",
@@ -9,7 +11,7 @@ export const en: Record<MessageKey, string> = {
   "nav.me": "Me",
   "nav.find": "Find",
   "nav.mind": "Idea Library",
-  "nav.hand": "Project Library",
+  "nav.hand": "Hand",
   "nav.land": "Land",
   "nav.settings": "Settings",
   "common.add": "New",
@@ -74,6 +76,7 @@ export const en: Record<MessageKey, string> = {
   "me.eyebrow": "Know yourself",
   "me.title": "Cycles, effort, and review",
   "me.subtitle": "See how time becomes outcomes through transparent metrics.",
+  ...meHomeEn,
   "me.newGoal": "New goal",
   "me.newCycle": "New cycle",
   "me.archiveCycle": "Archive current cycle",
@@ -148,16 +151,25 @@ export const en: Record<MessageKey, string> = {
   "find.pagesMapped": "Pages mapped",
   ...findLibraryEn,
   ...mindEn,
-  "hand.eyebrow": "Incubate projects from ideas",
-  "hand.title": "Project Library",
+  ...handLibraryEn,
+  "hand.eyebrow": "Make it real",
+  "hand.title": "Hand",
   "hand.subtitle":
-    "Only ideas that pass the evaluation gate can become formal projects.",
+    "Manage projects incubated from ideas or created manually in the project library.",
+  "hand.projectLibrary": "Project Library",
   "hand.projectGateHint":
-    "Evaluate an idea first, then promote it after it reaches Strong and passes all critical gates.",
+    "No projects yet. Incubate an evaluated idea or add a project manually.",
+  "hand.editProject": "Edit project",
+  "hand.openProject": "Open project",
+  "hand.backToProjects": "Back to project library",
+  "hand.ideaSource": "Linked ideas",
   "hand.newProject": "New project",
   "hand.projects": "Projects",
   "hand.purpose": "Purpose",
   "hand.expected": "Expected outcome",
+  "hand.projectScore": "Project score (0–100)",
+  "hand.taskDescription": "Task description",
+  "hand.expectedOutput": "Expected output",
   "hand.startDate": "Start date",
   "hand.endDate": "End date",
   "hand.timeline": "Plan and progress",
@@ -168,6 +180,12 @@ export const en: Record<MessageKey, string> = {
   "hand.logs": "Project logs",
   "hand.newLog": "New log",
   "hand.logType": "Log type",
+  "hand.logPeriod": "Log period",
+  "hand.logPeriod.day": "Day",
+  "hand.logPeriod.week": "Week",
+  "hand.logPeriod.month": "Month",
+  "hand.logPeriod.year": "Year",
+  "hand.logSaveFailed": "Could not save the Markdown log. Try again.",
   "hand.nextStep": "Next step",
   "hand.attachments": "Data and attachments",
   "hand.addAttachment": "Register attachment",

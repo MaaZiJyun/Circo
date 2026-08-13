@@ -1,4 +1,5 @@
 import type { AppState } from "@/shared/model/app-state";
+import { seedIdea, seedIdeas, seedProjects } from "./seed-project-lists";
 
 const stamp = "2026-08-11T08:00:00.000Z";
 
@@ -132,6 +133,8 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
+    projectLists: seedProjects(stamp),
+    ideaLists: seedIdeas(stamp),
     points: [],
     sources: [
       {
@@ -190,23 +193,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
-    ideas: [
-      {
-        id: "idea_decentral",
-        title: "去中心化多模态架构",
-        content: "将中心化融合节点改成可协商的分布式表示交换。",
-        definition: "将中心化融合节点改成可协商的分布式表示交换。",
-        reason: "阅读多模态架构材料后，对中心节点依赖进行后续推演。",
-        date: "2026-08-11",
-        status: "candidate",
-        method: "followUp",
-        sourceIds: ["source_multi"],
-        tags: ["架构", "去中心化"],
-        scores: { value: 4, feasibility: 3, novelty: 4, cost: 3, risk: 3 },
-        createdAt: stamp,
-        updatedAt: stamp,
-      },
-    ],
+    ideas: [seedIdea(stamp)],
     projects: [
       {
         id: "project_arch",
@@ -218,7 +205,9 @@ export function createSeedState(): AppState {
         status: "active",
         goalId: "goal_research",
         ideaIds: ["idea_decentral"],
+        listIds: [],
         tags: ["架构"],
+        score: 82,
         createdAt: stamp,
         updatedAt: stamp,
       },
@@ -228,12 +217,15 @@ export function createSeedState(): AppState {
         id: "task_scope",
         projectId: "project_arch",
         title: "定义原型范围",
+        description: "明确原型覆盖的核心场景和边界。",
         dueDate: "2026-08-10",
         priority: "high",
         status: "done",
         estimatedMinutes: 120,
         actualMinutes: 90,
         milestone: true,
+        expectedOutput: "原型范围说明",
+        completedAt: stamp,
         createdAt: stamp,
         updatedAt: stamp,
       },
@@ -241,20 +233,25 @@ export function createSeedState(): AppState {
         id: "task_test",
         projectId: "project_arch",
         title: "验证核心闭环",
+        description: "验证从文献到项目的核心链路。",
         dueDate: "2026-08-18",
         priority: "high",
         status: "doing",
         estimatedMinutes: 240,
         actualMinutes: 60,
         milestone: false,
+        expectedOutput: "验证记录",
         createdAt: stamp,
         updatedAt: stamp,
       },
     ],
+    dailyTasks: [],
     logs: [
       {
         id: "log_1",
         projectId: "project_arch",
+        period: "day",
+        filePath: "project/project_arch/logs/log_1.md",
         taskId: "task_scope",
         type: "decision",
         content: "采用本地优先并保留可替换适配器。",

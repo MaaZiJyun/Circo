@@ -14,7 +14,7 @@ Me → Find → Mind → Hand → Land → Me
 - **Me**：目标、专注计时、工时补录、有效投入率、计划完成率、成功/错误原因和周期复盘草稿。
 - **Find**：文献库与列表管理、PDF/Markdown/TXT 导入、PDF 转 Markdown、原文对照阅读、本地中英翻译、阅读标记和来源追溯。
 - **灵感库**：手动记录或基于 Library List 按七类方式推演灵感，通过 15 题五维评估决定是否孵化项目。
-- **项目库**：仅接收通过灵感评估门禁的项目，并管理任务、里程碑、进度、项目日志及任意类型附件。
+- **Hand**：通过项目库管理由灵感孵化或手动建立的项目，进入项目后管理任务、里程碑、进度、日志及附件。
 - **Land**：论文、海报、PPT 大纲、自媒体文案、博文与自定义成果，支持草稿生成、Markdown 导出和打印为 PDF。
 - **Shared**：全文搜索、软删除与回收站、简体中文/英文、白天/夜间/跟随系统、完整 ZIP 备份与恢复。
 
@@ -108,6 +108,7 @@ npm run dev
 - PDF 提取图片：`data/library/markdown/<UUID>/`
 - 本地翻译模型：`data/models/`
 - 项目附件：`data/attachments/`
+- 项目 Markdown 日志：`data/project/<project-id>/logs/`
 - 数据库开启 WAL 模式。
 - 以上个人数据默认不进入 Git。
 

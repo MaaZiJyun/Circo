@@ -1,21 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  ArrowUturnLeftIcon,
-  BeakerIcon,
-  PencilSquareIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import {
-  ContextMenu,
-  ContextMenuItem,
-  type MenuPosition,
-} from "@/modules/find/views/context-menu";
+import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { PageHeader, SectionHeader } from "@/shared/components/page-elements";
 import {
-  Alert,
   Badge,
   Button,
   Card,
@@ -25,16 +13,22 @@ import {
 } from "@/shared/components/ui";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { Idea } from "@/shared/model/entities";
-import { canPromoteIdea } from "../model/idea-evaluation";
+import type { Idea, IdeaList } from "@/shared/model/entities";
 import { sortIdeas, type IdeaSort } from "../model/idea-sorting";
+import { useIdeaLibrary } from "../view-models/use-idea-library";
 import type { IdeaInput } from "../view-models/use-mind-view-model";
 import { useMindViewModel } from "../view-models/use-mind-view-model";
-import { IdeaComposer, IdeaFields } from "./idea-form";
 import {
   EvaluationSummary,
   IdeaEvaluationDialog,
 } from "./idea-evaluation-dialog";
+import { IdeaComposer, IdeaFields } from "./idea-form";
+import { IdeaGrid } from "./idea-grid";
+import {
+  ChooseIdeaListDialog,
+  IdeaListDialog,
+  IdeaSidebar,
+} from "./idea-list-ui";
 
 const inputFromIdea = (idea: Idea): IdeaInput => ({
   title: idea.title,
@@ -44,142 +38,31 @@ const inputFromIdea = (idea: Idea): IdeaInput => ({
   tags: idea.tags,
 });
 
-function IdeaCard({
-  idea,
-  onEdit,
-  onDelete,
-  onConvert,
-  onEvaluate,
-}: {
-  idea: Idea;
-  onEdit: () => void;
-  onDelete: () => void;
-  onConvert: () => void;
-  onEvaluate: () => void;
-}) {
-  const { t } = useI18n();
-  const [expanded, setExpanded] = useState(false);
-  const [menu, setMenu] = useState<MenuPosition | null>(null);
-  const runMenuAction = (action: () => void) => {
-    setMenu(null);
-    action();
-  };
-  return (
-    <article
-      className="flex flex-col rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
-      onContextMenu={(event) => {
-        event.preventDefault();
-        setMenu({ x: event.clientX, y: event.clientY });
-      }}
-    >
-      <h3>
-        <button
-          className="w-full cursor-pointer rounded-md text-left font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 dark:focus-visible:ring-zinc-50"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((current) => !current)}
-        >
-          {idea.title}
-        </button>
-      </h3>
-      <div className="mt-2 space-y-3 text-sm leading-6">
-        <div>
-          <p className="text-xs font-medium text-zinc-400">
-            {t("mind.definition")}
-          </p>
-          <p
-            className={`${expanded ? "" : "line-clamp-3"} text-zinc-600 dark:text-zinc-300`}
-          >
-            {idea.definition || idea.content}
-          </p>
-        </div>
-        {expanded && (idea.reason || "").trim() && (
-          <div>
-            <p className="text-xs font-medium text-zinc-400">
-              {t("mind.reason")}
-            </p>
-            <p className="line-clamp-3 text-zinc-600 dark:text-zinc-300">
-              {idea.reason}
-            </p>
-          </div>
-        )}
-      </div>
-      <div className="mt-4 flex flex-wrap items-center gap-2">
-        <span className="text-xs text-zinc-500">
-          {idea.date || idea.createdAt.slice(0, 10)}
-        </span>
-        {idea.tags.map((tag) => (
-          <Badge key={tag}>{tag}</Badge>
-        ))}
-        <Badge tone={idea.evaluation ? "info" : "neutral"}>
-          {t("mind.scoreLabel")}: {idea.evaluation?.totalScore ?? "—"}
-        </Badge>
-      </div>
-      {expanded && (
-        <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-          <Badge
-            tone={
-              idea.status === "promoted" || idea.status === "converted"
-                ? "success"
-                : "neutral"
-            }
-          >
-            {t(statusLabels[idea.status])}
-          </Badge>
-          <EvaluationSummary idea={idea} />
-        </div>
-      )}
-      {menu && (
-        <ContextMenu position={menu} onClose={() => setMenu(null)}>
-          <ContextMenuItem onClick={() => runMenuAction(onEdit)}>
-            <PencilSquareIcon className="size-4" />
-            {t("common.edit")}
-          </ContextMenuItem>
-          <ContextMenuItem danger onClick={() => runMenuAction(onDelete)}>
-            <TrashIcon className="size-4" />
-            {t("common.delete")}
-          </ContextMenuItem>
-          <ContextMenuItem onClick={() => runMenuAction(onEvaluate)}>
-            <ArrowUturnLeftIcon className="size-4" />
-            {idea.evaluation ? t("mind.reevaluate") : t("mind.evaluate")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            disabled={
-              !canPromoteIdea(idea.evaluation) ||
-              idea.status === "promoted" ||
-              idea.status === "converted"
-            }
-            title={
-              !canPromoteIdea(idea.evaluation)
-                ? t("mind.notEvaluated")
-                : undefined
-            }
-            onClick={() => runMenuAction(onConvert)}
-          >
-            <BeakerIcon className="size-4" />
-            {t("mind.toProject")}
-          </ContextMenuItem>
-        </ContextMenu>
-      )}
-    </article>
-  );
-}
-
 export function MindView() {
   const { t } = useI18n();
   const vm = useMindViewModel();
+  const library = useIdeaLibrary();
+  const [viewing, setViewing] = useState<Idea | null>(null);
   const [composing, setComposing] = useState(false);
   const [evaluating, setEvaluating] = useState<Idea | null>(null);
   const [editing, setEditing] = useState<Idea | null>(null);
   const [editInput, setEditInput] = useState<IdeaInput | null>(null);
   const [sort, setSort] = useState<IdeaSort>("dateDesc");
-  const sortedIdeas = useMemo(
-    () => sortIdeas(vm.ideas, sort),
-    [sort, vm.ideas],
+  const [listDialog, setListDialog] = useState<"create" | "choose" | null>(
+    null,
   );
-
+  const [editingList, setEditingList] = useState<IdeaList | null>(null);
+  const selectionMode = library.selectedIds.length > 0;
+  const sortedIdeas = useMemo(
+    () => sortIdeas(library.ideas, sort),
+    [library.ideas, sort],
+  );
   const edit = (idea: Idea) => {
     setEditing(idea);
     setEditInput(inputFromIdea(idea));
+  };
+  const remove = (idea: Idea) => {
+    if (window.confirm(t("common.confirmDelete"))) vm.deleteIdea(idea.id);
   };
   const saveEdit = () => {
     if (!editing || !editInput) return;
@@ -190,56 +73,151 @@ export function MindView() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        eyebrow={t("mind.eyebrow")}
-        title={t("mind.title")}
-        subtitle={t("mind.subtitle")}
-        actions={
-          <Button onClick={() => setComposing(true)}>
-            <PlusIcon className="size-4" />
-            {t("dashboard.addIdea")}
-          </Button>
-        }
-      />
-      <Card>
-        <SectionHeader
-          title={t("mind.library")}
-          action={
-            <div className="w-28 shrink-0">
-              <Select
-                aria-label={t("mind.sort")}
-                value={sort}
-                onChange={(event) => setSort(event.target.value as IdeaSort)}
-              >
-                <option value="dateDesc">{t("mind.sortDateDesc")}</option>
-                <option value="dateAsc">{t("mind.sortDateAsc")}</option>
-                <option value="scoreDesc">{t("mind.sortScoreDesc")}</option>
-                <option value="scoreAsc">{t("mind.sortScoreAsc")}</option>
-              </Select>
-            </div>
+      {!viewing && (
+        <PageHeader
+          eyebrow={t("mind.eyebrow")}
+          title={t("mind.title")}
+          subtitle={t("mind.subtitle")}
+          actions={
+            <Button onClick={() => setComposing(true)}>
+              <PlusIcon className="size-4" />
+              {t("dashboard.addIdea")}
+            </Button>
           }
         />
-        {vm.ideas.length ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {sortedIdeas.map((idea) => (
-              <IdeaCard
-                key={idea.id}
-                idea={idea}
-                onEdit={() => edit(idea)}
-                onDelete={() =>
-                  window.confirm(t("common.confirmDelete")) &&
-                  vm.deleteIdea(idea.id)
-                }
-                onConvert={() => vm.convertToProject(idea)}
-                onEvaluate={() => setEvaluating(idea)}
+      )}
+      {viewing ? (
+        <>
+          <Button variant="ghost" onClick={() => setViewing(null)}>
+            <ArrowLeftIcon className="size-4" />
+            {t("mind.backToLibrary")}
+          </Button>
+          <Card>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <Badge>{t(statusLabels[viewing.status])}</Badge>
+                <h1 className="mt-3 text-2xl font-semibold">{viewing.title}</h1>
+              </div>
+              <Badge tone={viewing.evaluation ? "info" : "neutral"}>
+                {t("mind.scoreLabel")}: {viewing.evaluation?.totalScore ?? "—"}
+              </Badge>
+            </div>
+            <div className="mt-6 grid gap-5">
+              <section>
+                <h2 className="text-sm font-semibold">
+                  {t("mind.definition")}
+                </h2>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-zinc-600 dark:text-zinc-300">
+                  {viewing.definition || viewing.content}
+                </p>
+              </section>
+              <section>
+                <h2 className="text-sm font-semibold">{t("mind.reason")}</h2>
+                <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-zinc-600 dark:text-zinc-300">
+                  {viewing.reason || "—"}
+                </p>
+              </section>
+              <EvaluationSummary idea={viewing} />
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-zinc-500">{viewing.date}</span>
+                {viewing.tags.map((tag) => (
+                  <Badge key={tag}>{tag}</Badge>
+                ))}
+              </div>
+            </div>
+            
+          </Card>
+        </>
+      ) : (
+        <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
+          <IdeaSidebar
+            library={library}
+            onCreate={() => setListDialog("create")}
+            onEdit={setEditingList}
+          />
+          <Card>
+            <SectionHeader
+              title={
+                library.selectedList?.system
+                  ? t(`mind.list.${library.selectedList.system}`)
+                  : library.selectedList?.name || t("mind.library")
+              }
+              action={
+                !selectionMode ? (
+                  <div className="w-28">
+                    <Select
+                      aria-label={t("mind.sort")}
+                      value={sort}
+                      onChange={(event) =>
+                        setSort(event.target.value as IdeaSort)
+                      }
+                    >
+                      <option value="dateDesc">{t("mind.sortDateDesc")}</option>
+                      <option value="dateAsc">{t("mind.sortDateAsc")}</option>
+                      <option value="scoreDesc">
+                        {t("mind.sortScoreDesc")}
+                      </option>
+                      <option value="scoreAsc">{t("mind.sortScoreAsc")}</option>
+                    </Select>
+                  </div>
+                ) : undefined
+              }
+            />
+            {selectionMode && (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="text-sm text-zinc-500">
+                  {t("mind.selectedCount").replace(
+                    "{count}",
+                    String(library.selectedIds.length),
+                  )}
+                </span>
+                <Button
+                  variant="secondary"
+                  onClick={() => setListDialog("choose")}
+                >
+                  {t("mind.addToList")}
+                </Button>
+                <Button
+                  variant="secondary"
+                  disabled={library.selectedList?.system !== null}
+                  onClick={library.removeFromCurrentList}
+                >
+                  {t("mind.removeFromList")}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() =>
+                    window.confirm(t("common.confirmDelete")) &&
+                    library.deleteSelected()
+                  }
+                >
+                  {t("common.delete")}
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => library.setSelectedIds([])}
+                >
+                  {t("common.close")}
+                </Button>
+              </div>
+            )}
+            {sortedIdeas.length ? (
+              <IdeaGrid
+                library={library}
+                ideas={sortedIdeas}
+                selectionMode={selectionMode}
+                onOpen={setViewing}
+                onEdit={edit}
+                onDelete={remove}
+                onEvaluate={setEvaluating}
+                onConvert={vm.convertToProject}
               />
-            ))}
-          </div>
-        ) : (
-          <EmptyState title={t("common.noData")} />
-        )}
-      </Card>
-      <Alert>{t("find.aiNotice")}</Alert>
+            ) : (
+              <EmptyState title={t("common.noData")} />
+            )}
+          </Card>
+        </div>
+      )}
       <Dialog
         open={composing}
         title={t("mind.quickCapture")}
@@ -249,7 +227,7 @@ export function MindView() {
         <IdeaComposer
           lists={vm.libraryLists}
           busy={vm.busy}
-          sourceCount={(listId) => vm.sourcesForList(listId).length}
+          sourceCount={(id) => vm.sourcesForList(id).length}
           onGenerate={vm.generateIdea}
           onSave={(input, method, listId) =>
             vm.saveIdea(
@@ -268,8 +246,8 @@ export function MindView() {
           key={evaluating.id}
           idea={evaluating}
           onClose={() => setEvaluating(null)}
-          onSave={(id, answers, killCondition) => {
-            vm.saveEvaluation(id, answers, killCondition);
+          onSave={(id, answers, kill) => {
+            vm.saveEvaluation(id, answers, kill);
             setEvaluating(null);
           }}
         />
@@ -293,6 +271,27 @@ export function MindView() {
           </Button>
         </div>
       </Dialog>
+      {listDialog === "create" && (
+        <IdeaListDialog
+          onClose={() => setListDialog(null)}
+          onSave={library.createList}
+        />
+      )}
+      {editingList && (
+        <IdeaListDialog
+          key={editingList.id}
+          list={editingList}
+          onClose={() => setEditingList(null)}
+          onSave={(input) => library.updateList(editingList.id, input)}
+        />
+      )}
+      {listDialog === "choose" && (
+        <ChooseIdeaListDialog
+          lists={library.lists.filter((item) => !item.system)}
+          onClose={() => setListDialog(null)}
+          onChoose={(id) => library.addToList(library.selectedIds, id)}
+        />
+      )}
     </div>
   );
 }

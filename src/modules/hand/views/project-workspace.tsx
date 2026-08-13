@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   ArrowDownTrayIcon,
   CheckCircleIcon,
@@ -14,6 +16,7 @@ import {
   Card,
   EmptyState,
   ProgressBar,
+  Tabs,
 } from "@/shared/components/ui";
 import { statusLabels, typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
@@ -29,6 +32,9 @@ export function ProjectWorkspace({
   openDialog: (dialog: DialogName) => void;
 }) {
   const { t, formatDate, formatNumber } = useI18n();
+  const [logPeriod, setLogPeriod] = useState<"day" | "week" | "month" | "year">(
+    "day",
+  );
   if (!vm.selected) return null;
   return (
     <>
@@ -90,6 +96,21 @@ export function ProjectWorkspace({
                       {formatDate(task.dueDate)} · {task.estimatedMinutes}{" "}
                       {t("common.minutes")}
                     </p>
+                    {task.description && (
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {task.description}
+                      </p>
+                    )}
+                    {task.expectedOutput && (
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {t("hand.expectedOutput")}: {task.expectedOutput}
+                      </p>
+                    )}
+                    {task.completedAt && (
+                      <p className="mt-1 text-xs text-zinc-500">
+                        {t("me.finish")}: {formatDate(task.completedAt)}
+                      </p>
+                    )}
                   </div>
                   {task.milestone && (
                     <Badge tone="warning">{t("hand.milestone")}</Badge>
@@ -122,37 +143,54 @@ export function ProjectWorkspace({
               </Button>
             }
           />
-          {vm.logs.length ? (
+          <Tabs
+            value={logPeriod}
+            onChange={setLogPeriod}
+            items={(["day", "week", "month", "year"] as const).map(
+              (period) => ({
+                value: period,
+                label: t(`hand.logPeriod.${period}`),
+              }),
+            )}
+          />
+          {vm.logError && (
+            <div className="mt-3">
+              <Alert tone="danger">{t("hand.logSaveFailed")}</Alert>
+            </div>
+          )}
+          {vm.logs.some((log) => log.period === logPeriod) ? (
             <div className="grid gap-3">
-              {vm.logs.map((log) => (
-                <article
-                  key={log.id}
-                  className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
-                >
-                  <div className="flex justify-between gap-2">
-                    <Badge
-                      tone={
-                        log.type === "problem"
-                          ? "danger"
-                          : log.type === "conclusion"
-                            ? "success"
-                            : "info"
-                      }
-                    >
-                      {t(typeLabels[log.type])}
-                    </Badge>
-                    <span className="text-xs text-zinc-500">
-                      {formatDate(log.createdAt)}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm leading-6">{log.content}</p>
-                  {log.nextStep && (
-                    <p className="mt-2 text-xs text-zinc-500">
-                      {t("hand.nextStep")}: {log.nextStep}
-                    </p>
-                  )}
-                </article>
-              ))}
+              {vm.logs
+                .filter((log) => log.period === logPeriod)
+                .map((log) => (
+                  <article
+                    key={log.id}
+                    className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+                  >
+                    <div className="flex justify-between gap-2">
+                      <Badge
+                        tone={
+                          log.type === "problem"
+                            ? "danger"
+                            : log.type === "conclusion"
+                              ? "success"
+                              : "info"
+                        }
+                      >
+                        {t(typeLabels[log.type])}
+                      </Badge>
+                      <span className="text-xs text-zinc-500">
+                        {formatDate(log.createdAt)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-6">{log.content}</p>
+                    {log.nextStep && (
+                      <p className="mt-2 text-xs text-zinc-500">
+                        {t("hand.nextStep")}: {log.nextStep}
+                      </p>
+                    )}
+                  </article>
+                ))}
             </div>
           ) : (
             <EmptyState title={t("common.noData")} />

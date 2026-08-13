@@ -4,11 +4,14 @@ import type {
   Artifact,
   Attachment,
   Cycle,
+  DailyTask,
   EventReason,
   Goal,
   Idea,
+  IdeaList,
   LibraryList,
   ProjectLog,
+  ProjectList,
   ProjectRecord,
   ReferencePoint,
   Relation,
@@ -28,11 +31,14 @@ export interface AppState {
   events: EventReason[];
   sources: SourceRecord[];
   libraryLists: LibraryList[];
+  projectLists: ProjectList[];
+  ideaLists: IdeaList[];
   points: ReferencePoint[];
   annotations: Annotation[];
   ideas: Idea[];
   projects: ProjectRecord[];
   tasks: TaskRecord[];
+  dailyTasks: DailyTask[];
   logs: ProjectLog[];
   attachments: Attachment[];
   artifacts: Artifact[];
@@ -84,9 +90,12 @@ export function isAppState(value: unknown): value is AppState {
     Array.isArray(item.goals) &&
     Array.isArray(item.sources) &&
     (item.libraryLists === undefined || Array.isArray(item.libraryLists)) &&
+    (item.projectLists === undefined || Array.isArray(item.projectLists)) &&
+    (item.ideaLists === undefined || Array.isArray(item.ideaLists)) &&
     (item.points === undefined || Array.isArray(item.points)) &&
     Array.isArray(item.ideas) &&
     Array.isArray(item.projects) &&
+    (item.dailyTasks === undefined || Array.isArray(item.dailyTasks)) &&
     Array.isArray(item.artifacts) &&
     Array.isArray(item.aiJobs)
   );

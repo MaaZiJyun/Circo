@@ -1,8 +1,6 @@
 export type EntityKind = "goal" | "source" | "idea" | "project" | "artifact";
-
 export interface BaseEntity {
-  id: string;
-  createdAt: string;
+  id: string; createdAt: string;
   updatedAt: string;
   deletedAt?: string;
 }
@@ -107,6 +105,20 @@ export interface LibraryList extends BaseEntity {
   system: "default" | "recent" | "marked" | null;
 }
 
+export interface ProjectList extends BaseEntity {
+  name: string;
+  note: string;
+  color: string;
+  system: "default" | "recent" | null;
+}
+
+export interface IdeaList extends BaseEntity {
+  name: string;
+  note: string;
+  color: string;
+  system: "default" | "recent" | null;
+}
+
 export interface ReferencePoint extends BaseEntity {
   sourceId: string;
   type: "text" | "image";
@@ -156,6 +168,7 @@ export interface Idea extends BaseEntity {
     | "macro"
     | "micro";
   sourceIds: string[];
+  listIds: string[];
   tags: string[];
   scores: {
     value: number;
@@ -167,8 +180,7 @@ export interface Idea extends BaseEntity {
   evaluation?: IdeaEvaluation;
 }
 
-export type IdeaDimension =
-  "value" | "relevance" | "feasibility" | "testability" | "opportunity";
+export type IdeaDimension = "value" | "relevance" | "feasibility" | "testability" | "opportunity";
 
 export interface IdeaEvaluation {
   answers: number[];
@@ -193,24 +205,45 @@ export interface ProjectRecord extends BaseEntity {
     "concept" | "planning" | "active" | "paused" | "completed" | "archived";
   goalId?: string;
   ideaIds: string[];
+  listIds: string[];
   tags: string[];
+  score: number;
 }
 
 export interface TaskRecord extends BaseEntity {
   projectId: string;
   parentId?: string;
   title: string;
+  description: string;
   dueDate: string;
   priority: "low" | "medium" | "high";
   status: "todo" | "doing" | "done";
   estimatedMinutes: number;
   actualMinutes: number;
   milestone: boolean;
+  expectedOutput: string;
+  completedAt?: string;
+}
+
+export interface DailyTask extends BaseEntity {
+  date: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  dueAt: string;
+  completedAt?: string;
+  estimatedMinutes: number;
+  expectedOutput: string;
+  importance: number;
+  sourceTaskId?: string;
+  projectId?: string;
 }
 
 export interface ProjectLog extends BaseEntity {
   projectId: string;
   taskId?: string;
+  period: "day" | "week" | "month" | "year";
+  filePath: string;
   type: "progress" | "decision" | "problem" | "conclusion";
   content: string;
   nextStep: string;

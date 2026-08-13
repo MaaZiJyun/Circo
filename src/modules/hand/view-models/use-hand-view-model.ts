@@ -13,15 +13,20 @@ import { useStore } from "@/shared/view-models/store-context";
 
 export type ProjectInput = Pick<
   ProjectRecord,
-  "name" | "purpose" | "expected" | "startDate" | "endDate" | "tags"
+  "name" | "purpose" | "expected" | "startDate" | "endDate" | "tags" | "score"
 >;
 export type TaskInput = Pick<
   TaskRecord,
-  "title" | "dueDate" | "estimatedMinutes" | "milestone"
+  | "title"
+  | "description"
+  | "dueDate"
+  | "estimatedMinutes"
+  | "expectedOutput"
+  | "milestone"
 >;
 export type LogInput = Pick<
   ProjectLog,
-  "type" | "content" | "nextStep" | "tags"
+  "type" | "period" | "content" | "nextStep" | "tags"
 >;
 
 export function useHandViewModel() {
@@ -29,6 +34,7 @@ export function useHandViewModel() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
+  const [logError, setLogError] = useState(false);
   const projects = useMemo(
     () =>
       state
@@ -89,6 +95,8 @@ export function useHandViewModel() {
       ...input,
       status: "planning",
       ideaIds: [],
+      listIds: [],
+      score: input.score,
       createdAt: stamp,
       updatedAt: stamp,
     };
@@ -111,6 +119,15 @@ export function useHandViewModel() {
     }));
   };
 
+  const updateProjectById = (id: string, input: ProjectInput) => {
+    mutate((current) => ({
+      ...current,
+      projects: current.projects.map((item) =>
+        item.id === id ? { ...item, ...input, updatedAt: now() } : item,
+      ),
+    }));
+  };
+
   const addTask = (input: TaskInput) => {
     if (!selected) return;
     const stamp = now();
@@ -121,6 +138,7 @@ export function useHandViewModel() {
       priority: "medium",
       status: "todo",
       actualMinutes: 0,
+      completedAt: undefined,
       createdAt: stamp,
       updatedAt: stamp,
     };
@@ -134,6 +152,7 @@ export function useHandViewModel() {
         : task.status === "doing"
           ? "done"
           : "todo";
+    const stamp = now();
     mutate((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
@@ -145,20 +164,49 @@ export function useHandViewModel() {
                 status === "done" && !item.actualMinutes
                   ? item.estimatedMinutes
                   : item.actualMinutes,
-              updatedAt: now(),
+              updatedAt: stamp,
+              completedAt: status === "done" ? stamp : undefined,
+            }
+          : item,
+      ),
+      dailyTasks: current.dailyTasks.map((item) =>
+        item.sourceTaskId === task.id
+          ? {
+              ...item,
+              completed: status === "done",
+              completedAt: status === "done" ? stamp : undefined,
+              updatedAt: stamp,
             }
           : item,
       ),
     }));
   };
 
-  const addLog = (input: LogInput) => {
+  const addLog = async (input: LogInput) => {
     if (!selected) return;
+    setLogError(false);
     const stamp = now();
+    const id = createId("log");
+    const response = await fetch("/api/project-logs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...input,
+        projectId: selected.id,
+        logId: id,
+        createdAt: stamp,
+      }),
+    });
+    const payload = (await response.json()) as { filePath?: string };
+    if (!response.ok || !payload.filePath) {
+      setLogError(true);
+      throw new Error("Unable to save project log.");
+    }
     const log: ProjectLog = {
-      id: createId("log"),
+      id,
       projectId: selected.id,
       ...input,
+      filePath: payload.filePath,
       sourceIds: [],
       ideaIds: [],
       createdAt: stamp,
@@ -217,8 +265,10 @@ export function useHandViewModel() {
     progress,
     uploading,
     uploadError,
+    logError,
     addProject,
     updateProject,
+    updateProjectById,
     addTask,
     advanceTask,
     addLog,

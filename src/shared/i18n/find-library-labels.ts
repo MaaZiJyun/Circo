@@ -81,7 +81,7 @@ export const findLibraryZh = {
   "find.startedAt": "首次打开",
   "find.completedAt": "完成阅读",
   "find.studyDuration": "学习时长",
-  "find.cite": "Cite",
+  "find.cite": "引用",
   "find.copyCitationFailed": "无法复制 Citation。",
   "find.reference": "参考库",
   "find.points": "观点",

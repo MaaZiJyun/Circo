@@ -29,7 +29,7 @@ export function EvaluationSummary({ idea }: { idea: Idea }) {
   const strongest = evaluation.strength as IdeaDimension;
   const weakest = evaluation.weakness as IdeaDimension;
   return (
-    <div className="mt-4 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+    <div className="mt-4 dark:border-zinc-800">
       <div className="flex items-center justify-between gap-3">
         <span className="text-sm font-semibold">{t("mind.result")}</span>
         <Badge
@@ -42,9 +42,9 @@ export function EvaluationSummary({ idea }: { idea: Idea }) {
           {evaluation.totalScore} / 100
         </Badge>
       </div>
-      <p className="mt-2 text-xs font-medium">
+      {/* <p className="mt-2 text-xs font-medium">
         {t(levelKey(evaluation.level))}
-      </p>
+      </p> */}
       <div className="mt-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-5">
         {dimensions.map((dimension) => (
           <div
