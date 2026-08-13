@@ -11,12 +11,17 @@ export const PROJECT_RECENT_LIST = "project_list_recent";
 const recentWindow = 7 * 24 * 60 * 60 * 1000;
 
 export type ProjectListInput = Pick<ProjectList, "name" | "note" | "color">;
+export type ProjectSort = "startDate" | "endDate" | "score";
+export type ProjectSortDirection = "ascending" | "descending";
 
 export function useProjectLibrary() {
   const { state, mutate } = useStore();
   const [activeListId, setActiveListId] = useState(PROJECT_DEFAULT_LIST);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [draggedIds, setDraggedIds] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<ProjectSort>("startDate");
+  const [sortDirection, setSortDirection] =
+    useState<ProjectSortDirection>("descending");
   const [recentCutoff] = useState(() => Date.now() - recentWindow);
   const lists = useMemo(
     () => (state ? activeItems(state.projectLists) : []),
@@ -37,10 +42,19 @@ export function useProjectLibrary() {
     [allProjects, recentCutoff],
   );
   const projects = useMemo(() => {
-    if (activeListId === PROJECT_DEFAULT_LIST) return allProjects;
-    if (activeListId === PROJECT_RECENT_LIST) return recentProjects;
-    return allProjects.filter((item) => item.listIds.includes(activeListId));
-  }, [activeListId, allProjects, recentProjects]);
+    const filtered = activeListId === PROJECT_DEFAULT_LIST
+      ? allProjects
+      : activeListId === PROJECT_RECENT_LIST
+        ? recentProjects
+        : allProjects.filter((item) => item.listIds.includes(activeListId));
+    const direction = sortDirection === "ascending" ? 1 : -1;
+    return filtered.slice().sort((a, b) => {
+      const comparison = sortBy === "score"
+        ? a.score - b.score
+        : a[sortBy].localeCompare(b[sortBy]);
+      return comparison * direction;
+    });
+  }, [activeListId, allProjects, recentProjects, sortBy, sortDirection]);
   const selectedList = lists.find((item) => item.id === activeListId);
 
   const selectList = (id: string) => {
@@ -146,6 +160,10 @@ export function useProjectLibrary() {
     toggleSelected,
     draggedIds,
     setDraggedIds,
+    sortBy,
+    setSortBy,
+    sortDirection,
+    setSortDirection,
     createList,
     updateList,
     deleteList,

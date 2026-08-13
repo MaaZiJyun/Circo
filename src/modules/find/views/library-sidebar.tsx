@@ -140,28 +140,30 @@ export function LibrarySidebar({
                     dropTargetId === list.id ? `${list.color}26` : undefined,
                 }}
               >
-                {list.system === "recent" ? (
-                  <ClockIcon className="size-4 shrink-0" />
-                ) : list.system === "marked" ? (
-                  <FlagIcon className="size-4 shrink-0" />
-                ) : (
-                  <FolderIcon
-                    className={`size-4 shrink-0 ${!active && list.system === "default" ? "text-zinc-700 dark:text-zinc-300" : ""}`}
-                    style={{
-                      color: !active && !list.system ? list.color : undefined,
-                    }}
-                  />
-                )}
+                <span className="relative shrink-0">
+                  {list.system === "recent" ? (
+                    <ClockIcon className="size-4" />
+                  ) : list.system === "marked" ? (
+                    <FlagIcon className="size-4" />
+                  ) : (
+                    <FolderIcon
+                      className={`size-4 ${!active && list.system === "default" ? "text-zinc-700 dark:text-zinc-300" : ""}`}
+                      style={{
+                        color: !active && !list.system ? list.color : undefined,
+                      }}
+                    />
+                  )}
+                  {hasUnread && (
+                    <span
+                      className={`absolute -left-1 -top-1 size-2 rounded-full bg-red-500 shadow-sm ring-2 ${active ? "ring-zinc-950 dark:ring-zinc-50" : "ring-zinc-50 dark:ring-zinc-950"}`}
+                      aria-label={t("find.unread")}
+                    />
+                  )}
+                </span>
                 <span className="truncate">
                   {list.system ? t(`find.list.${list.system}`) : list.name}
                 </span>
                 <span className="ml-auto text-xs opacity-60">{count}</span>
-                {hasUnread && (
-                  <span
-                    className="absolute right-1 top-1 size-2 rounded-full bg-red-500 shadow-sm ring-2 ring-zinc-50 dark:ring-zinc-950"
-                    aria-label={t("find.unread")}
-                  />
-                )}
               </button>
             </div>
           );

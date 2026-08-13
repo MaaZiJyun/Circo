@@ -13,14 +13,17 @@ import {
   ContextMenuItem,
   type MenuPosition,
 } from "@/modules/find/views/context-menu";
-import { PageHeader, SectionHeader } from "@/shared/components/page-elements";
-import { Button, Card, EmptyState, Select } from "@/shared/components/ui";
+import { LibrarySortControls } from "@/shared/components/library-sort-controls";
+import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
+import { Button, EmptyState, Select } from "@/shared/components/ui";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectList, ProjectRecord } from "@/shared/model/entities";
-import type { ProjectInput } from "../view-models/use-hand-view-model";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
-import { useProjectLibrary } from "../view-models/use-project-library";
+import {
+  type ProjectSort,
+  useProjectLibrary,
+} from "../view-models/use-project-library";
 import { AttachmentDialog } from "./attachment-dialog";
 import { LogDialog, ProjectDialog, TaskDialog } from "./hand-dialogs";
 import {
@@ -30,19 +33,11 @@ import {
 import { ProjectSidebar } from "./project-sidebar";
 import { ProjectTable } from "./project-table";
 import { ProjectWorkspace } from "./project-workspace";
+import { projectInputFromRecord } from "./project-record-input";
 import { ProjectTaskActions, type TaskMenu } from "./project-task-actions";
 
 type DetailDialog = "task" | "log" | "attachment" | null;
 type ProjectMenu = { project: ProjectRecord; position: MenuPosition } | null;
-const projectInput = (project: ProjectRecord): ProjectInput => ({
-  name: project.name,
-  purpose: project.purpose,
-  expected: project.expected,
-  startDate: project.startDate,
-  endDate: project.endDate,
-  tags: project.tags,
-  score: project.score,
-});
 
 export function HandView() {
   const { t } = useI18n();
@@ -59,6 +54,7 @@ export function HandView() {
   );
   const [editingList, setEditingList] = useState<ProjectList | null>(null);
   const selectionMode = library.selectedIds.length > 0;
+  const sortAscending = library.sortDirection === "ascending";
   const openProject = (project: ProjectRecord) => {
     vm.setSelectedId(project.id);
     setViewing(true);
@@ -70,13 +66,6 @@ export function HandView() {
 
   return (
     <div className="space-y-8">
-      {!viewing && (
-        <PageHeader
-          eyebrow={t("hand.eyebrow")}
-          title={t("hand.title")}
-          subtitle={t("hand.subtitle")}
-        />
-      )}
       {!viewing ? (
         <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
           <ProjectSidebar
@@ -84,30 +73,55 @@ export function HandView() {
             onCreate={() => setListDialog("create")}
             onEdit={setEditingList}
           />
-          <Card>
-            <SectionHeader
-              title={
-                library.selectedList?.system
-                  ? t(`hand.list.${library.selectedList.system}`)
-                  : library.selectedList?.name || t("hand.projectLibrary")
-              }
-              action={
-                !selectionMode ? (
-                  <Button onClick={() => setCreating(true)}>
-                    <PlusIcon className="size-4" />
-                    {t("hand.newProject")}
-                  </Button>
-                ) : undefined
-              }
-            />
-            {selectionMode && (
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                <span className="text-sm text-zinc-500">
-                  {t("hand.selectedCount").replace(
+          <TableLibraryWorkspace
+            title={
+              library.selectedList?.system
+                ? t(`hand.list.${library.selectedList.system}`)
+                : library.selectedList?.name || t("hand.projectLibrary")
+            }
+            controls={
+              <LibrarySortControls
+                label={t("hand.sortBy")}
+                value={library.sortBy}
+                options={[
+                  { value: "startDate", label: t("hand.startDate") },
+                  { value: "endDate", label: t("hand.endDate") },
+                  { value: "score", label: t("hand.projectScore") },
+                ]}
+                ascending={sortAscending}
+                directionLabel={t(
+                  sortAscending ? "hand.ascending" : "hand.descending",
+                )}
+                onChange={(value) => library.setSortBy(value as ProjectSort)}
+                onToggleDirection={() =>
+                  library.setSortDirection(
+                    sortAscending ? "descending" : "ascending",
+                  )
+                }
+              />
+            }
+            action={
+              <Button
+                className="whitespace-nowrap"
+                onClick={() => setCreating(true)}
+              >
+                <PlusIcon className="size-4" />
+                {t("hand.newProject")}
+              </Button>
+            }
+            selectionLabel={
+              selectionMode
+                ? t("hand.selectedCount").replace(
                     "{count}",
                     String(library.selectedIds.length),
-                  )}
-                </span>
+                  )
+                : undefined
+            }
+            onCancelSelection={
+              selectionMode ? () => library.setSelectedIds([]) : undefined
+            }
+            selectionActions={
+              <>
                 <Button
                   variant="secondary"
                   onClick={() => setListDialog("choose")}
@@ -130,14 +144,9 @@ export function HandView() {
                 >
                   {t("common.delete")}
                 </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => library.setSelectedIds([])}
-                >
-                  {t("common.close")}
-                </Button>
-              </div>
-            )}
+              </>
+            }
+          >
             {library.projects.length ? (
               <ProjectTable
                 library={library}
@@ -156,7 +165,7 @@ export function HandView() {
                 description={t("hand.projectGateHint")}
               />
             )}
-          </Card>
+          </TableLibraryWorkspace>
         </div>
       ) : vm.selected ? (
         <>
@@ -193,9 +202,7 @@ export function HandView() {
           <ProjectWorkspace
             vm={vm}
             openDialog={setDialog}
-            onOpenTaskMenu={(task, position) =>
-              setTaskMenu({ task, position })
-            }
+            onOpenTaskMenu={(task, position) => setTaskMenu({ task, position })}
           />
         </>
       ) : null}
@@ -213,7 +220,7 @@ export function HandView() {
           key={editing.id}
           open
           edit
-          initial={projectInput(editing)}
+          initial={projectInputFromRecord(editing)}
           onClose={() => setEditing(null)}
           onSave={(input) => vm.updateProjectById(editing.id, input)}
         />

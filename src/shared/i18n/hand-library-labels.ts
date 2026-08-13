@@ -14,6 +14,10 @@ export const handLibraryZh = {
   "hand.addToList": "添加到列表",
   "hand.removeFromList": "从当前列表移除",
   "hand.noCustomLists": "暂无自定义 Project List",
+  "hand.sortBy": "排序类型",
+  "hand.sortDirection": "排序顺序",
+  "hand.ascending": "升序",
+  "hand.descending": "降序",
 } as const;
 
 export const handLibraryEn: Record<keyof typeof handLibraryZh, string> = {
@@ -33,4 +37,8 @@ export const handLibraryEn: Record<keyof typeof handLibraryZh, string> = {
   "hand.addToList": "Add to list",
   "hand.removeFromList": "Remove from current list",
   "hand.noCustomLists": "No custom Project Lists",
+  "hand.sortBy": "Sort by",
+  "hand.sortDirection": "Sort direction",
+  "hand.ascending": "Ascending",
+  "hand.descending": "Descending",
 };

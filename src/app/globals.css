@@ -39,6 +39,10 @@ body {
   font-family: var(--font-sans);
 }
 
+table thead th {
+  white-space: nowrap;
+}
+
 button,
 a,
 input,

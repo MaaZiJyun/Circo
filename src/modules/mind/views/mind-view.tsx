@@ -2,14 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { PageHeader, SectionHeader } from "@/shared/components/page-elements";
+import { LibrarySortControls } from "@/shared/components/library-sort-controls";
+import { SectionHeader } from "@/shared/components/page-elements";
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import {
   Badge,
   Button,
   Card,
   Dialog,
   EmptyState,
-  Select,
 } from "@/shared/components/ui";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
@@ -47,7 +48,10 @@ export function MindView() {
   const [evaluating, setEvaluating] = useState<Idea | null>(null);
   const [editing, setEditing] = useState<Idea | null>(null);
   const [editInput, setEditInput] = useState<IdeaInput | null>(null);
-  const [sort, setSort] = useState<IdeaSort>("dateDesc");
+  const [sortType, setSortType] = useState<"date" | "score">("date");
+  const [sortAscending, setSortAscending] = useState(false);
+  const sort: IdeaSort =
+    `${sortType}${sortAscending ? "Asc" : "Desc"}` as IdeaSort;
   const [listDialog, setListDialog] = useState<"create" | "choose" | null>(
     null,
   );
@@ -122,53 +126,54 @@ export function MindView() {
             onEdit={setEditingList}
           />
           <Card>
-            {!selectionMode ? (
-              <SectionHeader
-                title={
-                  library.selectedList?.system
-                    ? t(`mind.list.${library.selectedList.system}`)
-                    : library.selectedList?.name || t("mind.library")
-                }
-                action={
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="w-28">
-                      <Select
-                        aria-label={t("mind.sort")}
-                        value={sort}
-                        onChange={(event) =>
-                          setSort(event.target.value as IdeaSort)
-                        }
-                      >
-                        <option value="dateDesc">
-                          {t("mind.sortDateDesc")}
-                        </option>
-                        <option value="dateAsc">{t("mind.sortDateAsc")}</option>
-                        <option value="scoreDesc">
-                          {t("mind.sortScoreDesc")}
-                        </option>
-                        <option value="scoreAsc">
-                          {t("mind.sortScoreAsc")}
-                        </option>
-                      </Select>
-                    </div>
-                    <Button onClick={() => setComposing(true)}>
-                      <PlusIcon className="size-4" />
-                      {t("dashboard.addIdea")}
-                    </Button>
-                  </div>
-                }
-              />
-            ) : undefined}
-            {selectionMode && (
-              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm text-zinc-500">
-                  {t("mind.selectedCount").replace(
-                    "{count}",
-                    String(library.selectedIds.length),
-                  )}
-                </span>
-                <div className="flex flex-wrap gap-2">
+            <SectionHeader
+              title={
+                library.selectedList?.system
+                  ? t(`mind.list.${library.selectedList.system}`)
+                  : library.selectedList?.name || t("mind.library")
+              }
+              controls={
+                !selectionMode ? (
+                  <LibrarySortControls
+                    label={t("mind.sort")}
+                    value={sortType}
+                    options={[
+                      { value: "date", label: t("mind.sortDate") },
+                      { value: "score", label: t("mind.sortScore") },
+                    ]}
+                    ascending={sortAscending}
+                    directionLabel={t(
+                      sortAscending ? "find.ascending" : "find.descending",
+                    )}
+                    selectClassName="w-28"
+                    onChange={(value) => setSortType(value as "date" | "score")}
+                    onToggleDirection={() =>
+                      setSortAscending((value) => !value)
+                    }
+                  />
+                ) : undefined
+              }
+              action={
+                !selectionMode ? (
                   <Button
+                    className="whitespace-nowrap"
+                    onClick={() => setComposing(true)}
+                  >
+                    <PlusIcon className="size-4" />
+                    {t("dashboard.addIdea")}
+                  </Button>
+                ) : undefined
+              }
+            />
+            {selectionMode && (
+              <SelectionToolbar
+                label={t("mind.selectedCount").replace(
+                  "{count}",
+                  String(library.selectedIds.length),
+                )}
+                onCancel={() => library.setSelectedIds([])}
+              >
+                <Button
                   variant="secondary"
                   onClick={() => setListDialog("choose")}
                 >
@@ -190,14 +195,7 @@ export function MindView() {
                 >
                   {t("common.delete")}
                 </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => library.setSelectedIds([])}
-                >
-                  {t("common.close")}
-                </Button>
-                </div>
-              </div>
+              </SelectionToolbar>
             )}
             {sortedIdeas.length ? (
               <IdeaGrid
