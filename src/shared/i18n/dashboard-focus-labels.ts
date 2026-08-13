@@ -1,15 +1,18 @@
 export const dashboardFocusZh = {
   "dashboard.focusTimer": "专注计时",
+  "dashboard.focusReady": "准备开始",
   "dashboard.focusRunning": "专注进行中",
   "dashboard.focusPaused": "已暂停",
   "dashboard.focusStopped": "本次专注已停止",
   "dashboard.pauseFocus": "暂停",
+  "dashboard.startFocusTimer": "开始",
   "dashboard.resumeFocus": "继续",
   "dashboard.stopFocus": "停止",
   "dashboard.cancelFocus": "取消",
   "dashboard.assignFocusTask": "将这段工时记入每日任务",
   "dashboard.saveFocus": "保存工时",
   "dashboard.noDailyTasks": "今天没有可选择的每日任务。",
+  "dashboard.editFocusTime": "编辑专注时间，格式为时:分:秒.毫秒",
   "dashboard.averageScore": "日均 score",
   "dashboard.scoreFormula":
     "score = 完成率 40 分 + 投入时间 30 分 + 紧急/重要任务完成度 30 分。投入时间按累计实际用时 ÷ 计划用时计算，最高 30 分。",
@@ -29,16 +32,20 @@ export const dashboardFocusZh = {
 
 export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
   "dashboard.focusTimer": "Focus timer",
+  "dashboard.focusReady": "Ready to start",
   "dashboard.focusRunning": "Focus in progress",
   "dashboard.focusPaused": "Paused",
   "dashboard.focusStopped": "Focus session stopped",
   "dashboard.pauseFocus": "Pause",
+  "dashboard.startFocusTimer": "Start",
   "dashboard.resumeFocus": "Resume",
   "dashboard.stopFocus": "Stop",
   "dashboard.cancelFocus": "Cancel",
   "dashboard.assignFocusTask": "Log this time to a daily task",
   "dashboard.saveFocus": "Save time",
   "dashboard.noDailyTasks": "There are no daily tasks to choose today.",
+  "dashboard.editFocusTime":
+    "Edit focus time in hours:minutes:seconds.milliseconds",
   "dashboard.averageScore": "Average daily score",
   "dashboard.scoreFormula":
     "score = completion rate (40) + invested time (30) + urgent/important task completion (30). Invested time is actual accumulated time ÷ planned time, capped at 30.",

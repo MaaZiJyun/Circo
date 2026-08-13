@@ -60,7 +60,11 @@ export function MessageReader({
           <ProfileAvatar name={profile.name} src={profile.avatarDataUrl} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap justify-between gap-2">
-              <p className="font-semibold">{profile.name}</p>
+              <p className="font-semibold">
+                {message.systemGenerated
+                  ? t("messages.systemSender")
+                  : profile.name}
+              </p>
               <time className="text-xs text-zinc-500">
                 {formatDate(message.deliverAt)}
               </time>

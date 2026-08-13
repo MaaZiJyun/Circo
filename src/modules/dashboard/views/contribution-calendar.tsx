@@ -93,9 +93,9 @@ export function ContributionCalendar({
           </span>
         }
       />
-      <p className="mb-4 text-xs leading-5 text-zinc-500">
+      {/* <p className="mb-4 text-xs leading-5 text-zinc-500">
         {t("dashboard.scoreFormula")}
-      </p>
+      </p> */}
       <div className="flex items-start gap-4">
         <div className="min-w-0 flex-1 overflow-x-auto pb-2">
           <div className="flex min-w-max gap-2">

@@ -132,7 +132,13 @@ export function MessageList({
                 className={`min-w-0 flex-1 text-left ${unread ? "font-semibold" : "font-normal"} md:grid md:grid-cols-[160px_minmax(0,1fr)_110px] md:items-center md:gap-3`}
                 onClick={() => onOpen(message)}
               >
-                <span>{t("messages.futureSelf")}</span>
+                <span>
+                  {t(
+                    message.systemGenerated
+                      ? "messages.systemSender"
+                      : "messages.futureSelf",
+                  )}
+                </span>
                 <span className="block truncate text-sm">
                   {message.subject}
                   <span

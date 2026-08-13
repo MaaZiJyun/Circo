@@ -1,6 +1,7 @@
 import type { BaseEntity } from "./entities";
 
-export type MessageReferenceKind = "source" | "point" | "idea" | "project" | "task";
+export type MessageReferenceKind =
+  "source" | "point" | "idea" | "project" | "task";
 export interface FutureMessage extends BaseEntity {
   subject: string;
   body: string;
@@ -8,7 +9,13 @@ export interface FutureMessage extends BaseEntity {
   deliveryMode: "scheduled" | "random";
   deliverAt: string;
   references: { kind: MessageReferenceKind; id: string; label: string }[];
-  attachments: { name: string; fileToken: string; mimeType: string; size: number }[];
+  attachments: {
+    name: string;
+    fileToken: string;
+    mimeType: string;
+    size: number;
+  }[];
   readAt?: string;
   favorite?: boolean;
+  systemGenerated?: boolean;
 }

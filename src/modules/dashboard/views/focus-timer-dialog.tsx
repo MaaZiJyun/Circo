@@ -24,14 +24,31 @@ function timerText(milliseconds: number) {
     .concat(`.${String(millis).padStart(3, "0")}`);
 }
 
+function parseTimerText(value: string) {
+  const match = value
+    .trim()
+    .match(/^(\d{1,3}):([0-5]\d):([0-5]\d)\.(\d{1,3})$/);
+  if (!match) return null;
+  const milliseconds = Number(match[4].padEnd(3, "0"));
+  return (
+    Number(match[1]) * 3_600_000 +
+    Number(match[2]) * 60_000 +
+    Number(match[3]) * 1000 +
+    milliseconds
+  );
+}
+
 export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
   const { state, mutate } = useStore();
   const [elapsed, setElapsed] = useState(0);
-  const [running, setRunning] = useState(true);
+  const [running, setRunning] = useState(false);
+  const [started, setStarted] = useState(false);
   const [stopped, setStopped] = useState(false);
+  const [editingTime, setEditingTime] = useState(false);
+  const [timeDraft, setTimeDraft] = useState("");
   const [taskId, setTaskId] = useState("");
-  const startedAt = useRef(new Date().toISOString());
+  const startedAt = useRef("");
   const accumulated = useRef(0);
   const segmentStart = useRef<number | null>(null);
 
@@ -66,6 +83,10 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
     setRunning(false);
   };
   const resume = () => {
+    if (!started) {
+      startedAt.current = now();
+      setStarted(true);
+    }
     segmentStart.current = performance.now();
     setRunning(true);
   };
@@ -77,6 +98,14 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
     setRunning(false);
     setStopped(true);
   };
+  const finishTimeEdit = () => {
+    const parsed = parseTimerText(timeDraft);
+    if (parsed !== null) {
+      accumulated.current = parsed;
+      setElapsed(parsed);
+    }
+    setEditingTime(false);
+  };
   const save = () => {
     const task = tasks.find((item) => item.id === taskId);
     const cycle =
@@ -85,7 +114,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
       ) ?? state.cycles.find((item) => !item.deletedAt);
     if (!task) return;
     const stamp = now();
-    const minutes = Math.max(1, elapsed) / 60_000;
+    const minutes = accumulated.current / 60_000;
     const session: WorkSession | null = cycle
       ? {
           id: createId("session"),
@@ -93,7 +122,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
           projectId: task.projectId,
           taskId: task.sourceTaskId,
           title: task.title,
-          startedAt: startedAt.current,
+          startedAt: startedAt.current || stamp,
           endedAt: stamp,
           minutes,
           effective: true,
@@ -140,16 +169,46 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
       <div className="grid justify-items-center gap-6">
         <div className="grid size-64 place-items-center rounded-full border-[10px] border-zinc-100 shadow-inner dark:border-zinc-900">
           <div className="text-center">
-            <p className="font-mono text-3xl font-semibold tabular-nums">
-              {timerText(elapsed)}
-            </p>
+            {editingTime ? (
+              <input
+                autoFocus
+                aria-label={t("dashboard.editFocusTime")}
+                value={timeDraft}
+                className="w-52 border-b border-zinc-300 bg-transparent text-center font-mono text-3xl font-semibold tabular-nums outline-none dark:border-zinc-700"
+                onFocus={(event) => event.currentTarget.select()}
+                onChange={(event) => setTimeDraft(event.target.value)}
+                onBlur={finishTimeEdit}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                  if (event.key === "Escape") {
+                    setTimeDraft(timerText(elapsed));
+                    event.currentTarget.blur();
+                  }
+                }}
+              />
+            ) : (
+              <button
+                type="button"
+                disabled={!stopped}
+                title={stopped ? t("dashboard.editFocusTime") : undefined}
+                className={`font-mono text-3xl font-semibold tabular-nums ${stopped ? "rounded-md underline decoration-dotted underline-offset-4" : "cursor-default"}`}
+                onClick={() => {
+                  setTimeDraft(timerText(elapsed));
+                  setEditingTime(true);
+                }}
+              >
+                {timerText(elapsed)}
+              </button>
+            )}
             <p className="mt-2 text-xs text-zinc-500">
               {t(
                 stopped
                   ? "dashboard.focusStopped"
                   : running
                     ? "dashboard.focusRunning"
-                    : "dashboard.focusPaused",
+                    : started
+                      ? "dashboard.focusPaused"
+                      : "dashboard.focusReady",
               )}
             </p>
           </div>
@@ -162,9 +221,15 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
               ) : (
                 <PlayIcon className="size-4" />
               )}
-              {t(running ? "dashboard.pauseFocus" : "dashboard.resumeFocus")}
+              {t(
+                running
+                  ? "dashboard.pauseFocus"
+                  : started
+                    ? "dashboard.resumeFocus"
+                    : "dashboard.startFocusTimer",
+              )}
             </Button>
-            <Button onClick={stop}>
+            <Button disabled={!started} onClick={stop}>
               <StopIcon className="size-4" />
               {t("dashboard.stopFocus")}
             </Button>
@@ -178,7 +243,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
         )}
         {stopped && (
           <div className="flex justify-center gap-2">
-            <Button disabled={!taskId} onClick={save}>
+            <Button disabled={!taskId || elapsed <= 0} onClick={save}>
               {t("dashboard.saveFocus")}
             </Button>
             <Button variant="danger" onClick={onClose}>
