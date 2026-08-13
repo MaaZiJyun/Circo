@@ -128,6 +128,11 @@ export function IdeaSidebar({
           );
         })}
       </nav>
+      {library.selectedList?.note && (
+        <p className="mt-4 border-t border-zinc-200 px-2 pt-3 text-xs text-zinc-500 dark:border-zinc-800">
+          {library.selectedList.note}
+        </p>
+      )}
       {menu && (
         <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
           <ContextMenuItem

@@ -5,6 +5,7 @@ import {
   CheckIcon,
   ChevronDownIcon,
   ArrowPathIcon,
+  EyeIcon,
 } from "@heroicons/react/24/outline";
 import { Button, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
@@ -17,6 +18,7 @@ import {
   type PointCapture,
 } from "./interactive-pdf-viewer";
 import { PointDialog } from "./point-dialog";
+import { CitationButton } from "./citation-button";
 import { clampReaderRatio, readerRatioKey } from "./reader-layout";
 import type { LiteratureReaderProps } from "./literature-reader-types";
 
@@ -98,7 +100,7 @@ export function LiteratureReader({
   };
   return (
     <div className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
+      <header className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3 md:w-2/3">
           <Button variant="ghost" onClick={onBack}>
             <ArrowLeftIcon className="size-4" />
@@ -110,7 +112,7 @@ export function LiteratureReader({
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <Button onClick={() => void save()} disabled={!dirty || saving}>
             <CheckIcon className="size-4" />
             {saving
@@ -119,6 +121,7 @@ export function LiteratureReader({
                 ? t("common.save")
                 : t("common.saved")}
           </Button>
+          <CitationButton citation={source.citation} onError={setError} />
           <Button
             variant="secondary"
             onClick={() => {
@@ -132,6 +135,7 @@ export function LiteratureReader({
               else setShowReview(true);
             }}
           >
+            <EyeIcon className="size-4" />
             {t(
               source.readingStatus === "read"
                 ? "find.markAsUnread"

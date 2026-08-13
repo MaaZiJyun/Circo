@@ -7,7 +7,7 @@ export const en: Record<MessageKey, string> = {
   "nav.dashboard": "Overview",
   "nav.me": "Me",
   "nav.find": "Find",
-  "nav.mind": "Idea Library",
+  "nav.mind": "Mind",
   "nav.hand": "Hand",
   "nav.land": "Land",
   "nav.settings": "Settings",

@@ -156,7 +156,7 @@ export function LiteratureDetailsPanel({
     [t("find.publicationDate"), source.publicationDate],
   ];
   return (
-    <section className="overflow-hidden rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zinc-50 shadow-sm dark:border-zinc-800 dark:from-zinc-950 dark:to-zinc-900">
+    <section className="overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 dark:from-zinc-950 dark:to-zinc-900">
       <div className="flex items-start justify-between gap-4 border-b border-zinc-200 p-5 dark:border-zinc-800">
         <div>
           <p className="text-xs font-medium uppercase tracking-widest text-zinc-500">
@@ -188,14 +188,6 @@ export function LiteratureDetailsPanel({
           </div>
         ))}
       </div>
-      {/* {source.citation && (
-        <div className="mx-5 mb-5 rounded-xl bg-zinc-100 p-4 dark:bg-zinc-900">
-          <p className="mb-2 text-xs font-medium text-zinc-500">Citation</p>
-          <pre className="whitespace-pre-wrap text-xs leading-5">
-            {source.citation}
-          </pre>
-        </div>
-      )} */}
       {source.readingStatus === "read" && (
         <div className="border-t border-zinc-200 p-5 dark:border-zinc-800">
           <div className="mb-4 flex flex-wrap items-center gap-2">
