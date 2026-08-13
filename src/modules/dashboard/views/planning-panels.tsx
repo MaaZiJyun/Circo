@@ -4,7 +4,6 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   PlusIcon,
-  TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Button, ProgressBar } from "@/shared/components/ui";
@@ -157,12 +156,12 @@ export function ProjectTaskPool({
 export function IndependentTaskPool({
   tasks,
   planDate,
-  onRemove,
+  onContextMenu,
   ...pool
 }: PoolProps & {
   tasks: TaskRecord[];
   planDate: string;
-  onRemove: (task: TaskRecord) => void;
+  onContextMenu: (task: TaskRecord, x: number, y: number) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -170,7 +169,13 @@ export function IndependentTaskPool({
       <h3 className="mb-3 font-semibold">{t("planning.routineTasks")}</h3>
       <div className="space-y-1">
         {tasks.map((task) => (
-          <div key={task.id} className="flex items-center gap-1">
+          <div
+            key={task.id}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              onContextMenu(task, event.clientX, event.clientY);
+            }}
+          >
             <PlanChoice
               item={{
                 id: task.id,
@@ -185,13 +190,6 @@ export function IndependentTaskPool({
               }}
               {...pool}
             />
-            <button
-              aria-label={t("common.delete")}
-              className="grid size-10 shrink-0 place-items-center rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
-              onClick={() => onRemove(task)}
-            >
-              <TrashIcon className="size-4" />
-            </button>
           </div>
         ))}
       </div>

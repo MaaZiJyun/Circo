@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
 import { Button } from "@/shared/components/ui";
 import { CreateDailyTaskDialog } from "@/modules/me/views/daily-task-dialogs";
 import type { DailyTaskInput } from "@/modules/me/view-models/use-daily-task-cache";
@@ -18,6 +19,10 @@ import {
   ProjectTaskPool,
   IndependentTaskPool,
 } from "./planning-panels";
+import {
+  PlanningTaskActions,
+  type PlanningTaskMenu,
+} from "./planning-task-actions";
 
 export function PlanningDialog({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
@@ -31,6 +36,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
   );
   const [expanded, setExpanded] = useState<string[]>([]);
   const [creatingIndependent, setCreatingIndependent] = useState(false);
+  const [taskMenu, setTaskMenu] = useState<PlanningTaskMenu>(null);
   if (!state) return null;
   const projects = activeItems(state.projects);
   const tasks = activeItems(state.tasks);
@@ -41,6 +47,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
     (sum, item) => sum + item.estimatedMinutes,
     0,
   );
+  const plannedItems = selected.slice().sort(comparePlanDeadline);
   const selectedIds = new Set(
     selected.map((item) => item.id),
   );
@@ -104,24 +111,63 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       current.filter((item) => item.id !== task.id),
     );
   };
+  const updateIndependent = (task: TaskRecord, input: TaskInput) => {
+    const stamp = now();
+    mutate((current) => ({
+      ...current,
+      tasks: current.tasks.map((item) =>
+        item.id === task.id
+          ? {
+              ...item,
+              ...input,
+              priority: priorityFromImportance(input.importance),
+              updatedAt: stamp,
+            }
+          : item,
+      ),
+    }));
+    setSelected((current) => {
+      const previous = current.find((item) => item.id === task.id);
+      if (!previous) return current;
+      const withoutPrevious = current.filter((item) => item.id !== task.id);
+      const otherMinutes = withoutPrevious.reduce(
+        (sum, item) => sum + item.estimatedMinutes,
+        0,
+      );
+      if (otherMinutes + input.estimatedMinutes > dayMinutes)
+        return withoutPrevious;
+      return [
+        ...withoutPrevious,
+        {
+          ...previous,
+          title: input.title.trim(),
+          description: input.description,
+          dueAt: input.dueDate,
+          estimatedMinutes: input.estimatedMinutes,
+          expectedOutput: input.expectedOutput,
+          importance: input.importance,
+        },
+      ];
+    });
+  };
   const confirm = () => {
     const stamp = now();
     const message: FutureMessage = {
       ...existing,
       id: existing?.id ?? createId("message_plan"),
       subject: t("planning.messageSubject").replace("{date}", planDate),
-      body: planBody(selected, planDate, totalMinutes, t),
+      body: planBody(plannedItems, planDate, totalMinutes, t),
       recipient: "futureSelf",
       deliveryMode: "scheduled",
       deliverAt: `${planDate}T00:00:00`,
-      references: selected.flatMap((item) =>
+      references: plannedItems.flatMap((item) =>
         item.sourceTaskId
           ? [{ kind: "task" as const, id: item.sourceTaskId, label: item.title }]
           : [],
       ),
       attachments: [],
       systemGenerated: true,
-      dailyPlan: { date: planDate, items: selected },
+      dailyPlan: { date: planDate, items: plannedItems },
       createdAt: existing?.createdAt ?? stamp,
       updatedAt: stamp,
     };
@@ -149,7 +195,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         </header>
         <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(300px,0.9fr)_minmax(420px,1.3fr)]">
           <PlanBasket
-            items={selected}
+            items={plannedItems}
             totalMinutes={totalMinutes}
             onRemove={toggle}
             onCreate={() => setCreatingIndependent(true)}
@@ -169,7 +215,9 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
               planDate={planDate}
               selectedIds={selectedIds}
               totalMinutes={totalMinutes}
-              onRemove={removeIndependent}
+              onContextMenu={(task, x, y) =>
+                setTaskMenu({ task, position: { x, y } })
+              }
               onToggle={toggle}
             />
           </div>
@@ -190,8 +238,20 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         onClose={() => setCreatingIndependent(false)}
         onSave={createIndependent}
       />
+      <PlanningTaskActions
+        menu={taskMenu}
+        onClose={() => setTaskMenu(null)}
+        onUpdate={updateIndependent}
+        onRemove={removeIndependent}
+      />
     </div>
   );
+}
+
+function comparePlanDeadline(left: DailyPlanItem, right: DailyPlanItem) {
+  if (!left.dueAt) return right.dueAt ? 1 : 0;
+  if (!right.dueAt) return -1;
+  return left.dueAt.localeCompare(right.dueAt);
 }
 
 function planBody(

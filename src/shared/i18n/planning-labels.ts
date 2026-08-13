@@ -27,8 +27,8 @@ export const planningZh = {
 export const planningEn: Record<keyof typeof planningZh, string> = {
   "planning.title": "Plan tomorrow",
   "planning.planArea": "Plan",
-  "planning.projectTasks": "Project tasks",
-  "planning.routineTasks": "Non-project tasks",
+  "planning.projectTasks": "Online tasks",
+  "planning.routineTasks": "Offline tasks",
   "planning.routineName": "Task name, such as meals or sleep",
   "planning.createIndependent": "Create non-project task",
   "planning.empty": "The next-day task list is empty",
