@@ -1,6 +1,5 @@
 import type { MessageKey } from "./zh"; import { findLibraryEn } from "./find-library-labels"; import { mindEn } from "./mind-labels";
-import { meHomeEn } from "./me-home-labels";
-import { handLibraryEn } from "./hand-library-labels";
+import { meHomeEn } from "./me-home-labels"; import { handLibraryEn } from "./hand-library-labels";
 import { dashboardCountdownEn } from "./dashboard-countdown-labels"; import { messageEn } from "./message-labels";
 export const en: Record<MessageKey, string> = {
   "app.name": "Circo",
@@ -220,9 +219,10 @@ export const en: Record<MessageKey, string> = {
   "settings.title": "Settings",
   "settings.profile": "Profile",
   "settings.username": "Username",
-  "settings.changeAvatar": "Change avatar",
+  "settings.changeAvatar": "Replace avatar",
   "settings.removeAvatar": "Remove avatar",
-  "settings.avatarHint": "PNG, JPEG, or WebP up to 2 MB.",
+  "settings.avatarHint":
+    "Right-click the avatar to replace or remove it. PNG, JPEG, or WebP up to 2 MB.",
   "settings.avatarInvalid": "Choose a PNG, JPEG, or WebP image up to 2 MB.",
   "settings.nameRequired": "Username is required.",
   "settings.theme": "Theme",

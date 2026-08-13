@@ -218,9 +218,10 @@ export const zh = {
   "settings.title": "设置",
   "settings.profile": "个人资料",
   "settings.username": "用户名",
-  "settings.changeAvatar": "修改头像",
+  "settings.changeAvatar": "更换头像",
   "settings.removeAvatar": "移除头像",
-  "settings.avatarHint": "支持 PNG、JPEG 或 WebP，最大 2 MB。",
+  "settings.avatarHint":
+    "右键头像可更换或移除。支持 PNG、JPEG 或 WebP，最大 2 MB。",
   "settings.avatarInvalid": "请选择不超过 2 MB 的 PNG、JPEG 或 WebP 图片。",
   "settings.nameRequired": "用户名不能为空。",
   "settings.theme": "外观主题",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Bars3Icon,
   LightBulbIcon,
@@ -23,14 +23,14 @@ import { MindView } from "@/modules/mind/views/mind-view";
 import { MessagesView } from "@/modules/messages/views/messages-view";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
+import { activeItems } from "@/shared/model/app-state";
 import { useStore } from "@/shared/view-models/store-context";
 import { AppSearchResults } from "./app-search-results";
 import { SettingsView } from "./settings-view";
 import { SidebarProfile } from "./sidebar-profile";
 import { IconButton, Input, LoadingState } from "./ui";
 
-export type AppSection =
-  "dashboard" | "me" | "find" | "mind" | "hand" | "land" | "messages" | "settings";
+export type AppSection = "dashboard" | "me" | "find" | "mind" | "hand" | "land" | "messages" | "settings";
 
 const navigation: {
   id: AppSection;
@@ -38,11 +38,11 @@ const navigation: {
   icon: typeof HomeIcon;
 }[] = [
   { id: "dashboard", label: "nav.dashboard", icon: HomeIcon },
+  { id: "messages", label: "nav.messages", icon: EnvelopeIcon },
   { id: "find", label: "nav.find", icon: NewspaperIcon },
   { id: "mind", label: "nav.mind", icon: LightBulbIcon },
   { id: "hand", label: "nav.hand", icon: BeakerIcon },
   { id: "land", label: "nav.land", icon: TrophyIcon },
-  { id: "messages", label: "nav.messages", icon: EnvelopeIcon },
 ];
 
 function Navigation({
@@ -50,11 +50,15 @@ function Navigation({
   setSection,
   close,
   collapsed = false,
+  hasUnreadMessages = false,
+  hasUnreadLiterature = false,
 }: {
   section: AppSection;
   setSection: (section: AppSection) => void;
   close?: () => void;
   collapsed?: boolean;
+  hasUnreadMessages?: boolean;
+  hasUnreadLiterature?: boolean;
 }) {
   const { t } = useI18n();
   return (
@@ -62,6 +66,9 @@ function Navigation({
       {navigation.map((item) => {
         const Icon = item.icon;
         const active = item.id === section;
+        const showUnread =
+          (item.id === "messages" && hasUnreadMessages) ||
+          (item.id === "find" && hasUnreadLiterature);
         return (
           <button
             key={item.id}
@@ -73,7 +80,20 @@ function Navigation({
             }}
             className={`flex min-h-11 items-center rounded-xl text-sm font-medium transition-colors ${collapsed ? "justify-center px-0" : "gap-3 px-3"} ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50"}`}
           >
-            <Icon className="size-5" aria-hidden="true" />
+            <span className="relative shrink-0">
+              <Icon className="size-5" aria-hidden="true" />
+              {showUnread && (
+                <span
+                  className="absolute -left-1 -top-1 size-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-950"
+                  aria-hidden="true"
+                />
+              )}
+            </span>
+            {showUnread && (
+              <span className="sr-only">
+                {t(item.id === "find" ? "find.unread" : "messages.unread")}
+              </span>
+            )}
             {!collapsed && t(item.label)}
           </button>
         );
@@ -85,9 +105,13 @@ function Navigation({
 function Sidebar({
   section,
   setSection,
+  hasUnreadMessages,
+  hasUnreadLiterature,
 }: {
   section: AppSection;
   setSection: (section: AppSection) => void;
+  hasUnreadMessages: boolean;
+  hasUnreadLiterature: boolean;
 }) {
   const { t } = useI18n();
   const [collapsed, setCollapsed] = useState(false);
@@ -122,6 +146,8 @@ function Sidebar({
         section={section}
         setSection={setSection}
         collapsed={collapsed}
+        hasUnreadMessages={hasUnreadMessages}
+        hasUnreadLiterature={hasUnreadLiterature}
       />
       <SidebarProfile
         active={section === "me" || section === "settings" ? section : null}
@@ -138,6 +164,13 @@ export function AppShell() {
   const [section, setSection] = useState<AppSection>("dashboard");
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [currentTime, setCurrentTime] = useState(0);
+  useEffect(() => {
+    const updateCurrentTime = () => setCurrentTime(Date.now());
+    updateCurrentTime();
+    const timer = window.setInterval(updateCurrentTime, 60000);
+    return () => window.clearInterval(timer);
+  }, []);
   if (!state && !error) return <LoadingState label={t("common.loading")} />;
   if (!state)
     return (
@@ -151,6 +184,13 @@ export function AppShell() {
         </div>
       </main>
     );
+  const hasUnreadMessages = activeItems(state.messages ?? []).some(
+    (message) =>
+      !message.readAt && new Date(message.deliverAt).getTime() <= currentTime,
+  );
+  const hasUnreadLiterature = activeItems(state.sources).some(
+    (source) => source.readingStatus !== "read",
+  );
   const views: Record<AppSection, React.ReactNode> = {
     dashboard: <DashboardView navigate={setSection} />,
     me: <MeView />,
@@ -163,7 +203,12 @@ export function AppShell() {
   };
   return (
     <div className="flex h-dvh overflow-hidden bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
-      <Sidebar section={section} setSection={setSection} />
+      <Sidebar
+        section={section}
+        setSection={setSection}
+        hasUnreadMessages={hasUnreadMessages}
+        hasUnreadLiterature={hasUnreadLiterature}
+      />
       {menuOpen && (
         <div
           className="fixed inset-0 z-40 cursor-pointer bg-black/55 lg:hidden"
@@ -186,6 +231,8 @@ export function AppShell() {
               section={section}
               setSection={setSection}
               close={() => setMenuOpen(false)}
+              hasUnreadMessages={hasUnreadMessages}
+              hasUnreadLiterature={hasUnreadLiterature}
             />
             <SidebarProfile
               active={

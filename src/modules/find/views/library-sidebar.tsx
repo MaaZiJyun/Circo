@@ -140,7 +140,7 @@ export function LibrarySidebar({
                     dropTargetId === list.id ? `${list.color}26` : undefined,
                 }}
               >
-                <span className="relative shrink-0">
+                <span className="shrink-0">
                   {list.system === "recent" ? (
                     <ClockIcon className="size-4" />
                   ) : list.system === "marked" ? (
@@ -153,14 +153,10 @@ export function LibrarySidebar({
                       }}
                     />
                   )}
-                  {hasUnread && (
-                    <span
-                      className={`absolute -left-1 -top-1 size-2 rounded-full bg-red-500 shadow-sm ring-2 ${active ? "ring-zinc-950 dark:ring-zinc-50" : "ring-zinc-50 dark:ring-zinc-950"}`}
-                      aria-label={t("find.unread")}
-                    />
-                  )}
                 </span>
-                <span className="truncate">
+                <span
+                  className={`truncate ${hasUnread ? "font-semibold" : "font-normal"}`}
+                >
                   {list.system ? t(`find.list.${list.system}`) : list.name}
                 </span>
                 <span className="ml-auto text-xs opacity-60">{count}</span>
