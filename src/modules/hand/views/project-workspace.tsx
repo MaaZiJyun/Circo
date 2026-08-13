@@ -148,7 +148,7 @@ export function ProjectWorkspace({
             </div>
           )}
           {vm.logs.some((log) => log.period === logPeriod) ? (
-            <div className="mt-2 grid gap-3">
+            <div className="mt-3 grid gap-3">
               {vm.logs
                 .filter((log) => log.period === logPeriod)
                 .map((log) => (
@@ -174,7 +174,9 @@ export function ProjectWorkspace({
                 ))}
             </div>
           ) : (
-            <EmptyState title={t("common.noData")} />
+            <div className="mt-3">
+              <EmptyState title={t("common.noData")} />
+            </div>
           )}
         </Card>
       </div>
