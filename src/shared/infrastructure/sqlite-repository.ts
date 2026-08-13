@@ -8,6 +8,10 @@ import { createSeedState } from "./seed";
 import { seedPointLists } from "./seed-project-lists";
 import { emptyReadingReview } from "@/modules/find/model/reading-record";
 import { normalizeBackgroundAudio } from "@/shared/model/background-audio";
+import {
+  normalizeTasks,
+  withoutLegacyRoutineTasks,
+} from "@/shared/model/task-normalization";
 
 const systemLists = [
   {
@@ -109,7 +113,7 @@ function normalizeState(state: AppState): AppState {
   const systemIdeaListIds = new Set(systemIdeaLists.map((item) => item.id));
   const systemPointListIds = new Set(systemPointLists.map((item) => item.id));
   return {
-    ...state,
+    ...withoutLegacyRoutineTasks(state),
     profile: {
       name: state.profile?.name?.trim() || "Me",
       avatarDataUrl: state.profile?.avatarDataUrl ?? "",
@@ -207,12 +211,7 @@ function normalizeState(state: AppState): AppState {
       expectedOutput: item.expectedOutput ?? "",
       importance: item.importance ?? 50,
     })),
-    tasks: state.tasks.map((item) => ({
-      ...item,
-      description: item.description ?? "",
-      expectedOutput: item.expectedOutput ?? "",
-      actualMinutes: item.actualMinutes ?? 0,
-    })),
+    tasks: normalizeTasks(state),
     logs: state.logs.map((item) => ({
       ...item,
       period: item.period ?? "day",

@@ -16,5 +16,7 @@ export const today = () => {
 export const addDays = (date: Date, days: number) => {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
-  return result.toISOString().slice(0, 10);
+  const month = String(result.getMonth() + 1).padStart(2, "0");
+  const day = String(result.getDate()).padStart(2, "0");
+  return `${result.getFullYear()}-${month}-${day}`;
 };

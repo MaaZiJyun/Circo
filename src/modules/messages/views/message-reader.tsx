@@ -8,10 +8,11 @@ import {
   PaperClipIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { Badge, IconButton } from "@/shared/components/ui";
+import { Badge, Button, IconButton } from "@/shared/components/ui";
 import { ProfileAvatar } from "@/shared/components/profile-avatar";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { FutureMessage } from "@/shared/model/message";
+import { today } from "@/shared/model/factories";
 
 export function MessageReader({
   message,
@@ -21,6 +22,7 @@ export function MessageReader({
   onReply,
   onForward,
   onMarkUnread,
+  onImportPlan,
 }: {
   message: FutureMessage;
   profile: { name: string; avatarDataUrl: string };
@@ -29,6 +31,7 @@ export function MessageReader({
   onReply: () => void;
   onForward: () => void;
   onMarkUnread: () => void;
+  onImportPlan: () => void;
 }) {
   const { t, formatDate } = useI18n();
   return (
@@ -77,6 +80,9 @@ export function MessageReader({
         <div className="min-h-48 whitespace-pre-wrap py-8 text-sm leading-7">
           {message.body}
         </div>
+        {message.dailyPlan && (
+          <PlanMessageAction message={message} onImport={onImportPlan} />
+        )}
         {!!message.attachments.length && (
           <section className="border-t border-zinc-200 pt-5 dark:border-zinc-800">
             <h3 className="mb-3 text-sm font-semibold">
@@ -110,5 +116,33 @@ export function MessageReader({
         )}
       </div>
     </article>
+  );
+}
+
+function PlanMessageAction({
+  message,
+  onImport,
+}: {
+  message: FutureMessage;
+  onImport: () => void;
+}) {
+  const { t } = useI18n();
+  const plan = message.dailyPlan;
+  if (!plan) return null;
+  const current = today();
+  const imported = Boolean(plan.importedAt);
+  const expired = current > plan.date;
+  return (
+    <section className="mb-6 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+      {imported ? (
+        <p className="text-sm text-green-600">{t("planning.imported")}</p>
+      ) : current === plan.date ? (
+        <Button onClick={onImport}>{t("planning.importToday")}</Button>
+      ) : (
+        <p className="text-sm text-zinc-500">
+          {t(expired ? "planning.expired" : "planning.availableToday")}
+        </p>
+      )}
+    </section>
   );
 }

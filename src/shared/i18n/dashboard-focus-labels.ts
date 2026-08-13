@@ -1,4 +1,6 @@
 export const dashboardFocusZh = {
+  "dashboard.startFocus": "开始专注",
+  "dashboard.totalTime": "累计投入",
   "dashboard.focusTimer": "专注计时",
   "dashboard.focusReady": "准备开始",
   "dashboard.focusRunning": "专注进行中",
@@ -31,6 +33,8 @@ export const dashboardFocusZh = {
 } as const;
 
 export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
+  "dashboard.startFocus": "Start focus",
+  "dashboard.totalTime": "Total effort",
   "dashboard.focusTimer": "Focus timer",
   "dashboard.focusReady": "Ready to start",
   "dashboard.focusRunning": "Focus in progress",

@@ -247,7 +247,9 @@ export function HandView() {
         />
       )}
       <TaskDialog
+        key={vm.selected?.id ?? "task"}
         open={dialog === "task"}
+        defaultImportance={vm.selected?.score ?? 50}
         onClose={() => setDialog(null)}
         onSave={vm.addTask}
       />

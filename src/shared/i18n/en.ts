@@ -6,6 +6,7 @@ import { dashboardCountdownEn } from "./dashboard-countdown-labels";
 import { dashboardFocusEn } from "./dashboard-focus-labels";
 import { messageEn } from "./message-labels";
 import { settingsMediaEn } from "./settings-media-labels";
+import { planningEn } from "./planning-labels";
 export const en: Record<import("./zh").MessageKey, string> = {
   "app.name": "Circo",
   "app.tagline": "Give every effort an origin and a destination",
@@ -17,6 +18,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "nav.land": "Land",
   "nav.settings": "Settings",
   ...messageEn,
+  ...planningEn,
   "common.add": "New",
   "common.save": "Save",
   "common.cancel": "Cancel",
@@ -57,10 +59,8 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "dashboard.title": "Turn knowledge into reachable outcomes.",
   "dashboard.subtitle":
     "From effort, reading, and ideas to projects and artifacts—every step stays traceable.",
-  "dashboard.startFocus": "Start focus",
   ...dashboardFocusEn,
   "dashboard.addIdea": "Capture idea",
-  "dashboard.totalTime": "Total effort",
   "dashboard.effectiveRate": "Effective rate",
   "dashboard.completionRate": "Plan completion",
   "dashboard.activeProjects": "Active projects",

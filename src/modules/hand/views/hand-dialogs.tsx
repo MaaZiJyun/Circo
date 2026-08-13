@@ -8,8 +8,8 @@ import { parseTags } from "@/shared/model/tags";
 import type {
   LogInput,
   ProjectInput,
-  TaskInput,
 } from "../view-models/use-hand-view-model";
+export { TaskDialog } from "./task-dialog";
 
 export function ProjectDialog({
   open,
@@ -98,96 +98,6 @@ export function ProjectDialog({
             />
           </Field>
         </div>
-        <Button onClick={submit}>{t("common.save")}</Button>
-      </div>
-    </Dialog>
-  );
-}
-
-export function TaskDialog({
-  open,
-  edit = false,
-  initial,
-  onClose,
-  onSave,
-}: {
-  open: boolean;
-  edit?: boolean;
-  initial?: TaskInput;
-  onClose: () => void;
-  onSave: (input: TaskInput) => void;
-}) {
-  const { t } = useI18n();
-  const [input, setInput] = useState<TaskInput>(initial ?? {
-    title: "",
-    description: "",
-    dueDate: `${addDays(new Date(), 7)}T23:59`,
-    estimatedMinutes: 60,
-    expectedOutput: "",
-    milestone: false,
-  });
-  const submit = () => {
-    if (!input.title.trim()) return;
-    onSave(input);
-    onClose();
-    setInput({ ...input, title: "" });
-  };
-  return (
-    <Dialog
-      open={open}
-      title={t(edit ? "hand.editTask" : "hand.newTask")}
-      closeLabel={t("common.close")}
-      onClose={onClose}
-    >
-      <div className="grid gap-4">
-        <Field label={t("hand.taskTitle")}>
-          <Input value={input.title} onChange={(event) => setInput({ ...input, title: event.target.value })} autoFocus />
-        </Field>
-        <Field label={t("hand.taskDescription")}>
-          <Textarea value={input.description} onChange={(event) => setInput({ ...input, description: event.target.value })} />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={t("me.due")}>
-            <Input
-              type="datetime-local"
-              value={input.dueDate}
-              onChange={(event) =>
-                setInput({ ...input, dueDate: event.target.value })
-              }
-            />
-          </Field>
-          <Field label={t("hand.estimate")}>
-            <Input
-              type="number"
-              min="1"
-              value={input.estimatedMinutes}
-              onChange={(event) =>
-                setInput({
-                  ...input,
-                  estimatedMinutes: Number(event.target.value),
-                })
-              }
-            />
-          </Field>
-        </div>
-        <Field label={t("hand.expectedOutput")}>
-          <Textarea
-            value={input.expectedOutput}
-            onChange={(event) =>
-              setInput({ ...input, expectedOutput: event.target.value })
-            }
-          />
-        </Field>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={input.milestone}
-            onChange={(event) =>
-              setInput({ ...input, milestone: event.target.checked })
-            }
-          />
-          {t("hand.milestone")}
-        </label>
         <Button onClick={submit}>{t("common.save")}</Button>
       </div>
     </Dialog>

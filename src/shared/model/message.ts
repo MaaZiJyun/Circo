@@ -18,4 +18,24 @@ export interface FutureMessage extends BaseEntity {
   readAt?: string;
   favorite?: boolean;
   systemGenerated?: boolean;
+  dailyPlan?: DailyPlanMessage;
+}
+
+export interface DailyPlanItem {
+  id: string;
+  kind: "task" | "project" | "routine";
+  title: string;
+  description: string;
+  estimatedMinutes: number;
+  expectedOutput: string;
+  importance: number;
+  dueAt?: string;
+  sourceTaskId?: string;
+  projectId?: string;
+}
+
+export interface DailyPlanMessage {
+  date: string;
+  items: DailyPlanItem[];
+  importedAt?: string;
 }

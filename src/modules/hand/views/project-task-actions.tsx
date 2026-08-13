@@ -15,6 +15,8 @@ const taskInput = (task: TaskRecord): TaskInput => ({
   title: task.title, description: task.description, dueDate: task.dueDate,
   estimatedMinutes: task.estimatedMinutes,
   expectedOutput: task.expectedOutput, milestone: task.milestone,
+  importance: task.importance,
+  recurrence: task.recurrence,
 });
 
 export function ProjectTaskActions({

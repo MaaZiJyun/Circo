@@ -1,4 +1,6 @@
 export type EntityKind = "goal" | "source" | "idea" | "project" | "artifact";
+import type { TaskRecurrence } from "./task-recurrence-types";
+export type { TaskRecurrence } from "./task-recurrence-types";
 export type {
   PointList,
   ReferencePoint,
@@ -10,7 +12,6 @@ export interface BaseEntity {
   updatedAt: string;
   deletedAt?: string;
 }
-
 export interface Cycle extends BaseEntity {
   name: string;
   startDate: string;
@@ -206,7 +207,7 @@ export interface ProjectRecord extends BaseEntity {
 }
 
 export interface TaskRecord extends BaseEntity {
-  projectId: string;
+  projectId?: string;
   parentId?: string;
   title: string;
   description: string;
@@ -217,6 +218,9 @@ export interface TaskRecord extends BaseEntity {
   actualMinutes: number;
   milestone: boolean;
   expectedOutput: string;
+  importance: number;
+  recurrence: TaskRecurrence | null;
+  recurrenceSourceId?: string;
   completedAt?: string;
 }
 

@@ -76,6 +76,7 @@ export function MessagesView() {
                 onReply={() => reply(opened)}
                 onForward={() => forward(opened)}
                 onMarkUnread={() => vm.markUnread(opened.id)}
+                onImportPlan={() => vm.importDailyPlan(opened)}
               />
             ) : (
               <MessageList

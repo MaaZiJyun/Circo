@@ -3,6 +3,8 @@
 import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
 import { today } from "@/shared/model/factories";
+import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
+import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { useStore } from "@/shared/view-models/store-context";
 
 export type TaskInput = Pick<
@@ -13,6 +15,8 @@ export type TaskInput = Pick<
   | "estimatedMinutes"
   | "expectedOutput"
   | "milestone"
+  | "importance"
+  | "recurrence"
 >;
 
 export function useProjectTaskActions(selected?: ProjectRecord) {
@@ -24,7 +28,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       id: createId("task"),
       projectId: selected.id,
       ...input,
-      priority: "medium",
+      priority: priorityFromImportance(input.importance),
       status: "todo",
       actualMinutes: 0,
       completedAt: undefined,
@@ -34,16 +38,15 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
   };
   const advanceTask = (task: TaskRecord) => {
-    const status =
+    const status: TaskRecord["status"] =
       task.status === "todo"
         ? "doing"
         : task.status === "doing"
           ? "done"
           : "todo";
     const stamp = now();
-    mutate((current) => ({
-      ...current,
-      tasks: current.tasks.map((item) =>
+    mutate((current) => {
+      const tasks = current.tasks.map((item) =>
         item.id === task.id
           ? {
               ...item,
@@ -56,18 +59,25 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
               completedAt: status === "done" ? stamp : undefined,
             }
           : item,
-      ),
-      dailyTasks: current.dailyTasks.map((item) =>
-        item.sourceTaskId === task.id && item.date === today()
-          ? {
-              ...item,
-              completed: status === "done",
-              completedAt: status === "done" ? stamp : undefined,
-              updatedAt: stamp,
-            }
-          : item,
-      ),
-    }));
+      );
+      return {
+        ...current,
+        tasks:
+          status === "done"
+            ? appendNextRecurringTask(tasks, task.id, stamp)
+            : tasks,
+        dailyTasks: current.dailyTasks.map((item) =>
+          item.sourceTaskId === task.id && item.date === today()
+            ? {
+                ...item,
+                completed: status === "done",
+                completedAt: status === "done" ? stamp : undefined,
+                updatedAt: stamp,
+              }
+            : item,
+        ),
+      };
+    });
   };
   const updateTask = (id: string, input: TaskInput) =>
     mutate((current) => ({

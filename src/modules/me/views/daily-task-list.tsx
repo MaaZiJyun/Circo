@@ -76,7 +76,7 @@ export function DailyTaskList() {
               actualMinutes={item.actualMinutes ?? 0}
               expectedOutput={item.expectedOutput}
               source={
-                item.sourceTaskId
+                item.sourceTaskId && item.projectId
                   ? `${t("me.fromProject")}: ${vm.projectName(item.projectId)}`
                   : t("me.independentTask")
               }

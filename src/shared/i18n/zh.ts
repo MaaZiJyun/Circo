@@ -6,6 +6,7 @@ import { dashboardCountdownZh } from "./dashboard-countdown-labels";
 import { dashboardFocusZh } from "./dashboard-focus-labels";
 import { messageZh } from "./message-labels";
 import { settingsMediaZh } from "./settings-media-labels";
+import { planningZh } from "./planning-labels";
 
 export const zh = {
   "app.name": "Circo",
@@ -18,6 +19,7 @@ export const zh = {
   "nav.land": "结果",
   "nav.settings": "设置",
   ...messageZh,
+  ...planningZh,
   "common.add": "新建",
   "common.save": "保存",
   "common.cancel": "取消",
@@ -58,10 +60,8 @@ export const zh = {
   "dashboard.title": "把知识变成可以抵达的成果。",
   "dashboard.subtitle":
     "从投入、阅读和灵感，到项目与正式产出，每一步都可追溯。",
-  "dashboard.startFocus": "开始专注",
   ...dashboardFocusZh,
   "dashboard.addIdea": "记录灵感",
-  "dashboard.totalTime": "累计投入",
   "dashboard.effectiveRate": "有效投入率",
   "dashboard.completionRate": "计划完成率",
   "dashboard.activeProjects": "进行中项目",

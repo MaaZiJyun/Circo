@@ -6,7 +6,7 @@ import type {
   FutureMessage,
   MessageReferenceKind,
 } from "@/shared/model/message";
-import { createId, now } from "@/shared/model/factories";
+import { createId, now, today } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
 
 export type MessageInput = Pick<
@@ -109,6 +109,54 @@ export function useMessages() {
   const deleteMany = (ids: string[]) => updateMany(ids, { deletedAt: now() });
   const favoriteMany = (ids: string[], favorite: boolean) =>
     updateMany(ids, { favorite });
+  const importDailyPlan = (message: FutureMessage) => {
+    const plan = message.dailyPlan;
+    if (!plan || plan.importedAt || plan.date !== today()) return;
+    const stamp = now();
+    mutate((current) => {
+      const existingSourceIds = new Set(
+        current.dailyTasks
+          .filter((task) => task.date === plan.date && !task.deletedAt)
+          .flatMap((task) => (task.sourceTaskId ? [task.sourceTaskId] : [])),
+      );
+      const existingIds = new Set(current.dailyTasks.map((task) => task.id));
+      const additions = plan.items
+        .filter(
+          (item) =>
+            !item.sourceTaskId || !existingSourceIds.has(item.sourceTaskId),
+        )
+        .map((item) => ({
+          id: `daily_plan_${message.id}_${item.kind}_${item.id}`,
+          date: plan.date,
+          title: item.title,
+          description: item.description,
+          completed: false,
+          dueAt: item.dueAt ?? `${plan.date}T23:59`,
+          estimatedMinutes: item.estimatedMinutes,
+          actualMinutes: 0,
+          expectedOutput: item.expectedOutput,
+          importance: item.importance,
+          sourceTaskId: item.sourceTaskId,
+          projectId: item.projectId,
+          createdAt: stamp,
+          updatedAt: stamp,
+        }))
+        .filter((task) => !existingIds.has(task.id));
+      return {
+        ...current,
+        dailyTasks: [...current.dailyTasks, ...additions],
+        messages: current.messages.map((item) =>
+          item.id === message.id && item.dailyPlan
+            ? {
+                ...item,
+                dailyPlan: { ...item.dailyPlan, importedAt: stamp },
+                updatedAt: stamp,
+              }
+            : item,
+        ),
+      };
+    });
+  };
   return {
     profile: state.profile,
     messages,
@@ -121,6 +169,7 @@ export function useMessages() {
     markUnread,
     deleteMany,
     favoriteMany,
+    importDailyPlan,
     restoreMessage: (id: string) => restoreItem("messages", id),
   };
 }

@@ -22,6 +22,7 @@ import { ContributionCalendar } from "./contribution-calendar";
 import { PeriodCountdown } from "./period-countdown";
 import { DailyTaskList } from "@/modules/me/views/daily-task-list";
 import { FocusTimerDialog } from "./focus-timer-dialog";
+import { PlanningDialog } from "./planning-dialog";
 
 export function DashboardView({
   navigate,
@@ -30,6 +31,7 @@ export function DashboardView({
 }) {
   const { t, formatDate } = useI18n();
   const [focusOpen, setFocusOpen] = useState(false);
+  const [planningOpen, setPlanningOpen] = useState(false);
   const viewModel = useDashboardViewModel();
   if (!viewModel) return null;
   const { activeCycle, goals, dailyTasks } = viewModel;
@@ -45,7 +47,7 @@ export function DashboardView({
               <ClockIcon className="size-4" />
               {t("dashboard.startFocus")}
             </Button>
-            <Button variant="secondary" onClick={() => navigate("hand")}>
+            <Button variant="secondary" onClick={() => setPlanningOpen(true)}>
               <CalendarDaysIcon className="size-4" />
               {t("dashboard.startPlanning")}
             </Button>
@@ -108,6 +110,9 @@ export function DashboardView({
         </Card>
       </div>
       {focusOpen && <FocusTimerDialog onClose={() => setFocusOpen(false)} />}
+      {planningOpen && (
+        <PlanningDialog onClose={() => setPlanningOpen(false)} />
+      )}
     </div>
   );
 }

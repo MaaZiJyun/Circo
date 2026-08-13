@@ -9,6 +9,7 @@ import {
   Input,
 } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import { TaskRecurrenceFields } from "@/shared/components/task-recurrence-fields";
 import type { TaskRecord } from "@/shared/model/entities";
 import { addDays, today } from "@/shared/model/factories";
 import type { DailyTaskInput } from "../view-models/use-daily-task-cache";
@@ -17,24 +18,30 @@ export function CreateDailyTaskDialog({
   open,
   onClose,
   onSave,
+  title,
+  plannedDate,
 }: {
   open: boolean;
   onClose: () => void;
   onSave: (input: DailyTaskInput) => void;
+  title?: string;
+  plannedDate?: string;
 }) {
   const { t } = useI18n();
   const [input, setInput] = useState<DailyTaskInput>({
     title: "",
     description: "",
-    dueAt: `${addDays(new Date(), 1)}T23:59`,
+    dueAt: `${plannedDate ?? addDays(new Date(), 1)}T23:59`,
     estimatedMinutes: 30,
     expectedOutput: "",
     importance: 50,
+    milestone: false,
+    recurrence: null,
   });
   return (
     <Dialog
       open={open}
-      title={t("me.dailyCreate")}
+      title={title ?? t("me.dailyCreate")}
       closeLabel={t("common.close")}
       onClose={onClose}
     >
@@ -60,7 +67,8 @@ export function CreateDailyTaskDialog({
           <Field label={t("me.taskDueAt")}>
             <Input
               type="datetime-local"
-              min={`${today()}T00:00`}
+              min={`${plannedDate ?? today()}T00:00`}
+              max={plannedDate ? `${plannedDate}T23:59` : undefined}
               value={input.dueAt}
               onChange={(event) =>
                 setInput({ ...input, dueAt: event.target.value })
@@ -106,6 +114,20 @@ export function CreateDailyTaskDialog({
             }
           />
         </Field>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={input.milestone}
+            onChange={(event) =>
+              setInput({ ...input, milestone: event.target.checked })
+            }
+          />
+          {t("hand.milestone")}
+        </label>
+        <TaskRecurrenceFields
+          value={input.recurrence}
+          onChange={(recurrence) => setInput({ ...input, recurrence })}
+        />
         <Button
           disabled={!input.title.trim() || !input.dueAt}
           onClick={() => {
@@ -130,7 +152,7 @@ export function RetrieveTaskDialog({
 }: {
   open: boolean;
   tasks: TaskRecord[];
-  projectName: (id: string) => string;
+  projectName: (id?: string) => string;
   existingIds: string[];
   onClose: () => void;
   onChoose: (task: TaskRecord) => void;
@@ -170,7 +192,7 @@ export function RetrieveTaskDialog({
           >
             <p className="text-sm font-medium">{task.title}</p>
             <p className="mt-1 text-xs text-zinc-500">
-              {projectName(task.projectId)}
+              {projectName(task.projectId) || t("me.independentTask")}
             </p>
           </button>
         ))}
