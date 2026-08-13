@@ -1,7 +1,5 @@
 "use client";
-
-import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowLeftIcon,
   CheckIcon,
@@ -10,7 +8,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { Button, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ReferencePoint, SourceRecord } from "@/shared/model/entities";
 import { completeReading } from "../model/reading-record";
 import { LiteratureDetailsPanel } from "./literature-details-panel";
 import { MarkdownPreview } from "./markdown-preview";
@@ -20,12 +17,8 @@ import {
   type PointCapture,
 } from "./interactive-pdf-viewer";
 import { PointDialog } from "./point-dialog";
-
-const readerRatioKey = "circo-reader-pdf-ratio";
-
-function clampRatio(value: number) {
-  return Math.min(0.75, Math.max(0.25, value));
-}
+import { clampReaderRatio, readerRatioKey } from "./reader-layout";
+import type { LiteratureReaderProps } from "./literature-reader-types";
 
 export function LiteratureReader({
   source,
@@ -33,19 +26,12 @@ export function LiteratureReader({
   onSave,
   onConvert,
   onUpdate,
-  pointCount,
+  points,
+  pointLists,
   onCreatePoint,
-}: {
-  source: SourceRecord;
-  onBack: () => void;
-  onSave: (content: string) => Promise<void>;
-  onConvert: () => Promise<string>;
-  onUpdate: (change: Partial<SourceRecord>) => void;
-  pointCount: number;
-  onCreatePoint: (
-    point: Omit<ReferencePoint, "id" | "createdAt" | "updatedAt">,
-  ) => void;
-}) {
+  onUpdatePoint,
+  onDeletePoint,
+}: LiteratureReaderProps) {
   const { t } = useI18n();
   const [mode, setMode] = useState<"read" | "edit">("read");
   const [content, setContent] = useState(source.content);
@@ -62,7 +48,8 @@ export function LiteratureReader({
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => {
       const saved = Number(window.localStorage.getItem(readerRatioKey));
-      if (Number.isFinite(saved) && saved > 0) setPdfRatio(clampRatio(saved));
+      if (Number.isFinite(saved) && saved > 0)
+        setPdfRatio(clampReaderRatio(saved));
     });
     return () => {
       window.cancelAnimationFrame(frame);
@@ -73,7 +60,7 @@ export function LiteratureReader({
   const resizeAt = (clientX: number) => {
     const bounds = panesRef.current?.getBoundingClientRect();
     if (!bounds?.width) return pdfRatio;
-    const next = clampRatio((clientX - bounds.left) / bounds.width);
+    const next = clampReaderRatio((clientX - bounds.left) / bounds.width);
     setPdfRatio(next);
     return next;
   };
@@ -119,7 +106,7 @@ export function LiteratureReader({
           <div className="min-w-0">
             <h1 className="truncate text-xl font-semibold">{source.title}</h1>
             <p className="mt-1 text-xs text-zinc-500">
-              {t("find.pointCount").replace("{count}", String(pointCount))}
+              {t("find.pointCount").replace("{count}", String(points.length))}
             </p>
           </div>
         </div>
@@ -176,7 +163,12 @@ export function LiteratureReader({
             <div className="h-full">
               <InteractivePdfViewer
                 url={`/api/files/${source.fileToken}`}
+                source={source}
+                points={points}
+                pointLists={pointLists}
                 onCapture={setCapture}
+                onUpdatePoint={onUpdatePoint}
+                onDeletePoint={onDeletePoint}
               />
             </div>
           ) : (
@@ -223,7 +215,7 @@ export function LiteratureReader({
           onKeyDown={(event) => {
             if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
             event.preventDefault();
-            const next = clampRatio(
+            const next = clampReaderRatio(
               pdfRatio + (event.key === "ArrowRight" ? 0.02 : -0.02),
             );
             setPdfRatio(next);

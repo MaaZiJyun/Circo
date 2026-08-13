@@ -4,49 +4,58 @@ import { useState } from "react";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type {
   LibraryList,
+  PointList,
   ReferencePoint,
   SourceRecord,
 } from "@/shared/model/entities";
 import { useFindViewModel } from "../view-models/use-find-view-model";
 import { startReading } from "../model/reading-record";
 import { useLibraryManagement } from "../view-models/use-library-management";
+import { usePointLibrary } from "../view-models/use-point-library";
 import { ImportDialog } from "./find-dialogs";
 import {
   ChooseListDialog,
   EditLiteratureDialog,
   ListDialog,
 } from "./library-dialogs";
-import {
-  ContextMenu,
-  ContextMenuItem,
-  type MenuPosition,
-} from "./context-menu";
 import { LibrarySidebar } from "./library-sidebar";
 import { LibraryWorkspace } from "./library-workspace";
 import { ActiveLiteratureReader } from "./active-literature-reader";
 import { FindModeSwitch, type FindMode } from "./find-mode-switch";
-import { ReferenceSidebar, ReferenceWorkspace } from "./reference-workspace";
+import { ReferenceWorkspace } from "./reference-workspace";
 import { ReferencePointDialog } from "./reference-point-dialog";
+import {
+  ChoosePointListDialog,
+  PointListDialog,
+  PointListSidebar,
+} from "./point-list-ui";
+import {
+  LiteratureContextMenu,
+  type LiteratureMenu,
+} from "./literature-context-menu";
 
 export function FindView() {
   const { t } = useI18n();
   const find = useFindViewModel();
   const library = useLibraryManagement();
+  const pointLibrary = usePointLibrary();
   const [dialog, setDialog] = useState<"import" | "list" | null>(null);
   const [editing, setEditing] = useState<SourceRecord | null>(null);
   const [reading, setReading] = useState<SourceRecord | null>(null);
   const [editingList, setEditingList] = useState<LibraryList | null>(null);
   const [selectionMode, setSelectionMode] = useState(false);
   const [addingIds, setAddingIds] = useState<string[]>([]);
-  const [documentMenu, setDocumentMenu] = useState<{
-    source: SourceRecord;
-    position: MenuPosition;
-  } | null>(null);
+  const [documentMenu, setDocumentMenu] = useState<LiteratureMenu | null>(null);
   const [operationError, setOperationError] = useState("");
   const [mode, setMode] = useState<FindMode>("library");
   const [pointDialog, setPointDialog] = useState<ReferencePoint | "new" | null>(
     null,
   );
+  const [pointListDialog, setPointListDialog] = useState<"create" | null>(null);
+  const [editingPointList, setEditingPointList] = useState<PointList | null>(
+    null,
+  );
+  const [pointForList, setPointForList] = useState<ReferencePoint | null>(null);
   const customLists = library.lists.filter((item) => !item.system);
   const deleteSources = async (ids: string[]) => {
     if (!window.confirm(t("find.confirmDeleteFiles"))) return;
@@ -68,10 +77,13 @@ export function FindView() {
           library.updateSource(reading.id, change);
           setReading({ ...reading, ...change });
         }}
-        pointCount={
-          library.points.filter((point) => point.sourceId === reading.id).length
-        }
-        onCreatePoint={library.createPoint}
+        points={pointLibrary.points.filter(
+          (point) => point.sourceId === reading.id,
+        )}
+        pointLists={pointLibrary.lists}
+        onCreatePoint={pointLibrary.createPoint}
+        onUpdatePoint={pointLibrary.updatePoint}
+        onDeletePoint={pointLibrary.deletePoint}
       />
     );
   return (
@@ -86,7 +98,11 @@ export function FindView() {
               onEdit={setEditingList}
             />
           ) : (
-            <ReferenceSidebar points={library.points} />
+            <PointListSidebar
+              library={pointLibrary}
+              onCreate={() => setPointListDialog("create")}
+              onEdit={setEditingPointList}
+            />
           )}
         </div>
         {mode === "library" ? (
@@ -119,14 +135,25 @@ export function FindView() {
           />
         ) : (
           <ReferenceWorkspace
-            points={library.points}
+            points={pointLibrary.filteredPoints}
+            lists={pointLibrary.lists}
             sources={library.allSources}
             onAdd={() => setPointDialog("new")}
             onEdit={setPointDialog}
             onDelete={(point) => {
               if (window.confirm(t("find.confirmDeletePoint")))
-                library.deletePoint(point.id);
+                pointLibrary.deletePoint(point.id);
             }}
+            onAddToList={setPointForList}
+            onRemoveFromList={(point) =>
+              pointLibrary.removeFromCurrentList(point.id)
+            }
+            onDragStart={(point) => pointLibrary.setDraggedIds([point.id])}
+            canRemoveFromList={
+              pointLibrary.lists.find(
+                (list) => list.id === pointLibrary.activeListId,
+              )?.system === null
+            }
           />
         )}
       </div>
@@ -140,11 +167,37 @@ export function FindView() {
           key={pointDialog === "new" ? "new" : pointDialog.id}
           point={pointDialog === "new" ? undefined : pointDialog}
           sources={library.allSources}
+          lists={pointLibrary.lists}
           onClose={() => setPointDialog(null)}
           onSave={(input) => {
-            if (pointDialog === "new") library.createPoint(input);
-            else library.updatePoint(pointDialog.id, input);
+            if (pointDialog === "new") pointLibrary.createPoint(input);
+            else pointLibrary.updatePoint(pointDialog.id, input);
           }}
+        />
+      )}
+      {pointListDialog === "create" && (
+        <PointListDialog
+          onClose={() => setPointListDialog(null)}
+          onSave={pointLibrary.createList}
+        />
+      )}
+      {editingPointList && (
+        <PointListDialog
+          key={editingPointList.id}
+          list={editingPointList}
+          onClose={() => setEditingPointList(null)}
+          onSave={(input) =>
+            pointLibrary.updateList(editingPointList.id, input)
+          }
+        />
+      )}
+      {pointForList && (
+        <ChoosePointListDialog
+          lists={pointLibrary.lists.filter((list) => !list.system)}
+          onClose={() => setPointForList(null)}
+          onChoose={(listId) =>
+            pointLibrary.addToList([pointForList.id], listId)
+          }
         />
       )}
       <ListDialog
@@ -177,76 +230,29 @@ export function FindView() {
         />
       )}
       {documentMenu && (
-        <ContextMenu
-          position={documentMenu.position}
+        <LiteratureContextMenu
+          menu={documentMenu}
+          canRemoveFromList={library.selectedList?.system === null}
           onClose={() => setDocumentMenu(null)}
-        >
-          <ContextMenuItem
-            disabled={!documentMenu.source.fileToken}
-            onClick={() => {
-              window.open(
-                `/api/files/${documentMenu.source.fileToken}`,
-                "_blank",
-                "noopener,noreferrer",
-              );
-              setDocumentMenu(null);
-            }}
-          >
-            {t("find.openOriginal")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            disabled={!documentMenu.source.citation.trim()}
-            onClick={() => {
-              const citation = documentMenu.source.citation;
-              setDocumentMenu(null);
-              const copy = navigator.clipboard?.writeText(citation);
-              if (!copy) {
-                setOperationError(t("find.copyCitationFailed"));
-                return;
-              }
-              void copy.catch(() =>
-                setOperationError(t("find.copyCitationFailed")),
-              );
-            }}
-          >
-            {t("find.cite")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              setEditing(documentMenu.source);
-              setDocumentMenu(null);
-            }}
-          >
-            {t("common.edit")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              setAddingIds([documentMenu.source.id]);
-              setDocumentMenu(null);
-            }}
-          >
-            {t("find.addToList")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            disabled={library.selectedList?.system !== null}
-            onClick={() => {
-              library.removeFromList([documentMenu.source.id]);
-              setDocumentMenu(null);
-            }}
-          >
-            {t("find.removeFromList")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            danger
-            onClick={() => {
-              const id = documentMenu.source.id;
-              setDocumentMenu(null);
-              void deleteSources([id]);
-            }}
-          >
-            {t("find.deleteOriginal")}
-          </ContextMenuItem>
-        </ContextMenu>
+          onEdit={() => {
+            setEditing(documentMenu.source);
+            setDocumentMenu(null);
+          }}
+          onAddToList={() => {
+            setAddingIds([documentMenu.source.id]);
+            setDocumentMenu(null);
+          }}
+          onRemoveFromList={() => {
+            library.removeFromList([documentMenu.source.id]);
+            setDocumentMenu(null);
+          }}
+          onDelete={() => {
+            const id = documentMenu.source.id;
+            setDocumentMenu(null);
+            void deleteSources([id]);
+          }}
+          onError={setOperationError}
+        />
       )}
     </div>
   );

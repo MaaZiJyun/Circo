@@ -2,17 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import {
-  Button,
-  Dialog,
-  Field,
-  Input,
-  Select,
-  Textarea,
-} from "@/shared/components/ui";
+import { Button, Dialog, Field, Input, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ReferencePoint, SourceRecord } from "@/shared/model/entities";
 import type { PointCapture } from "./point-capture";
+import { PointTypeControl } from "./point-type-control";
 
 export function PointDialog({
   capture,
@@ -82,6 +76,7 @@ export function PointDialog({
         note,
         page: capture.page,
         location: capture.location,
+        listIds: [],
       });
       onClose();
     } catch (cause) {
@@ -98,17 +93,7 @@ export function PointDialog({
       onClose={onClose}
     >
       <div className="grid gap-4">
-        <Field label={t("find.pointType")}>
-          <Select
-            value={type}
-            onChange={(event) =>
-              setType(event.target.value as "text" | "image")
-            }
-          >
-            <option value="text">{t("find.pointType.text")}</option>
-            <option value="image">{t("find.pointType.image")}</option>
-          </Select>
-        </Field>
+        <PointTypeControl value={type} onChange={setType} />
         {type === "text" ? (
           <Field label={t("common.content")}>
             <Textarea

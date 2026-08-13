@@ -1,5 +1,5 @@
 import type { AppState } from "@/shared/model/app-state";
-import { seedIdea, seedIdeas, seedProjects } from "./seed-project-lists";
+import * as seeds from "./seed-project-lists";
 
 const stamp = "2026-08-11T08:00:00.000Z";
 
@@ -134,8 +134,9 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
-    projectLists: seedProjects(stamp),
-    ideaLists: seedIdeas(stamp),
+    projectLists: seeds.seedProjects(stamp),
+    ideaLists: seeds.seedIdeas(stamp),
+    pointLists: seeds.seedPointLists(stamp),
     points: [],
     sources: [
       {
@@ -194,7 +195,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
-    ideas: [seedIdea(stamp)],
+    ideas: [seeds.seedIdea(stamp)],
     projects: [
       {
         id: "project_arch",

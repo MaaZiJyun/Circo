@@ -3,8 +3,31 @@
 import { useEffect, useRef } from "react";
 import type { PDFPageProxy } from "pdfjs-dist";
 import { Util } from "pdfjs-dist/legacy/build/pdf.mjs";
+import type {
+  PointList,
+  ReferencePoint,
+  ReferencePointInput,
+  SourceRecord,
+} from "@/shared/model/entities";
+import { PdfPointLayer } from "./pdf-point-layer";
 
-export function PdfPage({ page }: { page: PDFPageProxy }) {
+export function PdfPage({
+  page,
+  points,
+  pointLists,
+  source,
+  pointSelectionEnabled,
+  onUpdatePoint,
+  onDeletePoint,
+}: {
+  page: PDFPageProxy;
+  points: ReferencePoint[];
+  pointLists: PointList[];
+  source: SourceRecord;
+  pointSelectionEnabled: boolean;
+  onUpdatePoint: (id: string, change: ReferencePointInput) => void;
+  onDeletePoint: (id: string) => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
   const renderTaskRef = useRef<ReturnType<PDFPageProxy["render"]> | null>(null);
@@ -84,6 +107,14 @@ export function PdfPage({ page }: { page: PDFPageProxy }) {
     >
       <canvas ref={canvasRef} />
       <div ref={textLayerRef} className="absolute inset-0 overflow-hidden" />
+      <PdfPointLayer
+        points={points}
+        lists={pointLists}
+        source={source}
+        interactive={pointSelectionEnabled}
+        onUpdatePoint={onUpdatePoint}
+        onDeletePoint={onDeletePoint}
+      />
     </div>
   );
 }

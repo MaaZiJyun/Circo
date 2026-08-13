@@ -1,4 +1,9 @@
-import type { Idea, IdeaList, ProjectList } from "@/shared/model/entities";
+import type {
+  Idea,
+  IdeaList,
+  PointList,
+  ProjectList,
+} from "@/shared/model/entities";
 
 export function seedProjects(stamp: string): ProjectList[] {
   return [
@@ -38,6 +43,29 @@ export function seedIdeas(stamp: string): IdeaList[] {
       id: "idea_list_recent",
       name: "Recently Added",
       note: "Ideas added in the last seven days",
+      color: "#2563eb",
+      system: "recent",
+      createdAt: stamp,
+      updatedAt: stamp,
+    },
+  ];
+}
+
+export function seedPointLists(stamp: string): PointList[] {
+  return [
+    {
+      id: "point_list_default",
+      name: "All Points",
+      note: "All extracted points",
+      color: "#f59e0b",
+      system: "default",
+      createdAt: stamp,
+      updatedAt: stamp,
+    },
+    {
+      id: "point_list_recent",
+      name: "Recently Added",
+      note: "Points added in the last seven days",
       color: "#2563eb",
       system: "recent",
       createdAt: stamp,

@@ -1,0 +1,251 @@
+"use client";
+
+import { useRef, useState } from "react";
+import { ClockIcon, FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
+import {
+  Button,
+  Dialog,
+  Field,
+  IconButton,
+  Input,
+} from "@/shared/components/ui";
+import { useI18n } from "@/shared/i18n/i18n-context";
+import type { PointList } from "@/shared/model/entities";
+import type {
+  PointListInput,
+  usePointLibrary,
+} from "../view-models/use-point-library";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  type MenuPosition,
+} from "./context-menu";
+
+export function PointListSidebar({
+  library,
+  onCreate,
+  onEdit,
+}: {
+  library: ReturnType<typeof usePointLibrary>;
+  onCreate: () => void;
+  onEdit: (list: PointList) => void;
+}) {
+  const { t } = useI18n();
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [menu, setMenu] = useState<{
+    list: PointList;
+    position: MenuPosition;
+  } | null>(null);
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const cancel = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+  };
+  return (
+    <aside className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="mb-3 flex items-center justify-between px-2">
+        <h2 className="font-semibold">{t("find.pointLists")}</h2>
+        <IconButton label={t("find.createPointList")} onClick={onCreate}>
+          <PlusIcon className="size-4" />
+        </IconButton>
+      </div>
+      <nav className="grid gap-1">
+        {library.lists.map((list) => {
+          const active = library.activeListId === list.id;
+          const count =
+            list.system === "default"
+              ? library.points.length
+              : list.system === "recent"
+                ? library.recentPoints.length
+                : library.points.filter((point) =>
+                    point.listIds.includes(list.id),
+                  ).length;
+          return (
+            <button
+              key={list.id}
+              className={`flex min-h-10 items-center gap-2 rounded-xl px-3 text-left text-sm ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-200 dark:hover:bg-zinc-900"}`}
+              style={{
+                backgroundColor:
+                  dropTarget === list.id ? `${list.color}26` : undefined,
+              }}
+              onClick={() => library.setActiveListId(list.id)}
+              onPointerDown={(event) => {
+                if (event.button || list.system) return;
+                cancel();
+                timer.current = setTimeout(
+                  () =>
+                    setMenu({
+                      list,
+                      position: { x: event.clientX, y: event.clientY },
+                    }),
+                  550,
+                );
+              }}
+              onPointerUp={cancel}
+              onPointerCancel={cancel}
+              onPointerMove={cancel}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                cancel();
+                if (!list.system)
+                  setMenu({
+                    list,
+                    position: { x: event.clientX, y: event.clientY },
+                  });
+              }}
+              onDragOver={(event) => {
+                if (!list.system) {
+                  event.preventDefault();
+                  setDropTarget(list.id);
+                }
+              }}
+              onDragLeave={() => setDropTarget(null)}
+              onDrop={(event) => {
+                event.preventDefault();
+                if (!list.system)
+                  library.addToList(library.draggedIds, list.id);
+                library.setDraggedIds([]);
+                setDropTarget(null);
+              }}
+            >
+              {list.system === "recent" ? (
+                <ClockIcon className="size-4" />
+              ) : (
+                <FolderIcon
+                  className="size-4"
+                  style={{
+                    color: !active && !list.system ? list.color : undefined,
+                  }}
+                />
+              )}
+              <span className="truncate">
+                {list.system ? t(`find.pointList.${list.system}`) : list.name}
+              </span>
+              <span className="ml-auto text-xs opacity-60">{count}</span>
+            </button>
+          );
+        })}
+      </nav>
+      {menu && (
+        <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
+          <ContextMenuItem
+            onClick={() => {
+              onEdit(menu.list);
+              setMenu(null);
+            }}
+          >
+            {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            danger
+            onClick={() => {
+              if (window.confirm(t("find.confirmDeletePointList")))
+                library.deleteList(menu.list.id);
+              setMenu(null);
+            }}
+          >
+            {t("find.deleteList")}
+          </ContextMenuItem>
+        </ContextMenu>
+      )}
+    </aside>
+  );
+}
+
+export function PointListDialog({
+  list,
+  onClose,
+  onSave,
+}: {
+  list?: PointList;
+  onClose: () => void;
+  onSave: (input: PointListInput) => void;
+}) {
+  const { t } = useI18n();
+  const [name, setName] = useState(list?.name ?? "");
+  const [note, setNote] = useState(list?.note ?? "");
+  const [color, setColor] = useState(list?.color ?? "#f59e0b");
+  return (
+    <Dialog
+      open
+      title={t(list ? "find.editPointList" : "find.createPointList")}
+      closeLabel={t("common.close")}
+      onClose={onClose}
+    >
+      <div className="grid gap-4">
+        <Field label={t("find.listName")}>
+          <Input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </Field>
+        <Field label={t("find.listNote")}>
+          <Input
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </Field>
+        <Field label={t("find.listColor")}>
+          <Input
+            type="color"
+            value={color}
+            onChange={(event) => setColor(event.target.value)}
+          />
+        </Field>
+        <Button
+          disabled={!name.trim()}
+          onClick={() => {
+            onSave({ name: name.trim(), note, color });
+            onClose();
+          }}
+        >
+          {t("common.save")}
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+
+export function ChoosePointListDialog({
+  lists,
+  onClose,
+  onChoose,
+}: {
+  lists: PointList[];
+  onClose: () => void;
+  onChoose: (id: string) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <Dialog
+      open
+      title={t("find.addPointToList")}
+      closeLabel={t("common.close")}
+      onClose={onClose}
+    >
+      <div className="grid gap-2">
+        {lists.map((list) => (
+          <button
+            key={list.id}
+            className="flex min-h-11 items-center gap-3 rounded-xl border border-zinc-200 px-3 text-left text-sm dark:border-zinc-800"
+            onClick={() => {
+              onChoose(list.id);
+              onClose();
+            }}
+          >
+            <span
+              className="size-3 rounded-full"
+              style={{ backgroundColor: list.color }}
+            />
+            {list.name}
+          </button>
+        ))}
+        {!lists.length && (
+          <p className="py-6 text-center text-sm text-zinc-500">
+            {t("find.noCustomLists")}
+          </p>
+        )}
+      </div>
+    </Dialog>
+  );
+}

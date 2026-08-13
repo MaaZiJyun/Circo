@@ -12,6 +12,7 @@ import type {
   LibraryList,
   ProjectLog,
   ProjectList,
+  PointList,
   ProjectRecord,
   ReferencePoint,
   Relation,
@@ -34,6 +35,7 @@ export interface AppState {
   libraryLists: LibraryList[];
   projectLists: ProjectList[];
   ideaLists: IdeaList[];
+  pointLists: PointList[];
   points: ReferencePoint[];
   annotations: Annotation[];
   ideas: Idea[];
@@ -79,7 +81,8 @@ function isProfile(value: unknown) {
     typeof avatar === "string" &&
     avatar.length <= 3_000_000 &&
     (avatar === "" || /^data:image\/(jpeg|png|webp);base64,/.test(avatar)) &&
-    (profile.birthDate === undefined || /^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate))
+    (profile.birthDate === undefined ||
+      /^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate))
   );
 }
 
@@ -96,6 +99,7 @@ export function isAppState(value: unknown): value is AppState {
     (item.libraryLists === undefined || Array.isArray(item.libraryLists)) &&
     (item.projectLists === undefined || Array.isArray(item.projectLists)) &&
     (item.ideaLists === undefined || Array.isArray(item.ideaLists)) &&
+    (item.pointLists === undefined || Array.isArray(item.pointLists)) &&
     (item.points === undefined || Array.isArray(item.points)) &&
     Array.isArray(item.ideas) &&
     Array.isArray(item.projects) &&

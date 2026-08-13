@@ -1,6 +1,12 @@
 export type EntityKind = "goal" | "source" | "idea" | "project" | "artifact";
+export type {
+  PointList,
+  ReferencePoint,
+  ReferencePointInput,
+} from "./reference-point";
 export interface BaseEntity {
-  id: string; createdAt: string;
+  id: string;
+  createdAt: string;
   updatedAt: string;
   deletedAt?: string;
 }
@@ -119,18 +125,6 @@ export interface IdeaList extends BaseEntity {
   system: "default" | "recent" | null;
 }
 
-export interface ReferencePoint extends BaseEntity {
-  sourceId: string;
-  type: "text" | "image";
-  content: string;
-  contentPath: string;
-  date: string;
-  author: string;
-  note: string;
-  page: number;
-  location: { x: number; y: number; width: number; height: number };
-}
-
 export interface Annotation extends BaseEntity {
   sourceId: string;
   location: string;
@@ -180,7 +174,8 @@ export interface Idea extends BaseEntity {
   evaluation?: IdeaEvaluation;
 }
 
-export type IdeaDimension = "value" | "relevance" | "feasibility" | "testability" | "opportunity";
+export type IdeaDimension =
+  "value" | "relevance" | "feasibility" | "testability" | "opportunity";
 
 export interface IdeaEvaluation {
   answers: number[];

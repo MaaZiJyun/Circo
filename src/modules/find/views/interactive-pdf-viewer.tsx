@@ -8,9 +8,16 @@ import {
 } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { Button } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import type {
+  PointList,
+  ReferencePoint,
+  ReferencePointInput,
+  SourceRecord,
+} from "@/shared/model/entities";
 import { ContextMenu, ContextMenuItem } from "./context-menu";
 import { PdfPage } from "./pdf-page";
-import { TranslationDialog, type TranslationState } from "./translation-dialog";
+import { TranslationDialog } from "./translation-dialog";
+import { useSelectionTranslation } from "./use-selection-translation";
 import {
   readPointCaptureFromClipboard,
   writePointCaptureToClipboard,
@@ -26,12 +33,24 @@ GlobalWorkerOptions.workerSrc = new URL(
 
 export function InteractivePdfViewer({
   url,
+  source,
+  points,
+  pointLists,
   onCapture,
+  onUpdatePoint,
+  onDeletePoint,
 }: {
   url: string;
+  source: SourceRecord;
+  points: ReferencePoint[];
+  pointLists: PointList[];
   onCapture: (capture: PointCapture) => void;
+  onUpdatePoint: (id: string, change: ReferencePointInput) => void;
+  onDeletePoint: (id: string) => void;
 }) {
-  const { locale, t } = useI18n();
+  const { t } = useI18n();
+  const { translation, translateSelection, closeTranslation } =
+    useSelectionTranslation();
   const rootRef = useRef<HTMLDivElement>(null);
   const [pages, setPages] = useState<PDFPageProxy[]>([]);
   const [error, setError] = useState("");
@@ -44,55 +63,9 @@ export function InteractivePdfViewer({
     null,
   );
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
-  const [translation, setTranslation] = useState<TranslationState | null>(null);
-  const translationRequest = useRef(0);
   const stageCapture = (capture: PointCapture) => {
     setTextCapture(capture);
     clipboardWriteRef.current = writePointCaptureToClipboard(capture);
-  };
-  const translateSelection = async (
-    source: string,
-    target: "zh-CN" | "en" = locale,
-  ) => {
-    const requestId = ++translationRequest.current;
-    setTranslation({
-      source,
-      result: "",
-      error: "",
-      loading: true,
-      target,
-    });
-    try {
-      const response = await fetch("/api/translate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: source, target }),
-      });
-      const payload = (await response.json()) as {
-        translation?: string;
-        error?: string;
-      };
-      if (!response.ok || !payload.translation)
-        throw new Error(payload.error || t("find.translationFailed"));
-      if (requestId !== translationRequest.current) return;
-      setTranslation({
-        source,
-        result: payload.translation,
-        error: "",
-        loading: false,
-        target,
-      });
-    } catch (cause) {
-      if (requestId !== translationRequest.current) return;
-      setTranslation({
-        source,
-        result: "",
-        error:
-          cause instanceof Error ? cause.message : t("find.translationFailed"),
-        loading: false,
-        target,
-      });
-    }
   };
   useEffect(() => {
     let active = true;
@@ -220,7 +193,16 @@ export function InteractivePdfViewer({
       {error && <p className="p-4 text-sm text-red-600">{error}</p>}
       <div className="grid gap-4">
         {pages.map((page) => (
-          <PdfPage key={page.pageNumber} page={page} />
+          <PdfPage
+            key={page.pageNumber}
+            page={page}
+            points={points.filter((point) => point.page === page.pageNumber)}
+            pointLists={pointLists}
+            source={source}
+            pointSelectionEnabled={!screenshotMode}
+            onUpdatePoint={onUpdatePoint}
+            onDeletePoint={onDeletePoint}
+          />
         ))}
       </div>
       {textCapture && (
@@ -288,7 +270,7 @@ export function InteractivePdfViewer({
       {translation && (
         <TranslationDialog
           value={translation}
-          onClose={() => setTranslation(null)}
+          onClose={closeTranslation}
           onTargetChange={(target) =>
             void translateSelection(translation.source, target)
           }

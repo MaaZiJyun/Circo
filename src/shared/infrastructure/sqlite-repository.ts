@@ -5,6 +5,7 @@ import type { AppRepository, AppState } from "@/shared/model/app-state";
 import { isAppState } from "@/shared/model/app-state";
 import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
+import { seedPointLists } from "./seed-project-lists";
 import { emptyReadingReview } from "@/modules/find/model/reading-record";
 
 const systemLists = [
@@ -66,7 +67,6 @@ const systemIdeaLists = [
     system: "recent" as const,
   },
 ];
-
 function openDatabase(databasePath: string) {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
   const database = new Database(databasePath);
@@ -96,14 +96,17 @@ function readSnapshot(database: Database.Database): AppState | null {
 
 function normalizeState(state: AppState): AppState {
   const stamp = state.updatedAt || new Date().toISOString();
+  const systemPointLists = seedPointLists(stamp);
   const existingLists = state.libraryLists ?? [];
   const systemListIds = new Set(systemLists.map((item) => item.id));
   const existingProjectLists = state.projectLists ?? [];
   const existingIdeaLists = state.ideaLists ?? [];
+  const existingPointLists = state.pointLists ?? [];
   const systemProjectListIds = new Set(
     systemProjectLists.map((item) => item.id),
   );
   const systemIdeaListIds = new Set(systemIdeaLists.map((item) => item.id));
+  const systemPointListIds = new Set(systemPointLists.map((item) => item.id));
   return {
     ...state,
     profile: {
@@ -151,7 +154,21 @@ function normalizeState(state: AppState): AppState {
       ),
       ...existingIdeaLists.filter((item) => !systemIdeaListIds.has(item.id)),
     ],
-    points: state.points ?? [],
+    pointLists: [
+      ...systemPointLists.map(
+        (item) =>
+          existingPointLists.find((existing) => existing.id === item.id) ?? {
+            ...item,
+            createdAt: stamp,
+            updatedAt: stamp,
+          },
+      ),
+      ...existingPointLists.filter((item) => !systemPointListIds.has(item.id)),
+    ],
+    points: (state.points ?? []).map((item) => ({
+      ...item,
+      listIds: item.listIds ?? [],
+    })),
     sources: state.sources.map((item) => ({
       ...item,
       fileToken: item.fileToken ?? "",
