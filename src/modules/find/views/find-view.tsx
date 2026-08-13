@@ -1,9 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon } from "@heroicons/react/24/outline";
-import { PageHeader } from "@/shared/components/page-elements";
-import { Button } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type {
   LibraryList,
@@ -79,22 +76,6 @@ export function FindView() {
     );
   return (
     <div className="space-y-6">
-      <PageHeader
-        eyebrow={t("find.eyebrow")}
-        title={t("find.title")}
-        subtitle={t("find.subtitle")}
-        actions={
-          <Button
-            disabled={mode === "reference" && !library.allSources.length}
-            onClick={() =>
-              mode === "library" ? setDialog("import") : setPointDialog("new")
-            }
-          >
-            <PlusIcon className="size-4" />
-            {t(mode === "library" ? "find.import" : "find.addPoint")}
-          </Button>
-        }
-      />
       <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
         <div className="space-y-3">
           <FindModeSwitch mode={mode} onChange={setMode} />
@@ -134,11 +115,13 @@ export function FindView() {
               setSelectionMode(false);
               library.setSelectedIds([]);
             }}
+            onImport={() => setDialog("import")}
           />
         ) : (
           <ReferenceWorkspace
             points={library.points}
             sources={library.allSources}
+            onAdd={() => setPointDialog("new")}
             onEdit={setPointDialog}
             onDelete={(point) => {
               if (window.confirm(t("find.confirmDeletePoint")))

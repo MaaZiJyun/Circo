@@ -1,6 +1,6 @@
 "use client";
 
-import { TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, TrashIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { Button, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
@@ -22,6 +22,7 @@ export function LibraryWorkspace({
   onAddSelected,
   onDeleteSelected,
   onCloseSelection,
+  onImport,
 }: {
   library: ReturnType<typeof useLibraryManagement>;
   selectionMode: boolean;
@@ -32,6 +33,7 @@ export function LibraryWorkspace({
   onAddSelected: () => void;
   onDeleteSelected: () => void;
   onCloseSelection: () => void;
+  onImport: () => void;
 }) {
   const { t } = useI18n();
   return (
@@ -50,6 +52,7 @@ export function LibraryWorkspace({
             )}
           </p>
         </div>
+
         {!selectionMode && (
           <div className="flex items-center gap-2">
             <Select
@@ -77,6 +80,10 @@ export function LibraryWorkspace({
               <option value="ascending">{t("find.ascending")}</option>
               <option value="descending">{t("find.descending")}</option>
             </Select>
+            <Button className="shrink-0 whitespace-nowrap" onClick={onImport}>
+              <PlusIcon className="size-4" />
+              {t("find.import")}
+            </Button>
           </div>
         )}
         {selectionMode && (

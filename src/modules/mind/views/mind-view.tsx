@@ -73,19 +73,6 @@ export function MindView() {
 
   return (
     <div className="space-y-8">
-      {!viewing && (
-        <PageHeader
-          eyebrow={t("mind.eyebrow")}
-          title={t("mind.title")}
-          subtitle={t("mind.subtitle")}
-          actions={
-            <Button onClick={() => setComposing(true)}>
-              <PlusIcon className="size-4" />
-              {t("dashboard.addIdea")}
-            </Button>
-          }
-        />
-      )}
       {viewing ? (
         <>
           <Button variant="ghost" onClick={() => setViewing(null)}>
@@ -125,7 +112,6 @@ export function MindView() {
                 ))}
               </div>
             </div>
-            
           </Card>
         </>
       ) : (
@@ -136,42 +122,53 @@ export function MindView() {
             onEdit={setEditingList}
           />
           <Card>
-            <SectionHeader
-              title={
-                library.selectedList?.system
-                  ? t(`mind.list.${library.selectedList.system}`)
-                  : library.selectedList?.name || t("mind.library")
-              }
-              action={
-                !selectionMode ? (
-                  <div className="w-28">
-                    <Select
-                      aria-label={t("mind.sort")}
-                      value={sort}
-                      onChange={(event) =>
-                        setSort(event.target.value as IdeaSort)
-                      }
-                    >
-                      <option value="dateDesc">{t("mind.sortDateDesc")}</option>
-                      <option value="dateAsc">{t("mind.sortDateAsc")}</option>
-                      <option value="scoreDesc">
-                        {t("mind.sortScoreDesc")}
-                      </option>
-                      <option value="scoreAsc">{t("mind.sortScoreAsc")}</option>
-                    </Select>
+            {!selectionMode ? (
+              <SectionHeader
+                title={
+                  library.selectedList?.system
+                    ? t(`mind.list.${library.selectedList.system}`)
+                    : library.selectedList?.name || t("mind.library")
+                }
+                action={
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="w-28">
+                      <Select
+                        aria-label={t("mind.sort")}
+                        value={sort}
+                        onChange={(event) =>
+                          setSort(event.target.value as IdeaSort)
+                        }
+                      >
+                        <option value="dateDesc">
+                          {t("mind.sortDateDesc")}
+                        </option>
+                        <option value="dateAsc">{t("mind.sortDateAsc")}</option>
+                        <option value="scoreDesc">
+                          {t("mind.sortScoreDesc")}
+                        </option>
+                        <option value="scoreAsc">
+                          {t("mind.sortScoreAsc")}
+                        </option>
+                      </Select>
+                    </div>
+                    <Button onClick={() => setComposing(true)}>
+                      <PlusIcon className="size-4" />
+                      {t("dashboard.addIdea")}
+                    </Button>
                   </div>
-                ) : undefined
-              }
-            />
+                }
+              />
+            ) : undefined}
             {selectionMode && (
-              <div className="mb-4 flex flex-wrap items-center gap-2">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-sm text-zinc-500">
                   {t("mind.selectedCount").replace(
                     "{count}",
                     String(library.selectedIds.length),
                   )}
                 </span>
-                <Button
+                <div className="flex flex-wrap gap-2">
+                  <Button
                   variant="secondary"
                   onClick={() => setListDialog("choose")}
                 >
@@ -199,6 +196,7 @@ export function MindView() {
                 >
                   {t("common.close")}
                 </Button>
+                </div>
               </div>
             )}
             {sortedIdeas.length ? (

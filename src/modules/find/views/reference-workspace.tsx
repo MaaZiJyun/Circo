@@ -1,8 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Card, EmptyState, IconButton } from "@/shared/components/ui";
+import { PencilSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { Button, Card, EmptyState, IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ReferencePoint, SourceRecord } from "@/shared/model/entities";
 
@@ -36,23 +36,27 @@ export function ReferenceWorkspace({
   sources,
   onEdit,
   onDelete,
+  onAdd,
 }: {
   points: ReferencePoint[];
   sources: SourceRecord[];
   onEdit: (point: ReferencePoint) => void;
   onDelete: (point: ReferencePoint) => void;
+  onAdd: () => void;
 }) {
   const { t } = useI18n();
   const sourceName = (id: string) =>
     sources.find((item) => item.id === id)?.title ?? t("find.unknownSource");
-  if (!points.length)
-    return (
-      <Card>
-        <EmptyState title={t("find.noPoints")} />
-      </Card>
-    );
   return (
-    <section className="grid gap-4 md:grid-cols-2">
+    <section className="space-y-3">
+      <div className="flex min-h-11 items-center justify-between gap-3">
+        <h2 className="font-semibold">{t("find.points")}</h2>
+        <Button disabled={!sources.length} onClick={onAdd}>
+          <PlusIcon className="size-4" />{t("find.addPoint")}
+        </Button>
+      </div>
+      {!points.length ? <Card><EmptyState title={t("find.noPoints")} /></Card> :
+      <div className="grid gap-4 md:grid-cols-2">
       {points
         .slice()
         .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -111,6 +115,7 @@ export function ReferenceWorkspace({
             </Card>
           );
         })}
+      </div>}
     </section>
   );
 }

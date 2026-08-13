@@ -58,7 +58,6 @@ export function MessagesView() {
         title={t("messages.title")}
         subtitle={t("messages.subtitle")}
       />
-
       <Card className="overflow-hidden p-0">
         <div className="grid md:grid-cols-[220px_minmax(0,1fr)]">
           <MessageSidebar
