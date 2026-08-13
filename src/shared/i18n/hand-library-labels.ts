@@ -22,6 +22,9 @@ export const handLibraryZh = {
   "hand.markdownHint": "日志内容会保存为项目目录中的 Markdown 文件",
   "hand.markdownSource": "Markdown 编辑器",
   "hand.markdownPreview": "实时预览",
+  "hand.insertImage": "插入图片",
+  "hand.uploadingImage": "正在上传图片…",
+  "hand.imageUploadFailed": "图片上传失败，请重试。",
 } as const;
 
 export const handLibraryEn: Record<keyof typeof handLibraryZh, string> = {
@@ -49,4 +52,7 @@ export const handLibraryEn: Record<keyof typeof handLibraryZh, string> = {
   "hand.markdownHint": "The log is saved as a Markdown file in the project directory",
   "hand.markdownSource": "Markdown editor",
   "hand.markdownPreview": "Live preview",
+  "hand.insertImage": "Insert image",
+  "hand.uploadingImage": "Uploading image…",
+  "hand.imageUploadFailed": "Could not upload the image. Try again.",
 };

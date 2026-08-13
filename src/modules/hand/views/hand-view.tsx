@@ -35,10 +35,8 @@ import { ProjectTable } from "./project-table";
 import { ProjectWorkspace } from "./project-workspace";
 import { projectInputFromRecord } from "./project-record-input";
 import { ProjectTaskActions, type TaskMenu } from "./project-task-actions";
-
 type DetailDialog = "task" | "log" | "attachment" | null;
 type ProjectMenu = { project: ProjectRecord; position: MenuPosition } | null;
-
 export function HandView() {
   const { t } = useI18n();
   const vm = useHandViewModel();
@@ -63,7 +61,6 @@ export function HandView() {
     setMenu(null);
     if (window.confirm(t("common.confirmDelete"))) vm.deleteProject(project.id);
   };
-
   return (
     <div className="space-y-8">
       {!viewing ? (
@@ -206,7 +203,6 @@ export function HandView() {
           />
         </>
       ) : null}
-
       {creating && (
         <ProjectDialog
           key="create-project"
@@ -253,11 +249,15 @@ export function HandView() {
         onClose={() => setDialog(null)}
         onSave={vm.addTask}
       />
-      <ProjectLogEditor
-        open={dialog === "log"}
-        onClose={() => setDialog(null)}
-        onSave={vm.addLog}
-      />
+      {dialog === "log" && vm.selected && (
+        <ProjectLogEditor
+          key={`new-log-${vm.selected.id}`}
+          open
+          projectId={vm.selected.id}
+          onClose={() => setDialog(null)}
+          onSave={vm.addLog}
+        />
+      )}
       <AttachmentDialog
         open={dialog === "attachment"}
         onClose={() => setDialog(null)}

@@ -257,6 +257,8 @@ export function ProjectWorkspace({
           key={editingLog.id}
           open
           initial={logInput(editingLog)}
+          projectId={editingLog.projectId}
+          logId={editingLog.id}
           onClose={() => setEditingLog(null)}
           onSave={(input) => vm.updateLog(editingLog, input)}
         />

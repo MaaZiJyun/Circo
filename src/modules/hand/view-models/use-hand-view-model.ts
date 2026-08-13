@@ -50,7 +50,11 @@ export function useHandViewModel() {
   const logs = useMemo(
     () =>
       state && selected
-        ? activeItems(state.logs)
+        ? Array.from(
+            new Map(
+              activeItems(state.logs).map((item) => [item.id, item]),
+            ).values(),
+          )
             .filter((item) => item.projectId === selected.id)
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
         : [],
@@ -122,11 +126,15 @@ export function useHandViewModel() {
   };
 
 
-  const addLog = async (input: LogInput) => {
+  const addLog = async (input: LogInput, requestedId?: string) => {
     if (!selected) return;
     setLogError(false);
     const stamp = now();
-    const id = createId("log");
+    const id = requestedId ?? createId("log");
+    if (state?.logs.some((item) => item.id === id)) {
+      setLogError(true);
+      throw new Error("A project log with this identifier already exists.");
+    }
     const response = await fetch("/api/project-logs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -152,7 +160,12 @@ export function useHandViewModel() {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, logs: [...current.logs, log] }));
+    mutate((current) => ({
+      ...current,
+      logs: Array.from(
+        new Map([...current.logs, log].map((item) => [item.id, item])).values(),
+      ),
+    }));
   };
 
   const updateLog = async (log: ProjectLog, input: LogInput) => {

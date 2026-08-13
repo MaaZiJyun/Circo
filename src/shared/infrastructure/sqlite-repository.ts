@@ -212,7 +212,9 @@ function normalizeState(state: AppState): AppState {
       importance: item.importance ?? 50,
     })),
     tasks: normalizeTasks(state),
-    logs: state.logs.map((item) => ({
+    logs: Array.from(
+      new Map(state.logs.map((item) => [item.id, item])).values(),
+    ).map((item) => ({
       ...item,
       period: item.period ?? "day",
       filePath: item.filePath ?? `project/${item.projectId}/logs/${item.id}.md`,

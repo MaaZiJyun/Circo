@@ -1,23 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { CheckIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useRef, useState } from "react";
+import { CheckIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { MarkdownPreview } from "@/modules/find/views/markdown-preview";
 import { Button, Field, Select, Textarea } from "@/shared/components/ui";
 import { typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import { createId } from "@/shared/model/factories";
 import type { LogInput } from "../view-models/use-hand-view-model";
 
 export function ProjectLogEditor({
   open,
   initial,
+  projectId,
+  logId,
   onClose,
   onSave,
 }: {
   open: boolean;
   initial?: LogInput;
+  projectId: string;
+  logId?: string;
   onClose: () => void;
-  onSave: (input: LogInput) => Promise<void>;
+  onSave: (input: LogInput, logId: string) => Promise<void>;
 }) {
   const { t } = useI18n();
   const [input, setInput] = useState<LogInput>(
@@ -31,19 +36,77 @@ export function ProjectLogEditor({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const [assetLogId] = useState(() => logId ?? createId("log"));
+  const fileRef = useRef<HTMLInputElement>(null);
+  const selectionRef = useRef({ start: 0, end: 0 });
+  const submittingRef = useRef(false);
   if (!open) return null;
   const submit = async () => {
-    if (!input.content.replace(/^#+\s*/gm, "").trim()) return;
+    if (
+      submittingRef.current ||
+      !input.content.replace(/^#+\s*/gm, "").trim()
+    )
+      return;
+    submittingRef.current = true;
     setSaving(true);
     setError(false);
     try {
-      await onSave(input);
+      await onSave(input, assetLogId);
       onClose();
     } catch {
       setError(true);
     } finally {
+      submittingRef.current = false;
       setSaving(false);
     }
+  };
+  const discard = () => {
+    if (logId) return onClose();
+    void fetch("/api/project-logs", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId, logId: assetLogId }),
+    }).finally(onClose);
+  };
+  const uploadImage = async (file?: File) => {
+    if (!file) return;
+    setUploadingImage(true);
+    setImageError(false);
+    try {
+      const form = new FormData();
+      form.set("file", file);
+      const response = await fetch(
+        `/api/project-logs/${encodeURIComponent(projectId)}/${encodeURIComponent(assetLogId)}/asset`,
+        { method: "POST", body: form },
+      );
+      const payload = (await response.json()) as { url?: string };
+      if (!response.ok || !payload.url) throw new Error("Upload failed.");
+      insertImage(file, payload.url);
+    } catch {
+      setImageError(true);
+    } finally {
+      setUploadingImage(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+  const insertImage = (file: File, url: string) => {
+    const alt = file.name
+      .replace(/\.[^.]+$/, "")
+      .replace(/[\[\]]/g, "")
+      .slice(0, 120);
+    const { start, end } = selectionRef.current;
+    setInput((current) => {
+      const before = current.content.slice(0, start);
+      const after = current.content.slice(end);
+      const prefix = before && !before.endsWith("\n") ? "\n" : "";
+      const suffix = after && !after.startsWith("\n") ? "\n" : "";
+      return {
+        ...current,
+        content: `${before}${prefix}![${alt}](${url})${suffix}${after}`,
+      };
+    });
   };
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4">
@@ -59,7 +122,7 @@ export function ProjectLogEditor({
             <p className="text-xs text-zinc-500">{t("hand.markdownHint")}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="secondary" disabled={saving} onClick={onClose}>
+            <Button variant="secondary" disabled={saving} onClick={discard}>
               {t("common.cancel")}
             </Button>
             <Button disabled={saving} onClick={() => void submit()}>
@@ -68,9 +131,9 @@ export function ProjectLogEditor({
             </Button>
           </div>
         </header>
-        {error && (
+        {(error || imageError) && (
           <p className="px-5 pt-3 text-sm text-red-600">
-            {t("hand.logSaveFailed")}
+            {t(error ? "hand.logSaveFailed" : "hand.imageUploadFailed")}
           </p>
         )}
         <div className="grid min-h-0 flex-1 md:grid-cols-2">
@@ -83,49 +146,32 @@ export function ProjectLogEditor({
             </div>
           </section>
           <section className="flex min-h-[520px] min-w-0 flex-col">
-            <div className="grid grid-cols-2 gap-3 border-b border-zinc-200 p-4 dark:border-zinc-800">
-              <Field label={t("hand.logPeriod")}>
-                <Select
-                  value={input.period}
-                  onChange={(event) =>
-                    setInput({
-                      ...input,
-                      period: event.target.value as LogInput["period"],
-                    })
-                  }
-                >
-                  {(["day", "week", "month", "year"] as const).map(
-                    (period) => (
-                      <option key={period} value={period}>
-                        {t(`hand.logPeriod.${period}`)}
-                      </option>
-                    ),
-                  )}
-                </Select>
-              </Field>
-              <Field label={t("hand.logType")}>
-                <Select
-                  value={input.type}
-                  onChange={(event) =>
-                    setInput({
-                      ...input,
-                      type: event.target.value as LogInput["type"],
-                    })
-                  }
-                >
-                  {(
-                    ["progress", "decision", "problem", "conclusion"] as const
-                  ).map((type) => (
-                    <option key={type} value={type}>
-                      {t(typeLabels[type])}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
+            <LogMetadata input={input} onChange={setInput} />
+            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                {t("hand.markdownSource")}
+              </h3>
+              <Button
+                variant="ghost"
+                className="min-h-8 px-2 text-xs"
+                disabled={uploadingImage}
+                onClick={() => fileRef.current?.click()}
+              >
+                <PhotoIcon className="size-4" />
+                {t(
+                  uploadingImage
+                    ? "hand.uploadingImage"
+                    : "hand.insertImage",
+                )}
+              </Button>
+              <input
+                ref={fileRef}
+                hidden
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={(event) => void uploadImage(event.target.files?.[0])}
+              />
             </div>
-            <h3 className="border-b border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800">
-              {t("hand.markdownSource")}
-            </h3>
             <Textarea
               autoFocus
               spellCheck
@@ -133,11 +179,67 @@ export function ProjectLogEditor({
               onChange={(event) =>
                 setInput({ ...input, content: event.target.value })
               }
+              onSelect={(event) => {
+                selectionRef.current = {
+                  start: event.currentTarget.selectionStart,
+                  end: event.currentTarget.selectionEnd,
+                };
+              }}
               className="min-h-0 flex-1 resize-none rounded-none border-0 font-mono leading-7"
             />
           </section>
         </div>
       </section>
+    </div>
+  );
+}
+
+function LogMetadata({
+  input,
+  onChange,
+}: {
+  input: LogInput;
+  onChange: (input: LogInput) => void;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="grid grid-cols-2 gap-3 border-b border-zinc-200 p-4 dark:border-zinc-800">
+      <Field label={t("hand.logPeriod")}>
+        <Select
+          value={input.period}
+          onChange={(event) =>
+            onChange({
+              ...input,
+              period: event.target.value as LogInput["period"],
+            })
+          }
+        >
+          {(["day", "week", "month", "year"] as const).map((period) => (
+            <option key={period} value={period}>
+              {t(`hand.logPeriod.${period}`)}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label={t("hand.logType")}>
+        <Select
+          value={input.type}
+          onChange={(event) =>
+            onChange({
+              ...input,
+              type: event.target.value as LogInput["type"],
+            })
+          }
+        >
+          {(["progress", "decision", "problem", "conclusion"] as const).map(
+            (type) => (
+              <option key={type} value={type}>
+                {t(typeLabels[type])}
+              </option>
+            ),
+          )}
+        </Select>
+      </Field>
     </div>
   );
 }

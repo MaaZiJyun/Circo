@@ -42,7 +42,7 @@ function markdown(payload: LogPayload) {
   ].join("\n");
 }
 
-async function saveLog(request: Request) {
+async function saveLog(request: Request, overwrite: boolean) {
   try {
     const payload = (await request.json()) as Partial<LogPayload>;
     if (
@@ -66,11 +66,25 @@ async function saveLog(request: Request) {
     };
     const directory = getStoragePath("project", value.projectId, "logs");
     await fs.mkdir(directory, { recursive: true });
-    await fs.writeFile(
-      path.join(directory, `${value.logId}.md`),
-      markdown(value),
-      "utf8",
-    );
+    const markdownPath = path.join(directory, `${value.logId}.md`);
+    try {
+      await fs.writeFile(markdownPath, markdown(value), {
+        encoding: "utf8",
+        flag: overwrite ? "w" : "wx",
+      });
+    } catch (error) {
+      if (
+        !overwrite &&
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "EEXIST"
+      )
+        return Response.json(
+          { error: "A log with this identifier already exists." },
+          { status: 409 },
+        );
+      throw error;
+    }
     return Response.json({
       filePath: path.posix.join(
         "project",
@@ -87,8 +101,8 @@ async function saveLog(request: Request) {
   }
 }
 
-export const POST = saveLog;
-export const PUT = saveLog;
+export const POST = (request: Request) => saveLog(request, false);
+export const PUT = (request: Request) => saveLog(request, true);
 
 export async function DELETE(request: Request) {
   try {
@@ -106,6 +120,10 @@ export async function DELETE(request: Request) {
         `${payload.logId}.md`,
       ),
       { force: true },
+    );
+    await fs.rm(
+      getStoragePath("project", payload.projectId!, "logs", payload.logId!),
+      { force: true, recursive: true },
     );
     return Response.json({ ok: true });
   } catch (error) {
