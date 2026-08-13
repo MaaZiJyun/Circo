@@ -13,6 +13,7 @@ import { PointPreviewDialog } from "./point-preview-dialog";
 
 export function PdfPointLayer({
   points,
+  scale,
   lists,
   source,
   interactive,
@@ -20,6 +21,7 @@ export function PdfPointLayer({
   onDeletePoint,
 }: {
   points: ReferencePoint[];
+  scale: number;
   lists: PointList[];
   source: SourceRecord;
   interactive: boolean;
@@ -50,10 +52,10 @@ export function PdfPointLayer({
               }
               className="absolute z-20 rounded-sm border-2 opacity-50 transition-opacity hover:opacity-75 disabled:pointer-events-none"
               style={{
-                left: point.location.x,
-                top: point.location.y,
-                width: point.location.width,
-                height: point.location.height,
+                left: point.location.x * scale,
+                top: point.location.y * scale,
+                width: point.location.width * scale,
+                height: point.location.height * scale,
                 borderColor: color,
                 backgroundColor: `${color}55`,
               }}

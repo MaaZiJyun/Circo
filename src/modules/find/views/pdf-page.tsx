@@ -13,6 +13,7 @@ import { PdfPointLayer } from "./pdf-point-layer";
 
 export function PdfPage({
   page,
+  zoom,
   points,
   pointLists,
   source,
@@ -21,6 +22,7 @@ export function PdfPage({
   onDeletePoint,
 }: {
   page: PDFPageProxy;
+  zoom: number;
   points: ReferencePoint[];
   pointLists: PointList[];
   source: SourceRecord;
@@ -44,7 +46,7 @@ export function PdfPage({
         }
       }
       if (!active) return;
-      const viewport = page.getViewport({ scale: 1.35 });
+      const viewport = page.getViewport({ scale: 1.35 * zoom });
       const canvas = canvasRef.current;
       const layer = textLayerRef.current;
       if (!canvas || !layer) return;
@@ -99,7 +101,7 @@ export function PdfPage({
       active = false;
       renderTaskRef.current?.cancel();
     };
-  }, [page]);
+  }, [page, zoom]);
   return (
     <div
       data-pdf-page={page.pageNumber}
@@ -109,6 +111,7 @@ export function PdfPage({
       <div ref={textLayerRef} className="absolute inset-0 overflow-hidden" />
       <PdfPointLayer
         points={points}
+        scale={zoom}
         lists={pointLists}
         source={source}
         interactive={pointSelectionEnabled}

@@ -16,6 +16,7 @@ import type {
 } from "@/shared/model/entities";
 import { ContextMenu, ContextMenuItem } from "./context-menu";
 import { PdfPage } from "./pdf-page";
+import { PdfZoomControls } from "./pdf-zoom-controls";
 import { TranslationDialog } from "./translation-dialog";
 import { useSelectionTranslation } from "./use-selection-translation";
 import {
@@ -58,6 +59,7 @@ export function InteractivePdfViewer({
   const [pendingText, setPendingText] = useState<PointCapture | null>(null);
   const [textCapture, setTextCapture] = useState<PointCapture | null>(null);
   const [screenshotMode, setScreenshotMode] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const clipboardWriteRef = useRef<Promise<boolean>>(Promise.resolve(false));
   const dragStart = useRef<{ x: number; y: number; page: HTMLElement } | null>(
     null,
@@ -106,10 +108,10 @@ export function InteractivePdfViewer({
       content: text,
       page: Number(page.dataset.pdfPage),
       location: {
-        x: rect.left - pageRect.left,
-        y: rect.top - pageRect.top,
-        width: rect.width,
-        height: rect.height,
+        x: (rect.left - pageRect.left) / zoom,
+        y: (rect.top - pageRect.top) / zoom,
+        width: rect.width / zoom,
+        height: rect.height / zoom,
       },
     } satisfies PointCapture;
   };
@@ -150,132 +152,141 @@ export function InteractivePdfViewer({
         content: "",
         image,
         page: Number(start.page.dataset.pdfPage),
-        location: { x: left, y: top, width, height },
+        location: {
+          x: left / zoom,
+          y: top / zoom,
+          width: width / zoom,
+          height: height / zoom,
+        },
       });
     dragStart.current = null;
     setSelectionRect(null);
     setScreenshotMode(false);
   };
   return (
-    <div
-      ref={rootRef}
-      className={`relative h-full overflow-auto p-4 ${screenshotMode ? "cursor-crosshair select-none" : ""}`}
-      onContextMenu={(event) => {
-        event.preventDefault();
-        setPendingText(readTextSelection());
-        setMenu({ x: event.clientX, y: event.clientY });
-      }}
-      onPointerDown={(event) => {
-        if (!screenshotMode) return;
-        event.preventDefault();
-        const page = (event.target as Element).closest<HTMLElement>(
-          "[data-pdf-page]",
-        );
-        if (!page) return;
-        window.getSelection()?.removeAllRanges();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        dragStart.current = { x: event.clientX, y: event.clientY, page };
-      }}
-      onPointerMove={(event) => {
-        const start = dragStart.current;
-        if (!start) return;
-        setSelectionRect(
-          new DOMRect(
-            Math.min(start.x, event.clientX),
-            Math.min(start.y, event.clientY),
-            Math.abs(event.clientX - start.x),
-            Math.abs(event.clientY - start.y),
-          ),
-        );
-      }}
-      onPointerUp={(event) => void finishScreenshot(event)}
-    >
-      {error && <p className="p-4 text-sm text-red-600">{error}</p>}
-      <div className="grid gap-4">
-        {pages.map((page) => (
-          <PdfPage
-            key={page.pageNumber}
-            page={page}
-            points={points.filter((point) => point.page === page.pageNumber)}
-            pointLists={pointLists}
-            source={source}
-            pointSelectionEnabled={!screenshotMode}
-            onUpdatePoint={onUpdatePoint}
-            onDeletePoint={onDeletePoint}
-          />
-        ))}
-      </div>
-      {textCapture && (
-        <div className="sticky bottom-3 mx-auto mt-3 flex w-fit gap-2 rounded-xl bg-zinc-950 p-2 text-white shadow-xl">
-          <Button
-            onClick={() => {
-              void clipboardWriteRef.current.then(async (clipboardReady) => {
-                const capture = clipboardReady
-                  ? await readPointCaptureFromClipboard(textCapture)
-                  : textCapture;
-                onCapture(capture);
-                setTextCapture(null);
-              });
-            }}
-          >
-            {t("find.generatePoint")}
-          </Button>
-          <Button variant="ghost" onClick={() => setTextCapture(null)}>
-            {t("common.cancel")}
-          </Button>
+    <div className="relative h-full">
+      <div
+        ref={rootRef}
+        className={`h-full overflow-auto p-4 ${screenshotMode ? "cursor-crosshair select-none" : ""}`}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          setPendingText(readTextSelection());
+          setMenu({ x: event.clientX, y: event.clientY });
+        }}
+        onPointerDown={(event) => {
+          if (!screenshotMode) return;
+          event.preventDefault();
+          const page = (event.target as Element).closest<HTMLElement>(
+            "[data-pdf-page]",
+          );
+          if (!page) return;
+          window.getSelection()?.removeAllRanges();
+          event.currentTarget.setPointerCapture(event.pointerId);
+          dragStart.current = { x: event.clientX, y: event.clientY, page };
+        }}
+        onPointerMove={(event) => {
+          const start = dragStart.current;
+          if (!start) return;
+          setSelectionRect(
+            new DOMRect(
+              Math.min(start.x, event.clientX),
+              Math.min(start.y, event.clientY),
+              Math.abs(event.clientX - start.x),
+              Math.abs(event.clientY - start.y),
+            ),
+          );
+        }}
+        onPointerUp={(event) => void finishScreenshot(event)}
+      >
+        {error && <p className="p-4 text-sm text-red-600">{error}</p>}
+        <div className="grid gap-4">
+          {pages.map((page) => (
+            <PdfPage
+              key={page.pageNumber}
+              page={page}
+              zoom={zoom}
+              points={points.filter((point) => point.page === page.pageNumber)}
+              pointLists={pointLists}
+              source={source}
+              pointSelectionEnabled={!screenshotMode}
+              onUpdatePoint={onUpdatePoint}
+              onDeletePoint={onDeletePoint}
+            />
+          ))}
         </div>
-      )}
-      {selectionRect && (
-        <div
-          className="pointer-events-none fixed z-30 border-2 border-blue-500 bg-blue-500/15"
-          style={{
-            left: selectionRect.x,
-            top: selectionRect.y,
-            width: selectionRect.width,
-            height: selectionRect.height,
-          }}
-        />
-      )}
-      {menu && (
-        <ContextMenu position={menu} onClose={() => setMenu(null)}>
-          <ContextMenuItem
-            disabled={!pendingText}
-            onClick={() => {
-              if (pendingText) void translateSelection(pendingText.content);
-              setMenu(null);
+        {textCapture && (
+          <div className="sticky bottom-3 mx-auto mt-3 flex w-fit gap-2 rounded-xl bg-zinc-950 p-2 text-white shadow-xl">
+            <Button
+              onClick={() => {
+                void clipboardWriteRef.current.then(async (clipboardReady) => {
+                  const capture = clipboardReady
+                    ? await readPointCaptureFromClipboard(textCapture)
+                    : textCapture;
+                  onCapture(capture);
+                  setTextCapture(null);
+                });
+              }}
+            >
+              {t("find.generatePoint")}
+            </Button>
+            <Button variant="ghost" onClick={() => setTextCapture(null)}>
+              {t("common.cancel")}
+            </Button>
+          </div>
+        )}
+        {selectionRect && (
+          <div
+            className="pointer-events-none fixed z-30 border-2 border-blue-500 bg-blue-500/15"
+            style={{
+              left: selectionRect.x,
+              top: selectionRect.y,
+              width: selectionRect.width,
+              height: selectionRect.height,
             }}
-          >
-            {t("find.translateSelection")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            disabled={!pendingText}
-            onClick={() => {
-              if (pendingText) stageCapture(pendingText);
-              setMenu(null);
-            }}
-          >
-            {t("find.selectText")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              window.getSelection()?.removeAllRanges();
-              setScreenshotMode(true);
-              setMenu(null);
-            }}
-          >
-            {t("find.screenshot")}
-          </ContextMenuItem>
-        </ContextMenu>
-      )}
-      {translation && (
-        <TranslationDialog
-          value={translation}
-          onClose={closeTranslation}
-          onTargetChange={(target) =>
-            void translateSelection(translation.source, target)
-          }
-        />
-      )}
+          />
+        )}
+        {menu && (
+          <ContextMenu position={menu} onClose={() => setMenu(null)}>
+            <ContextMenuItem
+              disabled={!pendingText}
+              onClick={() => {
+                if (pendingText) void translateSelection(pendingText.content);
+                setMenu(null);
+              }}
+            >
+              {t("find.translateSelection")}
+            </ContextMenuItem>
+            <ContextMenuItem
+              disabled={!pendingText}
+              onClick={() => {
+                if (pendingText) stageCapture(pendingText);
+                setMenu(null);
+              }}
+            >
+              {t("find.selectText")}
+            </ContextMenuItem>
+            <ContextMenuItem
+              onClick={() => {
+                window.getSelection()?.removeAllRanges();
+                setScreenshotMode(true);
+                setMenu(null);
+              }}
+            >
+              {t("find.screenshot")}
+            </ContextMenuItem>
+          </ContextMenu>
+        )}
+        {translation && (
+          <TranslationDialog
+            value={translation}
+            onClose={closeTranslation}
+            onTargetChange={(target) =>
+              void translateSelection(translation.source, target)
+            }
+          />
+        )}
+      </div>
+      <PdfZoomControls zoom={zoom} onChange={setZoom} />
     </div>
   );
 }
