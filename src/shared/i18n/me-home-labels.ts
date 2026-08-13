@@ -1,7 +1,7 @@
 export const meHomeZh = {
   "me.profileTitle": "个人主页",
   "me.profileSubtitle": "聚焦今天需要完成的事情，并看见长期投入的结果。",
-  "me.dailyCache": "每日任务缓存",
+  "me.dailyCache": "每日任务清单",
   "me.dailyRetrieve": "检索",
   "me.dailyCreate": "创建",
   "me.dailyTaskName": "任务名称",
@@ -15,6 +15,7 @@ export const meHomeZh = {
   "me.taskEstimate": "预期耗时",
   "me.taskExpectedOutput": "预期产出",
   "me.taskImportance": "重要度（0–100）",
+  "me.completedAt": "完成时间",
   "me.taskQuadrant": "紧急－重要四象限",
   "me.urgency": "紧急度",
   "me.importance": "重要度",
@@ -28,7 +29,7 @@ export const meHomeEn: Record<keyof typeof meHomeZh, string> = {
   "me.profileTitle": "Personal Home",
   "me.profileSubtitle":
     "Focus on what needs doing today and see the results of long-term effort.",
-  "me.dailyCache": "Daily Task Cache",
+  "me.dailyCache": "Daily Task List",
   "me.dailyRetrieve": "Retrieve",
   "me.dailyCreate": "Create",
   "me.dailyTaskName": "Task name",
@@ -43,6 +44,7 @@ export const meHomeEn: Record<keyof typeof meHomeZh, string> = {
   "me.taskEstimate": "Expected duration",
   "me.taskExpectedOutput": "Expected output",
   "me.taskImportance": "Importance (0–100)",
+  "me.completedAt": "Completed at",
   "me.taskQuadrant": "Urgent–Important Matrix",
   "me.urgency": "Urgency",
   "me.importance": "Importance",

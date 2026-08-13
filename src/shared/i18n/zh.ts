@@ -2,6 +2,7 @@ import { findLibraryZh } from "./find-library-labels";
 import { mindZh } from "./mind-labels";
 import { meHomeZh } from "./me-home-labels";
 import { handLibraryZh } from "./hand-library-labels";
+import { dashboardCountdownZh } from "./dashboard-countdown-labels";
 
 export const zh = {
   "app.name": "Circo",
@@ -63,6 +64,7 @@ export const zh = {
   "dashboard.less": "较少",
   "dashboard.more": "较多",
   "dashboard.selectYear": "选择年份",
+  ...dashboardCountdownZh,
   "dashboard.metricEffective": "标记有效的时长 ÷ 总时长",
   "dashboard.metricCompletion": "到期已完成任务 ÷ 到期任务",
   "dashboard.cycle": "当前周期",
@@ -169,6 +171,9 @@ export const zh = {
   "hand.endDate": "结束日期",
   "hand.timeline": "计划与进度",
   "hand.newTask": "添加任务",
+  "hand.editTask": "编辑任务",
+  "hand.moveTask": "转移至其他项目",
+  "hand.targetProject": "目标项目",
   "hand.taskTitle": "任务名称",
   "hand.estimate": "预计工时（分钟）",
   "hand.milestone": "设为里程碑",

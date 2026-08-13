@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import {
   ArrowDownTrayIcon,
-  CheckCircleIcon,
   DocumentPlusIcon,
   PlusIcon,
 } from "@heroicons/react/24/outline";
@@ -21,15 +20,20 @@ import {
 import { statusLabels, typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
+import { TaskRow } from "@/shared/components/task-row";
+import type { MenuPosition } from "@/modules/find/views/context-menu";
+import type { TaskRecord } from "@/shared/model/entities";
 
 type DialogName = "task" | "log" | "attachment" | null;
 
 export function ProjectWorkspace({
   vm,
   openDialog,
+  onOpenTaskMenu,
 }: {
   vm: ReturnType<typeof useHandViewModel>;
   openDialog: (dialog: DialogName) => void;
+  onOpenTaskMenu: (task: TaskRecord, position: MenuPosition) => void;
 }) {
   const { t, formatDate, formatNumber } = useI18n();
   const [logPeriod, setLogPeriod] = useState<"day" | "week" | "month" | "year">(
@@ -78,55 +82,25 @@ export function ProjectWorkspace({
           {vm.tasks.length ? (
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {vm.tasks.map((task) => (
-                <button
+                <TaskRow
                   key={task.id}
-                  onClick={() => vm.advanceTask(task)}
-                  className="flex w-full items-center gap-3 py-3 text-left"
-                >
-                  <CheckCircleIcon
-                    className={`size-5 ${task.status === "done" ? "text-green-500" : task.status === "doing" ? "text-blue-500" : "text-zinc-300 dark:text-zinc-700"}`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={`text-sm font-medium ${task.status === "done" ? "line-through text-zinc-400" : ""}`}
-                    >
-                      {task.title}
-                    </p>
-                    <p className="text-xs text-zinc-500">
-                      {formatDate(task.dueDate)} · {task.estimatedMinutes}{" "}
-                      {t("common.minutes")}
-                    </p>
-                    {task.description && (
-                      <p className="mt-1 text-xs text-zinc-500">
-                        {task.description}
-                      </p>
-                    )}
-                    {task.expectedOutput && (
-                      <p className="mt-1 text-xs text-zinc-500">
-                        {t("hand.expectedOutput")}: {task.expectedOutput}
-                      </p>
-                    )}
-                    {task.completedAt && (
-                      <p className="mt-1 text-xs text-zinc-500">
-                        {t("me.finish")}: {formatDate(task.completedAt)}
-                      </p>
-                    )}
-                  </div>
-                  {task.milestone && (
-                    <Badge tone="warning">{t("hand.milestone")}</Badge>
-                  )}
-                  <Badge
-                    tone={
-                      task.status === "done"
-                        ? "success"
-                        : task.status === "doing"
-                          ? "info"
-                          : "neutral"
-                    }
-                  >
-                    {t(statusLabels[task.status])}
-                  </Badge>
-                </button>
+                  title={task.title}
+                  description={task.description}
+                  status={task.status}
+                  dueAt={task.dueDate}
+                  completedAt={task.completedAt}
+                  estimatedMinutes={task.estimatedMinutes}
+                  expectedOutput={task.expectedOutput}
+                  milestone={task.milestone}
+                  onToggle={() => vm.advanceTask(task)}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    onOpenTaskMenu(task, {
+                      x: event.clientX,
+                      y: event.clientY,
+                    });
+                  }}
+                />
               ))}
             </div>
           ) : (

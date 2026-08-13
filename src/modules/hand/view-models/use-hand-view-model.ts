@@ -6,23 +6,15 @@ import type {
   Attachment,
   ProjectLog,
   ProjectRecord,
-  TaskRecord,
 } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
+import { useProjectTaskActions } from "./use-project-task-actions";
+export type { TaskInput } from "./use-project-task-actions";
 
 export type ProjectInput = Pick<
   ProjectRecord,
   "name" | "purpose" | "expected" | "startDate" | "endDate" | "tags" | "score"
->;
-export type TaskInput = Pick<
-  TaskRecord,
-  | "title"
-  | "description"
-  | "dueDate"
-  | "estimatedMinutes"
-  | "expectedOutput"
-  | "milestone"
 >;
 export type LogInput = Pick<
   ProjectLog,
@@ -87,6 +79,7 @@ export function useHandViewModel() {
           100,
       )
     : 0;
+  const taskActions = useProjectTaskActions(selected);
 
   const addProject = (input: ProjectInput) => {
     const stamp = now();
@@ -128,59 +121,6 @@ export function useHandViewModel() {
     }));
   };
 
-  const addTask = (input: TaskInput) => {
-    if (!selected) return;
-    const stamp = now();
-    const task: TaskRecord = {
-      id: createId("task"),
-      projectId: selected.id,
-      ...input,
-      priority: "medium",
-      status: "todo",
-      actualMinutes: 0,
-      completedAt: undefined,
-      createdAt: stamp,
-      updatedAt: stamp,
-    };
-    mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
-  };
-
-  const advanceTask = (task: TaskRecord) => {
-    const status =
-      task.status === "todo"
-        ? "doing"
-        : task.status === "doing"
-          ? "done"
-          : "todo";
-    const stamp = now();
-    mutate((current) => ({
-      ...current,
-      tasks: current.tasks.map((item) =>
-        item.id === task.id
-          ? {
-              ...item,
-              status,
-              actualMinutes:
-                status === "done" && !item.actualMinutes
-                  ? item.estimatedMinutes
-                  : item.actualMinutes,
-              updatedAt: stamp,
-              completedAt: status === "done" ? stamp : undefined,
-            }
-          : item,
-      ),
-      dailyTasks: current.dailyTasks.map((item) =>
-        item.sourceTaskId === task.id
-          ? {
-              ...item,
-              completed: status === "done",
-              completedAt: status === "done" ? stamp : undefined,
-              updatedAt: stamp,
-            }
-          : item,
-      ),
-    }));
-  };
 
   const addLog = async (input: LogInput) => {
     if (!selected) return;
@@ -269,8 +209,7 @@ export function useHandViewModel() {
     addProject,
     updateProject,
     updateProjectById,
-    addTask,
-    advanceTask,
+    ...taskActions,
     addLog,
     addAttachment,
     deleteProject: (id: string) => softDelete("projects", id),

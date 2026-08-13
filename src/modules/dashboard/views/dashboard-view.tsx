@@ -5,7 +5,6 @@ import type { AppSection } from "@/shared/components/app-shell";
 import {
   PageHeader,
   SectionHeader,
-  StatCard,
 } from "@/shared/components/page-elements";
 import {
   Badge,
@@ -18,6 +17,8 @@ import { statusLabels, typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useDashboardViewModel } from "../view-models/use-dashboard-view-model";
 import { ContributionCalendar } from "./contribution-calendar";
+import { PeriodCountdown } from "./period-countdown";
+import { DailyTaskList } from "@/modules/me/views/daily-task-list";
 
 const loop: {
   id: AppSection;
@@ -35,14 +36,10 @@ export function DashboardView({
 }: {
   navigate: (section: AppSection) => void;
 }) {
-  const { t, formatDate, formatNumber } = useI18n();
+  const { t, formatDate } = useI18n();
   const viewModel = useDashboardViewModel();
   if (!viewModel) return null;
-  const { metrics, activeCycle, goals, recentArtifacts, sessions } = viewModel;
-  const rate = (value: number | null) =>
-    value === null
-      ? t("common.noData")
-      : formatNumber(value, { style: "percent", maximumFractionDigits: 0 });
+  const { activeCycle, goals, recentArtifacts, sessions } = viewModel;
   return (
     <div className="space-y-8">
       <PageHeader
@@ -62,6 +59,10 @@ export function DashboardView({
           </>
         }
       />
+      <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
+        <Card><PeriodCountdown /></Card>
+        <Card><DailyTaskList /></Card>
+      </div>
       <ContributionCalendar sessions={sessions} />
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <Card>

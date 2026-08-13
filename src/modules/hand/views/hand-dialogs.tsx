@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { Button, Dialog, Field, Input, Select, Textarea } from "@/shared/components/ui";
 import { typeLabels } from "@/shared/i18n/domain-labels";
@@ -107,15 +106,19 @@ export function ProjectDialog({
 
 export function TaskDialog({
   open,
+  edit = false,
+  initial,
   onClose,
   onSave,
 }: {
   open: boolean;
+  edit?: boolean;
+  initial?: TaskInput;
   onClose: () => void;
   onSave: (input: TaskInput) => void;
 }) {
   const { t } = useI18n();
-  const [input, setInput] = useState<TaskInput>({
+  const [input, setInput] = useState<TaskInput>(initial ?? {
     title: "",
     description: "",
     dueDate: `${addDays(new Date(), 7)}T23:59`,
@@ -132,7 +135,7 @@ export function TaskDialog({
   return (
     <Dialog
       open={open}
-      title={t("hand.newTask")}
+      title={t(edit ? "hand.editTask" : "hand.newTask")}
       closeLabel={t("common.close")}
       onClose={onClose}
     >

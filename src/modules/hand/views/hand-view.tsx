@@ -30,6 +30,7 @@ import {
 import { ProjectSidebar } from "./project-sidebar";
 import { ProjectTable } from "./project-table";
 import { ProjectWorkspace } from "./project-workspace";
+import { ProjectTaskActions, type TaskMenu } from "./project-task-actions";
 
 type DetailDialog = "task" | "log" | "attachment" | null;
 type ProjectMenu = { project: ProjectRecord; position: MenuPosition } | null;
@@ -52,6 +53,7 @@ export function HandView() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ProjectRecord | null>(null);
   const [menu, setMenu] = useState<ProjectMenu>(null);
+  const [taskMenu, setTaskMenu] = useState<TaskMenu>(null);
   const [listDialog, setListDialog] = useState<"create" | "choose" | null>(
     null,
   );
@@ -188,7 +190,13 @@ export function HandView() {
               </Select>
             </label>
           </div>
-          <ProjectWorkspace vm={vm} openDialog={setDialog} />
+          <ProjectWorkspace
+            vm={vm}
+            openDialog={setDialog}
+            onOpenTaskMenu={(task, position) =>
+              setTaskMenu({ task, position })
+            }
+          />
         </>
       ) : null}
 
@@ -272,6 +280,11 @@ export function HandView() {
           </ContextMenuItem>
         </ContextMenu>
       )}
+      <ProjectTaskActions
+        vm={vm}
+        menu={taskMenu}
+        onClose={() => setTaskMenu(null)}
+      />
     </div>
   );
 }

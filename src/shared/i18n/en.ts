@@ -1,9 +1,8 @@
-import type { MessageKey } from "./zh";
-import { findLibraryEn } from "./find-library-labels";
+import type { MessageKey } from "./zh"; import { findLibraryEn } from "./find-library-labels";
 import { mindEn } from "./mind-labels";
 import { meHomeEn } from "./me-home-labels";
 import { handLibraryEn } from "./hand-library-labels";
-
+import { dashboardCountdownEn } from "./dashboard-countdown-labels";
 export const en: Record<MessageKey, string> = {
   "app.name": "Circo",
   "app.tagline": "Give every effort an origin and a destination",
@@ -64,6 +63,7 @@ export const en: Record<MessageKey, string> = {
   "dashboard.less": "Less",
   "dashboard.more": "More",
   "dashboard.selectYear": "Select year",
+  ...dashboardCountdownEn,
   "dashboard.metricEffective": "Effective time ÷ total time",
   "dashboard.metricCompletion": "Due tasks done ÷ due tasks",
   "dashboard.cycle": "Current cycle",
@@ -154,8 +154,7 @@ export const en: Record<MessageKey, string> = {
   ...handLibraryEn,
   "hand.eyebrow": "Make it real",
   "hand.title": "Hand",
-  "hand.subtitle":
-    "Manage projects incubated from ideas or created manually in the project library.",
+  "hand.subtitle": "Manage projects incubated from ideas or created manually in the project library.",
   "hand.projectLibrary": "Project Library",
   "hand.projectGateHint":
     "No projects yet. Incubate an evaluated idea or add a project manually.",
@@ -174,6 +173,9 @@ export const en: Record<MessageKey, string> = {
   "hand.endDate": "End date",
   "hand.timeline": "Plan and progress",
   "hand.newTask": "Add task",
+  "hand.editTask": "Edit task",
+  "hand.moveTask": "Move to another project",
+  "hand.targetProject": "Target project",
   "hand.taskTitle": "Task name",
   "hand.estimate": "Estimate (minutes)",
   "hand.milestone": "Mark as milestone",
