@@ -18,6 +18,7 @@ export function SidebarProfile({
   const { state } = useStore();
   const name = state?.profile.name || t("nav.me");
   const avatar = state?.profile.avatarDataUrl ?? "";
+  const musicPlaying = state?.profile.backgroundMusicEnabled ?? false;
   return (
     <div
       className={`mt-auto flex border-t border-zinc-200 pt-4 dark:border-zinc-800 ${collapsed ? "flex-col items-center gap-2" : "items-center gap-2"}`}
@@ -28,7 +29,11 @@ export function SidebarProfile({
         onClick={() => onNavigate("me")}
         className={`flex min-w-0 items-center rounded-xl p-2 text-left transition-colors ${collapsed ? "justify-center" : "flex-1 gap-3"} ${active === "me" ? "bg-zinc-200 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-900"}`}
       >
-        <ProfileAvatar name={name} src={avatar} />
+        <ProfileAvatar
+          name={name}
+          src={avatar}
+          className={musicPlaying ? "background-music-avatar" : ""}
+        />
         {!collapsed && (
           <span className="truncate text-sm font-medium">{name}</span>
         )}

@@ -24,13 +24,12 @@ import { MessagesView } from "@/modules/messages/views/messages-view";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
 import { activeItems } from "@/shared/model/app-state";
+import type { AppSection } from "@/shared/model/app-section";
 import { useStore } from "@/shared/view-models/store-context";
 import { AppSearchResults } from "./app-search-results";
 import { SettingsView } from "./settings-view";
 import { SidebarProfile } from "./sidebar-profile";
 import { IconButton, Input, LoadingState } from "./ui";
-
-export type AppSection = "dashboard" | "me" | "find" | "mind" | "hand" | "land" | "messages" | "settings";
 
 const navigation: {
   id: AppSection;
@@ -127,7 +126,7 @@ function Sidebar({
       >
         {!collapsed && (
           <div>
-            <p className="text-3xl font-bold tracking-loose">{t("app.name")}</p>
+            <p className="brand-wordmark text-3xl">{t("app.name")}</p>
             <p className="text-xs text-zinc-500">{t("common.localOnly")}</p>
           </div>
         )}
@@ -219,7 +218,7 @@ export function AppShell() {
             onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="mb-6 flex items-center justify-between">
-              <span className="font-semibold">{t("app.name")}</span>
+              <span className="brand-wordmark text-xl">{t("app.name")}</span>
               <IconButton
                 label={t("common.close")}
                 onClick={() => setMenuOpen(false)}

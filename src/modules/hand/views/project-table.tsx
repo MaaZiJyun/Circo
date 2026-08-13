@@ -33,11 +33,11 @@ export function ProjectTable({
     library.projects.every((item) => library.selectedIds.includes(item.id));
   return (
     <div className="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
-      <table className="w-full min-w-[850px] text-left text-sm">
+      <table className="w-full min-w-[960px] text-left text-sm">
         <thead className="bg-zinc-50 text-xs text-zinc-500 dark:bg-zinc-900">
           <tr>
             {selectionMode && (
-              <th className="w-12 p-3">
+              <th className="h-8 w-12 px-3 py-0">
                 <input
                   type="checkbox"
                   aria-label={t("hand.selectAll")}
@@ -52,14 +52,16 @@ export function ProjectTable({
                 />
               </th>
             )}
-            <th className="p-3">{t("common.title")}</th>
-            <th className="p-3">{t("hand.purpose")}</th>
-            <th className="p-3">{t("common.status")}</th>
-            <th className="p-3">{t("hand.projectScore")}</th>
-            <th className="p-3">{t("hand.startDate")}</th>
-            <th className="p-3">{t("hand.endDate")}</th>
-            <th className="p-3">{t("common.tags")}</th>
-            <th className="p-3">{t("hand.ideaSource")}</th>
+            <th className="h-8 w-[30%] min-w-72 px-3 py-0">
+              {t("common.title")}
+            </th>
+            <th className="h-8 w-56 px-3 py-0">{t("hand.purpose")}</th>
+            <th className="h-8 px-3 py-0">{t("common.status")}</th>
+            <th className="h-8 px-3 py-0">{t("hand.projectScore")}</th>
+            <th className="h-8 px-3 py-0">{t("hand.startDate")}</th>
+            <th className="h-8 px-3 py-0">{t("hand.endDate")}</th>
+            <th className="h-8 px-3 py-0">{t("common.tags")}</th>
+            <th className="h-8 px-3 py-0">{t("hand.ideaSource")}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
@@ -67,7 +69,7 @@ export function ProjectTable({
             <tr
               key={project.id}
               draggable
-              className={`${library.selectedIds.includes(project.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""} cursor-grab select-none hover:bg-zinc-50 dark:hover:bg-zinc-900/60`}
+              className={`${library.selectedIds.includes(project.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""} max-h-[120px] cursor-grab select-none hover:bg-zinc-50 dark:hover:bg-zinc-900/60`}
               onDragStart={(event) => {
                 cancelPress();
                 const ids = library.selectedIds.includes(project.id)
@@ -106,7 +108,7 @@ export function ProjectTable({
               }}
             >
               {selectionMode && (
-                <td className="p-3">
+                <td className="px-3 py-3 align-top">
                   <input
                     type="checkbox"
                     aria-label={project.name}
@@ -115,32 +117,40 @@ export function ProjectTable({
                   />
                 </td>
               )}
-              <td className="p-3 font-semibold">{project.name}</td>
-              <td className="max-w-80 truncate p-3 text-zinc-500">
-                {project.purpose || "—"}
+              <td className="w-[30%] min-w-72 px-3 py-3 align-top font-semibold">
+                <div className="line-clamp-4 max-h-24 break-words leading-6">
+                  {project.name}
+                </div>
               </td>
-              <td className="p-3">
+              <td className="w-56 max-w-56 px-3 py-3 align-top text-zinc-500">
+                <div className="line-clamp-4 max-h-24 whitespace-normal break-words leading-6">
+                  {project.purpose || "—"}
+                </div>
+              </td>
+              <td className="px-3 py-3 align-top">
                 <Badge
                   tone={project.status === "completed" ? "success" : "info"}
                 >
                   {t(statusLabels[project.status])}
                 </Badge>
               </td>
-              <td className="p-3">{project.score}</td>
-              <td className="whitespace-nowrap p-3">
+              <td className="px-3 py-3 align-top">{project.score}</td>
+              <td className="whitespace-nowrap px-3 py-3 align-top">
                 {formatDate(project.startDate)}
               </td>
-              <td className="whitespace-nowrap p-3">
+              <td className="whitespace-nowrap px-3 py-3 align-top">
                 {formatDate(project.endDate)}
               </td>
-              <td className="p-3">
-                <div className="flex flex-wrap gap-1">
+              <td className="px-3 py-3 align-top">
+                <div className="flex max-h-24 flex-wrap gap-1 overflow-hidden">
                   {project.tags.map((tag) => (
                     <Badge key={tag}>{tag}</Badge>
                   ))}
                 </div>
               </td>
-              <td className="p-3">{project.ideaIds.length || "—"}</td>
+              <td className="px-3 py-3 align-top">
+                {project.ideaIds.length || "—"}
+              </td>
             </tr>
           ))}
         </tbody>

@@ -90,6 +90,7 @@ export function ProjectWorkspace({
                   dueAt={task.dueDate}
                   completedAt={task.completedAt}
                   estimatedMinutes={task.estimatedMinutes}
+                  actualMinutes={task.actualMinutes}
                   expectedOutput={task.expectedOutput}
                   milestone={task.milestone}
                   onToggle={() => vm.advanceTask(task)}

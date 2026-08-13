@@ -59,6 +59,15 @@ export interface UserProfile {
   name: string;
   avatarDataUrl: string;
   birthDate?: string;
+  backgroundAudioToken?: string;
+  backgroundAudioName?: string;
+  backgroundMusicEnabled?: boolean;
+  backgroundAudioTracks?: BackgroundAudioTrack[];
+}
+
+export interface BackgroundAudioTrack {
+  token: string;
+  name: string;
 }
 
 export type AppEntity = AppState[CollectionName][number];
@@ -81,6 +90,31 @@ function isProfile(value: unknown) {
     typeof avatar === "string" &&
     avatar.length <= 3_000_000 &&
     (avatar === "" || /^data:image\/(jpeg|png|webp);base64,/.test(avatar)) &&
+    (profile.backgroundAudioToken === undefined ||
+      (typeof profile.backgroundAudioToken === "string" &&
+        (profile.backgroundAudioToken === "" ||
+          /^[a-f0-9-]+\.(aac|flac|m4a|mp3|ogg|wav|webm)$/i.test(
+            profile.backgroundAudioToken,
+          )))) &&
+    (profile.backgroundAudioName === undefined ||
+      (typeof profile.backgroundAudioName === "string" &&
+        profile.backgroundAudioName.length <= 200)) &&
+    (profile.backgroundMusicEnabled === undefined ||
+      typeof profile.backgroundMusicEnabled === "boolean") &&
+    (profile.backgroundAudioTracks === undefined ||
+      (Array.isArray(profile.backgroundAudioTracks) &&
+        profile.backgroundAudioTracks.length <= 100 &&
+        profile.backgroundAudioTracks.every(
+          (track) =>
+            track &&
+            typeof track === "object" &&
+            typeof track.token === "string" &&
+            /^[a-f0-9-]+\.(aac|flac|m4a|mp3|ogg|wav|webm)$/i.test(
+              track.token,
+            ) &&
+            typeof track.name === "string" &&
+            track.name.length <= 200,
+        ))) &&
     (profile.birthDate === undefined ||
       /^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate))
   );

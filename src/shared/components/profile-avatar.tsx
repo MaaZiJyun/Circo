@@ -5,15 +5,17 @@ export function ProfileAvatar({
   name,
   src,
   large = false,
+  className = "",
 }: {
   name: string;
   src: string;
   large?: boolean;
+  className?: string;
 }) {
   const size = large ? "size-20" : "size-9";
   return (
     <span
-      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950 ${size}`}
+      className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950 ${size} ${className}`}
     >
       {src ? (
         <Image

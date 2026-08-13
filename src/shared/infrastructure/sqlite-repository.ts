@@ -7,6 +7,7 @@ import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
 import { seedPointLists } from "./seed-project-lists";
 import { emptyReadingReview } from "@/modules/find/model/reading-record";
+import { normalizeBackgroundAudio } from "@/shared/model/background-audio";
 
 const systemLists = [
   {
@@ -115,6 +116,7 @@ function normalizeState(state: AppState): AppState {
       ...(state.profile?.birthDate
         ? { birthDate: state.profile.birthDate }
         : {}),
+      ...normalizeBackgroundAudio(state.profile),
     },
     aiJobs: state.aiJobs ?? [],
     messages: state.messages ?? [],
@@ -201,6 +203,7 @@ function normalizeState(state: AppState): AppState {
       description: item.description ?? "",
       dueAt: item.dueAt ?? `${item.date}T23:59`,
       estimatedMinutes: item.estimatedMinutes ?? 30,
+      actualMinutes: item.actualMinutes ?? 0,
       expectedOutput: item.expectedOutput ?? "",
       importance: item.importance ?? 50,
     })),
@@ -208,6 +211,7 @@ function normalizeState(state: AppState): AppState {
       ...item,
       description: item.description ?? "",
       expectedOutput: item.expectedOutput ?? "",
+      actualMinutes: item.actualMinutes ?? 0,
     })),
     logs: state.logs.map((item) => ({
       ...item,

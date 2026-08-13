@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
 import type { DailyTask, TaskRecord } from "@/shared/model/entities";
 import { createId, now, today } from "@/shared/model/factories";
@@ -21,6 +21,22 @@ export type DailyTaskInput = Pick<
 export function useDailyTaskCache() {
   const { state, mutate, softDelete } = useStore();
   const [date, setDate] = useState(today());
+  useEffect(() => {
+    let timer = 0;
+    const scheduleReset = () => {
+      const nextMidnight = new Date();
+      nextMidnight.setHours(24, 0, 0, 0);
+      timer = window.setTimeout(
+        () => {
+          setDate(today());
+          scheduleReset();
+        },
+        nextMidnight.getTime() - Date.now() + 50,
+      );
+    };
+    scheduleReset();
+    return () => window.clearTimeout(timer);
+  }, []);
   const view = useMemo(() => {
     if (!state) return null;
     const projects = activeItems(state.projects);
@@ -74,6 +90,7 @@ export function useDailyTaskCache() {
       completedAt: source?.completedAt,
       dueAt: input.dueAt,
       estimatedMinutes: input.estimatedMinutes,
+      actualMinutes: 0,
       expectedOutput: input.expectedOutput,
       importance: input.importance,
       sourceTaskId: input.sourceTaskId,
@@ -119,7 +136,6 @@ export function useDailyTaskCache() {
           )
         : current.tasks,
       dailyTasks: current.dailyTasks.map((task) =>
-        (item.sourceTaskId && task.sourceTaskId === item.sourceTaskId) ||
         task.id === item.id
           ? {
               ...task,

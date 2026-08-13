@@ -27,6 +27,7 @@ export function useDashboardViewModel() {
       goals,
       recentArtifacts,
       sessions: activeItems(state.sessions),
+      dailyTasks: activeItems(state.dailyTasks),
       metrics: calculateMetrics(state),
     };
   }, [state]);

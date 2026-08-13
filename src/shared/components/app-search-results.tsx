@@ -5,7 +5,7 @@ import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
 import { activeItems } from "@/shared/model/app-state";
 import { useStore } from "@/shared/view-models/store-context";
-import type { AppSection } from "./app-shell";
+import type { AppSection } from "@/shared/model/app-section";
 
 export function AppSearchResults({
   query,

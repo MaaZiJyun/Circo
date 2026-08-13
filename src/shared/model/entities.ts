@@ -228,6 +228,7 @@ export interface DailyTask extends BaseEntity {
   dueAt: string;
   completedAt?: string;
   estimatedMinutes: number;
+  actualMinutes: number;
   expectedOutput: string;
   importance: number;
   sourceTaskId?: string;

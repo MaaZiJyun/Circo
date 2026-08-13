@@ -16,7 +16,7 @@ export async function GET() {
     const state = await repository.load();
     const zip = new AdmZip();
     zip.addFile("circo.json", Buffer.from(JSON.stringify(state, null, 2)));
-    for (const folder of ["files", "attachments"]) {
+    for (const folder of ["files", "attachments", "background-audio"]) {
       const localPath = path.join(
         /* turbopackIgnore: true */ dataDirectory,
         folder,
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     for (const entry of zip.getEntries()) {
       if (entry.isDirectory || entry.entryName === "circo.json") continue;
       if (
-        !/^(files|attachments)\/[a-z0-9-]+\.[a-z0-9]{1,10}$/i.test(
+        !/^(files|attachments|background-audio)\/[a-z0-9-]+\.[a-z0-9]{1,10}$/i.test(
           entry.entryName,
         )
       ) {
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
       fs.writeFileSync(destination, entry.getData());
     }
     await repository.restore(parsed);
-    for (const folder of ["files", "attachments"]) {
+    for (const folder of ["files", "attachments", "background-audio"]) {
       const source = path.join(temporary, folder);
       const destination = path.join(
         /* turbopackIgnore: true */ dataDirectory,

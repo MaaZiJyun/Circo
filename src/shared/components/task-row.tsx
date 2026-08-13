@@ -13,6 +13,7 @@ export function TaskRow({
   dueAt,
   completedAt,
   estimatedMinutes,
+  actualMinutes,
   expectedOutput,
   source,
   milestone,
@@ -26,6 +27,7 @@ export function TaskRow({
   dueAt: string;
   completedAt?: string;
   estimatedMinutes: number;
+  actualMinutes?: number;
   expectedOutput: string;
   source?: string;
   milestone?: boolean;
@@ -66,6 +68,12 @@ export function TaskRow({
         <p className="mt-1 text-xs text-zinc-500">
           {t("me.taskDueAt")}: {formatDate(dueAt)} · {t("me.taskEstimate")}:{" "}
           {estimatedMinutes} {t("common.minutes")}
+          {actualMinutes !== undefined && (
+            <>
+              {" · "}
+              {t("me.actualTime")}: {formatElapsed(actualMinutes)}
+            </>
+          )}
         </p>
         {description && (
           <p className="mt-1 text-xs leading-5 text-zinc-500">{description}</p>
@@ -84,4 +92,14 @@ export function TaskRow({
       {action && <div className="shrink-0">{action}</div>}
     </div>
   );
+}
+
+function formatElapsed(minutes: number) {
+  const totalSeconds = Math.floor(minutes * 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const remainingMinutes = Math.floor(totalSeconds / 60) % 60;
+  const seconds = totalSeconds % 60;
+  return hours
+    ? `${hours}h ${remainingMinutes}m ${seconds}s`
+    : `${remainingMinutes}m ${seconds}s`;
 }

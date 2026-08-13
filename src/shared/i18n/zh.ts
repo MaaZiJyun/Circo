@@ -3,7 +3,9 @@ import { mindZh } from "./mind-labels";
 import { meHomeZh } from "./me-home-labels";
 import { handLibraryZh } from "./hand-library-labels";
 import { dashboardCountdownZh } from "./dashboard-countdown-labels";
+import { dashboardFocusZh } from "./dashboard-focus-labels";
 import { messageZh } from "./message-labels";
+import { settingsMediaZh } from "./settings-media-labels";
 
 export const zh = {
   "app.name": "Circo",
@@ -57,6 +59,7 @@ export const zh = {
   "dashboard.subtitle":
     "从投入、阅读和灵感，到项目与正式产出，每一步都可追溯。",
   "dashboard.startFocus": "开始专注",
+  ...dashboardFocusZh,
   "dashboard.addIdea": "记录灵感",
   "dashboard.totalTime": "累计投入",
   "dashboard.effectiveRate": "有效投入率",
@@ -216,14 +219,7 @@ export const zh = {
   "land.publishInfo": "发布信息",
   "settings.eyebrow": "偏好与数据",
   "settings.title": "设置",
-  "settings.profile": "个人资料",
-  "settings.username": "用户名",
-  "settings.changeAvatar": "更换头像",
-  "settings.removeAvatar": "移除头像",
-  "settings.avatarHint":
-    "右键头像可更换或移除。支持 PNG、JPEG 或 WebP，最大 2 MB。",
-  "settings.avatarInvalid": "请选择不超过 2 MB 的 PNG、JPEG 或 WebP 图片。",
-  "settings.nameRequired": "用户名不能为空。",
+  ...settingsMediaZh,
   "settings.theme": "外观主题",
   "settings.language": "界面语言",
   "settings.system": "跟随系统",

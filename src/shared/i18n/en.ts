@@ -1,7 +1,12 @@
-import type { MessageKey } from "./zh"; import { findLibraryEn } from "./find-library-labels"; import { mindEn } from "./mind-labels";
-import { meHomeEn } from "./me-home-labels"; import { handLibraryEn } from "./hand-library-labels";
-import { dashboardCountdownEn } from "./dashboard-countdown-labels"; import { messageEn } from "./message-labels";
-export const en: Record<MessageKey, string> = {
+import { findLibraryEn } from "./find-library-labels";
+import { mindEn } from "./mind-labels";
+import { meHomeEn } from "./me-home-labels";
+import { handLibraryEn } from "./hand-library-labels";
+import { dashboardCountdownEn } from "./dashboard-countdown-labels";
+import { dashboardFocusEn } from "./dashboard-focus-labels";
+import { messageEn } from "./message-labels";
+import { settingsMediaEn } from "./settings-media-labels";
+export const en: Record<import("./zh").MessageKey, string> = {
   "app.name": "Circo",
   "app.tagline": "Give every effort an origin and a destination",
   "nav.dashboard": "Overview",
@@ -53,6 +58,7 @@ export const en: Record<MessageKey, string> = {
   "dashboard.subtitle":
     "From effort, reading, and ideas to projects and artifacts—every step stays traceable.",
   "dashboard.startFocus": "Start focus",
+  ...dashboardFocusEn,
   "dashboard.addIdea": "Capture idea",
   "dashboard.totalTime": "Total effort",
   "dashboard.effectiveRate": "Effective rate",
@@ -153,7 +159,8 @@ export const en: Record<MessageKey, string> = {
   ...handLibraryEn,
   "hand.eyebrow": "Make it real",
   "hand.title": "Hand",
-  "hand.subtitle": "Manage projects incubated from ideas or created manually in the project library.",
+  "hand.subtitle":
+    "Manage projects incubated from ideas or created manually in the project library.",
   "hand.projectLibrary": "Project Library",
   "hand.projectGateHint":
     "No projects yet. Incubate an evaluated idea or add a project manually.",
@@ -217,14 +224,7 @@ export const en: Record<MessageKey, string> = {
   "land.publishInfo": "Publication details",
   "settings.eyebrow": "Preferences and data",
   "settings.title": "Settings",
-  "settings.profile": "Profile",
-  "settings.username": "Username",
-  "settings.changeAvatar": "Replace avatar",
-  "settings.removeAvatar": "Remove avatar",
-  "settings.avatarHint":
-    "Right-click the avatar to replace or remove it. PNG, JPEG, or WebP up to 2 MB.",
-  "settings.avatarInvalid": "Choose a PNG, JPEG, or WebP image up to 2 MB.",
-  "settings.nameRequired": "Username is required.",
+  ...settingsMediaEn,
   "settings.theme": "Theme",
   "settings.language": "Language",
   "settings.system": "System",

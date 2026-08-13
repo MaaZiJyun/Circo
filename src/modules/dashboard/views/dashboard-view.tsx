@@ -1,11 +1,13 @@
 "use client";
 
-import { ArrowPathIcon, CalendarDaysIcon, ClockIcon } from "@heroicons/react/20/solid";
-import type { AppSection } from "@/shared/components/app-shell";
+import { useState } from "react";
 import {
-  PageHeader,
-  SectionHeader,
-} from "@/shared/components/page-elements";
+  ArrowPathIcon,
+  CalendarDaysIcon,
+  ClockIcon,
+} from "@heroicons/react/20/solid";
+import type { AppSection } from "@/shared/model/app-section";
+import { PageHeader, SectionHeader } from "@/shared/components/page-elements";
 import {
   Badge,
   Button,
@@ -19,6 +21,7 @@ import { useDashboardViewModel } from "../view-models/use-dashboard-view-model";
 import { ContributionCalendar } from "./contribution-calendar";
 import { PeriodCountdown } from "./period-countdown";
 import { DailyTaskList } from "@/modules/me/views/daily-task-list";
+import { FocusTimerDialog } from "./focus-timer-dialog";
 
 export function DashboardView({
   navigate,
@@ -26,9 +29,10 @@ export function DashboardView({
   navigate: (section: AppSection) => void;
 }) {
   const { t, formatDate } = useI18n();
+  const [focusOpen, setFocusOpen] = useState(false);
   const viewModel = useDashboardViewModel();
   if (!viewModel) return null;
-  const { activeCycle, goals, sessions } = viewModel;
+  const { activeCycle, goals, dailyTasks } = viewModel;
   return (
     <div className="space-y-8">
       <PageHeader
@@ -37,7 +41,7 @@ export function DashboardView({
         subtitle={t("dashboard.subtitle")}
         actions={
           <>
-            <Button onClick={() => navigate("me")}>
+            <Button onClick={() => setFocusOpen(true)}>
               <ClockIcon className="size-4" />
               {t("dashboard.startFocus")}
             </Button>
@@ -53,10 +57,14 @@ export function DashboardView({
         }
       />
       <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
-        <Card><PeriodCountdown /></Card>
-        <Card><DailyTaskList /></Card>
+        <Card>
+          <PeriodCountdown />
+        </Card>
+        <Card>
+          <DailyTaskList />
+        </Card>
       </div>
-      <ContributionCalendar sessions={sessions} />
+      <ContributionCalendar dailyTasks={dailyTasks} />
       <div>
         <Card>
           <SectionHeader
@@ -99,6 +107,7 @@ export function DashboardView({
           )}
         </Card>
       </div>
+      {focusOpen && <FocusTimerDialog onClose={() => setFocusOpen(false)} />}
     </div>
   );
 }

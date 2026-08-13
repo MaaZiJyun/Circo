@@ -39,6 +39,23 @@ body {
   font-family: var(--font-sans);
 }
 
+.brand-wordmark {
+  font-family:
+    ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.background-music-avatar {
+  animation: background-music-avatar-spin 20s linear infinite;
+}
+
+@keyframes background-music-avatar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 table thead th {
   white-space: nowrap;
 }
