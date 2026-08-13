@@ -35,15 +35,14 @@ function markdown(payload: LogPayload) {
     `# ${payload.createdAt.slice(0, 10)} · ${payload.period}`,
     "",
     payload.content.trim(),
-    "",
-    "## Next Step",
-    "",
-    payload.nextStep.trim() || "—",
+    ...(payload.nextStep.trim()
+      ? ["", "## Next Step", "", payload.nextStep.trim()]
+      : []),
     "",
   ].join("\n");
 }
 
-export async function POST(request: Request) {
+async function saveLog(request: Request) {
   try {
     const payload = (await request.json()) as Partial<LogPayload>;
     if (
@@ -83,6 +82,38 @@ export async function POST(request: Request) {
   } catch (error) {
     return Response.json(
       { error: error instanceof Error ? error.message : "Unable to save log." },
+      { status: 400 },
+    );
+  }
+}
+
+export const POST = saveLog;
+export const PUT = saveLog;
+
+export async function DELETE(request: Request) {
+  try {
+    const payload = (await request.json()) as Partial<LogPayload>;
+    if (
+      !identifier.test(payload.projectId ?? "") ||
+      !identifier.test(payload.logId ?? "")
+    )
+      return Response.json({ error: "Invalid identifier." }, { status: 422 });
+    await fs.rm(
+      getStoragePath(
+        "project",
+        payload.projectId!,
+        "logs",
+        `${payload.logId}.md`,
+      ),
+      { force: true },
+    );
+    return Response.json({ ok: true });
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof Error ? error.message : "Unable to delete log.",
+      },
       { status: 400 },
     );
   }

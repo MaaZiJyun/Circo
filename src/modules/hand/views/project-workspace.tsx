@@ -5,7 +5,9 @@ import { useState } from "react";
 import {
   ArrowDownTrayIcon,
   DocumentPlusIcon,
+  PencilSquareIcon,
   PlusIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { SectionHeader } from "@/shared/components/page-elements";
 import {
@@ -17,14 +19,23 @@ import {
   ProgressBar,
   Tabs,
 } from "@/shared/components/ui";
-import { statusLabels, typeLabels } from "@/shared/i18n/domain-labels";
+import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
 import { TaskRow } from "@/shared/components/task-row";
-import type { MenuPosition } from "@/modules/find/views/context-menu";
-import type { TaskRecord } from "@/shared/model/entities";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  type MenuPosition,
+} from "@/modules/find/views/context-menu";
+import type { ProjectLog, TaskRecord } from "@/shared/model/entities";
+import { projectLogTitle } from "../model/project-log";
+import type { LogInput } from "../view-models/use-hand-view-model";
+import { ProjectLogEditor } from "./project-log-editor";
+import { ProjectLogViewer } from "./project-log-viewer";
 
 type DialogName = "task" | "log" | "attachment" | null;
+type LogMenu = { log: ProjectLog; position: MenuPosition } | null;
 
 export function ProjectWorkspace({
   vm,
@@ -39,6 +50,9 @@ export function ProjectWorkspace({
   const [logPeriod, setLogPeriod] = useState<"day" | "week" | "month" | "year">(
     "day",
   );
+  const [openedLog, setOpenedLog] = useState<ProjectLog | null>(null);
+  const [logMenu, setLogMenu] = useState<LogMenu>(null);
+  const [editingLog, setEditingLog] = useState<ProjectLog | null>(null);
   if (!vm.selected) return null;
   return (
     <>
@@ -134,37 +148,29 @@ export function ProjectWorkspace({
             </div>
           )}
           {vm.logs.some((log) => log.period === logPeriod) ? (
-            <div className="grid gap-3">
+            <div className="mt-2 grid gap-3">
               {vm.logs
                 .filter((log) => log.period === logPeriod)
                 .map((log) => (
-                  <article
+                  <button
                     key={log.id}
-                    className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+                    className="flex w-full items-center justify-between gap-4 rounded-xl border border-zinc-200 p-3 text-left hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                    onClick={() => setOpenedLog(log)}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      setLogMenu({
+                        log,
+                        position: { x: event.clientX, y: event.clientY },
+                      });
+                    }}
                   >
-                    <div className="flex justify-between gap-2">
-                      <Badge
-                        tone={
-                          log.type === "problem"
-                            ? "danger"
-                            : log.type === "conclusion"
-                              ? "success"
-                              : "info"
-                        }
-                      >
-                        {t(typeLabels[log.type])}
-                      </Badge>
-                      <span className="text-xs text-zinc-500">
-                        {formatDate(log.createdAt)}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm leading-6">{log.content}</p>
-                    {log.nextStep && (
-                      <p className="mt-2 text-xs text-zinc-500">
-                        {t("hand.nextStep")}: {log.nextStep}
-                      </p>
-                    )}
-                  </article>
+                    <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                      {projectLogTitle(log)}
+                    </span>
+                    <time className="shrink-0 text-xs text-zinc-500">
+                      {formatDate(log.createdAt)}
+                    </time>
+                  </button>
                 ))}
             </div>
           ) : (
@@ -213,6 +219,56 @@ export function ProjectWorkspace({
           <EmptyState title={t("common.noData")} />
         )}
       </Card>
+      {openedLog && (
+        <ProjectLogViewer log={openedLog} onClose={() => setOpenedLog(null)} />
+      )}
+      {logMenu && (
+        <ContextMenu
+          position={logMenu.position}
+          onClose={() => setLogMenu(null)}
+        >
+          <ContextMenuItem
+            onClick={() => {
+              setEditingLog(logMenu.log);
+              setLogMenu(null);
+            }}
+          >
+            <PencilSquareIcon className="size-4" />
+            {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            danger
+            onClick={() => {
+              const log = logMenu.log;
+              setLogMenu(null);
+              if (window.confirm(t("common.confirmDelete")))
+                void vm.deleteLog(log);
+            }}
+          >
+            <TrashIcon className="size-4" />
+            {t("common.delete")}
+          </ContextMenuItem>
+        </ContextMenu>
+      )}
+      {editingLog && (
+        <ProjectLogEditor
+          key={editingLog.id}
+          open
+          initial={logInput(editingLog)}
+          onClose={() => setEditingLog(null)}
+          onSave={(input) => vm.updateLog(editingLog, input)}
+        />
+      )}
     </>
   );
+}
+
+function logInput(log: ProjectLog): LogInput {
+  return {
+    type: log.type,
+    period: log.period,
+    content: log.content,
+    nextStep: log.nextStep,
+    tags: log.tags,
+  };
 }

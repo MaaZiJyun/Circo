@@ -155,6 +155,53 @@ export function useHandViewModel() {
     mutate((current) => ({ ...current, logs: [...current.logs, log] }));
   };
 
+  const updateLog = async (log: ProjectLog, input: LogInput) => {
+    setLogError(false);
+    const stamp = now();
+    const response = await fetch("/api/project-logs", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        ...input,
+        projectId: log.projectId,
+        logId: log.id,
+        createdAt: log.createdAt,
+      }),
+    });
+    if (!response.ok) {
+      setLogError(true);
+      throw new Error("Unable to update project log.");
+    }
+    mutate((current) => ({
+      ...current,
+      logs: current.logs.map((item) =>
+        item.id === log.id ? { ...item, ...input, updatedAt: stamp } : item,
+      ),
+    }));
+  };
+
+  const deleteLog = async (log: ProjectLog) => {
+    setLogError(false);
+    const response = await fetch("/api/project-logs", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectId: log.projectId, logId: log.id }),
+    });
+    if (!response.ok) {
+      setLogError(true);
+      throw new Error("Unable to delete project log.");
+    }
+    const stamp = now();
+    mutate((current) => ({
+      ...current,
+      logs: current.logs.map((item) =>
+        item.id === log.id
+          ? { ...item, deletedAt: stamp, updatedAt: stamp }
+          : item,
+      ),
+    }));
+  };
+
   const addAttachment = async (file: File, description: string) => {
     if (!selected) return;
     setUploading(true);
@@ -211,6 +258,8 @@ export function useHandViewModel() {
     updateProjectById,
     ...taskActions,
     addLog,
+    updateLog,
+    deleteLog,
     addAttachment,
     deleteProject: (id: string) => softDelete("projects", id),
   };

@@ -20,8 +20,10 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@huggingface/transformers": "^3.7.6",
+    "@types/katex": "^0.16.8",
     "adm-zip": "^0.6.0",
     "better-sqlite3": "^12.11.1",
+    "katex": "^0.18.4",
     "next": "16.3.0",
     "pdf-parse": "^2.4.5",
     "pdfjs-dist": "5.4.296",

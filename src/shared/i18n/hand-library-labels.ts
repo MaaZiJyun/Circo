@@ -18,6 +18,10 @@ export const handLibraryZh = {
   "hand.sortDirection": "排序顺序",
   "hand.ascending": "升序",
   "hand.descending": "降序",
+  "hand.markdownEditor": "Markdown 项目日志",
+  "hand.markdownHint": "日志内容会保存为项目目录中的 Markdown 文件",
+  "hand.markdownSource": "Markdown 编辑器",
+  "hand.markdownPreview": "实时预览",
 } as const;
 
 export const handLibraryEn: Record<keyof typeof handLibraryZh, string> = {
@@ -41,4 +45,8 @@ export const handLibraryEn: Record<keyof typeof handLibraryZh, string> = {
   "hand.sortDirection": "Sort direction",
   "hand.ascending": "Ascending",
   "hand.descending": "Descending",
+  "hand.markdownEditor": "Markdown project log",
+  "hand.markdownHint": "The log is saved as a Markdown file in the project directory",
+  "hand.markdownSource": "Markdown editor",
+  "hand.markdownPreview": "Live preview",
 };

@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import {
   ArrowLeftIcon,
@@ -25,7 +24,8 @@ import {
   useProjectLibrary,
 } from "../view-models/use-project-library";
 import { AttachmentDialog } from "./attachment-dialog";
-import { LogDialog, ProjectDialog, TaskDialog } from "./hand-dialogs";
+import { ProjectDialog, TaskDialog } from "./hand-dialogs";
+import { ProjectLogEditor } from "./project-log-editor";
 import {
   ChooseProjectListDialog,
   ProjectListDialog,
@@ -253,7 +253,7 @@ export function HandView() {
         onClose={() => setDialog(null)}
         onSave={vm.addTask}
       />
-      <LogDialog
+      <ProjectLogEditor
         open={dialog === "log"}
         onClose={() => setDialog(null)}
         onSave={vm.addLog}
