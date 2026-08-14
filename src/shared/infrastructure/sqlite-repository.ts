@@ -37,7 +37,6 @@ const systemLists = [
     system: "marked" as const,
   },
 ];
-
 const systemProjectLists = [
   {
     id: "project_list_default",
@@ -213,6 +212,7 @@ function normalizeState(state: AppState): AppState {
       ...normalizeTaskImportance(item, item.importance ?? 50),
       ...normalizeTaskFactors(item),
     })),
+    dailyCacheClearedDates: state.dailyCacheClearedDates ?? [],
     tasks: normalizeTasks(state),
     logs: Array.from(
       new Map(state.logs.map((item) => [item.id, item])).values(),

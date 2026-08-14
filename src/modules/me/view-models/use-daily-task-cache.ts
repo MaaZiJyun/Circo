@@ -4,6 +4,7 @@ import { activeItems } from "@/shared/model/app-state";
 import type { DailyTask, TaskRecord } from "@/shared/model/entities";
 import { createId, now, today } from "@/shared/model/factories";
 import { calculateMetrics } from "@/shared/model/metrics";
+import { isDailyCacheCleared } from "@/shared/model/daily-cache";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance, taskImportanceDimensions } from "@/shared/model/task-importance";
 import { normalizeTaskFactors } from "@/shared/model/task-factors";
@@ -11,7 +12,6 @@ import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
 import { dailyTaskStatusAt, isOverdue } from "@/shared/model/task-status";
 import { useStore } from "@/shared/view-models/store-context";
 import { taskCoordinatesFromFormula } from "../model/task-coordinate-formula";
-export type { DailyTaskInput } from "../model/daily-task-input";
 import type { DailyTaskInput } from "../model/daily-task-input";
 export function useDailyTaskCache() {
   const { state, mutate, softDelete } = useStore();
@@ -38,7 +38,7 @@ export function useDailyTaskCache() {
     const tasks = activeItems(state.tasks);
     const taskById = new Map(tasks.map((task) => [task.id, task]));
     const dailyTasks = activeItems(state.dailyTasks)
-      .filter((item) => item.date === date)
+      .filter((item) => item.date === date && !isDailyCacheCleared(state, date))
       .map((item) => {
         const source = item.sourceTaskId
           ? taskById.get(item.sourceTaskId)

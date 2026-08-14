@@ -8,6 +8,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { Button, Dialog } from "@/shared/components/ui";
+import { isDailyCacheCleared } from "@/shared/model/daily-cache";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { DailyTask, WorkSession } from "@/shared/model/entities";
 import { createId, now, today } from "@/shared/model/factories";
@@ -72,9 +73,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
 
   if (!state) return null;
   const currentDate = today();
-  const tasks = state.dailyTasks.filter(
-    (task) => task.date === currentDate && !task.deletedAt,
-  );
+  const tasks = state.dailyTasks.filter((task) => task.date === currentDate && !task.deletedAt && !isDailyCacheCleared(state, currentDate));
   const pause = () => {
     if (segmentStart.current !== null)
       accumulated.current += performance.now() - segmentStart.current;

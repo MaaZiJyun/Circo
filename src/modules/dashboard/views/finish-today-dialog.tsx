@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { buildDailySummaryMessage } from "@/modules/dashboard/model/daily-summary-message";
 import { Button, Dialog, Field, Textarea } from "@/shared/components/ui";
+import { clearDailyCacheDate } from "@/shared/model/daily-cache";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
 import { now, today } from "@/shared/model/factories";
@@ -88,7 +89,10 @@ export function FinishTodayDialog({
     mutate((current) =>
       current.messages.some((item) => item.id === message.id)
         ? current
-        : { ...current, messages: [...current.messages, message] },
+        : {
+            ...clearDailyCacheDate(current, today()),
+            messages: [...current.messages, message],
+          },
     );
     window.dispatchEvent(new Event("circo-message-delivered"));
     onFinished(result.score);

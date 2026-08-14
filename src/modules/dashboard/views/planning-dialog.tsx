@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
 import { Button } from "@/shared/components/ui";
 import { CreateDailyTaskDialog } from "@/modules/me/views/daily-task-dialogs";
-import type { DailyTaskInput } from "@/modules/me/view-models/use-daily-task-cache";
+import type { DailyTaskInput } from "@/modules/me/model/daily-task-input";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { activeItems } from "@/shared/model/app-state";
 import type { TaskRecord } from "@/shared/model/entities";

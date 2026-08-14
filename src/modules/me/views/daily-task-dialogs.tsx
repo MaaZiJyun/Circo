@@ -18,7 +18,7 @@ import { addDays, today } from "@/shared/model/factories";
 import { defaultTaskImportance, taskImportance } from "@/shared/model/task-importance";
 import { defaultTaskUrgency } from "@/shared/model/task-urgency";
 import { defaultTaskEffort } from "@/shared/model/task-effort";
-import type { DailyTaskInput } from "../view-models/use-daily-task-cache";
+import type { DailyTaskInput } from "../model/daily-task-input";
 
 export function CreateDailyTaskDialog({
   open,

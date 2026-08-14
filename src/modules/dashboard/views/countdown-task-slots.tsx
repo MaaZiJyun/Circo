@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { activeItems } from "@/shared/model/app-state";
+import { isDailyCacheCleared } from "@/shared/model/daily-cache";
+import { today } from "@/shared/model/factories";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useStore } from "@/shared/view-models/store-context";
 import {
@@ -37,8 +39,16 @@ export function CountdownTaskSlots() {
   const [clock, setClock] = useState<number | null>(null);
   const cacheRef = useRef<CountdownTimeCache>({});
   const slots = slotsOf(state?.profile.countdownTaskSlots);
-  const dailyTasks = activeItems(state?.dailyTasks ?? []);
-  const activeSlotKey = slots
+  const currentDate = today();
+  const cacheCleared = state ? isDailyCacheCleared(state, currentDate) : false;
+  const visibleSlots = cacheCleared ? slotsOf() : slots;
+  const dailyTasks = activeItems(state?.dailyTasks ?? []).filter(
+    (task) =>
+      task.date === currentDate &&
+      state !== null &&
+      !isDailyCacheCleared(state, currentDate),
+  );
+  const activeSlotKey = visibleSlots
     .filter((id): id is string => {
       const task = dailyTasks.find((item) => item.id === id);
       return !!task && !task.completed;
@@ -94,7 +104,9 @@ export function CountdownTaskSlots() {
     const stampTime = stampDate.getTime();
     const stamp = stampDate.toISOString();
     const displacedId =
-      slots[index] && slots[index] !== dailyTaskId ? slots[index] : null;
+      visibleSlots[index] && visibleSlots[index] !== dailyTaskId
+        ? visibleSlots[index]
+        : null;
     const displacedTask = dailyTasks.find((task) => task.id === displacedId);
     const displacedEnd = displacedTask?.completedAt
       ? Math.min(stampTime, Date.parse(displacedTask.completedAt))
@@ -208,7 +220,7 @@ export function CountdownTaskSlots() {
 
   return (
     <div className="grid gap-2 sm:grid-cols-3">
-      {slots.map((taskId, index) => {
+      {visibleSlots.map((taskId, index) => {
         const task = dailyTasks.find((item) => item.id === taskId);
         return (
           <div

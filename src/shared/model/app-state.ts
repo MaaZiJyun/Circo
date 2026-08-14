@@ -42,6 +42,7 @@ export interface AppState {
   projects: ProjectRecord[];
   tasks: TaskRecord[];
   dailyTasks: DailyTask[];
+  dailyCacheClearedDates?: string[];
   logs: ProjectLog[];
   attachments: Attachment[];
   artifacts: Artifact[];
@@ -52,7 +53,11 @@ export interface AppState {
 
 export type CollectionName = Exclude<
   keyof AppState,
-  "schemaVersion" | "revision" | "updatedAt" | "profile"
+  | "schemaVersion"
+  | "revision"
+  | "updatedAt"
+  | "profile"
+  | "dailyCacheClearedDates"
 >;
 
 export interface UserProfile {

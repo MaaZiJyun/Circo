@@ -59,9 +59,9 @@ export const zh = {
   "common.required": "请填写必要信息",
   "common.localOnly": "本地优先",
   "dashboard.eyebrow": "今日成长总览",
-  "dashboard.title": "把知识变成可以抵达的成果。",
+  "dashboard.title": "知行合一",
   "dashboard.subtitle":
-    "从投入、阅读和灵感，到项目与正式产出，每一步都可追溯。",
+    "伟大的事情，是由一系列小事汇聚而成。",
   ...dashboardFocusZh,
   "dashboard.addIdea": "记录灵感",
   "dashboard.effectiveRate": "有效投入率",
