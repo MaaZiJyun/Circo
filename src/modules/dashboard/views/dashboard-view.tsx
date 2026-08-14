@@ -67,48 +67,6 @@ export function DashboardView({
         </Card>
       </div>
       <ContributionCalendar dailyTasks={dailyTasks} />
-      <div>
-        <Card>
-          <SectionHeader
-            title={t("dashboard.goals")}
-            action={
-              activeCycle && (
-                <span className="text-xs text-zinc-500">
-                  {formatDate(activeCycle.startDate)} –{" "}
-                  {formatDate(activeCycle.endDate)}
-                </span>
-              )
-            }
-          />
-          {goals.length ? (
-            <div className="grid gap-5">
-              {goals.map((goal) => (
-                <div key={goal.id}>
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium">{goal.title}</p>
-                      <p className="mt-1 text-xs text-zinc-500">
-                        {goal.current} / {goal.target} {goal.unit}
-                      </p>
-                    </div>
-                    <Badge
-                      tone={goal.status === "completed" ? "success" : "info"}
-                    >
-                      {t(statusLabels[goal.status])}
-                    </Badge>
-                  </div>
-                  <ProgressBar
-                    value={goal.percent}
-                    label={t("common.progress")}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyState title={t("common.noData")} />
-          )}
-        </Card>
-      </div>
       {focusOpen && <FocusTimerDialog onClose={() => setFocusOpen(false)} />}
       {planningOpen && (
         <PlanningDialog onClose={() => setPlanningOpen(false)} />
