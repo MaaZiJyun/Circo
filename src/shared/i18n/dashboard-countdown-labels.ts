@@ -1,6 +1,6 @@
 export const dashboardCountdownZh = {
-  "dashboard.startPlanning": "开始规划",
-  "dashboard.startReview": "开始复盘",
+  "dashboard.startPlanning": "规划明天",
+  "dashboard.startReview": "结束今天",
   "dashboard.countdown": "周期倒计时",
   "dashboard.countdown.life": "Life",
   "dashboard.countdown.year": "年",
@@ -29,8 +29,8 @@ export const dashboardCountdownEn: Record<
   keyof typeof dashboardCountdownZh,
   string
 > = {
-  "dashboard.startPlanning": "Start planning",
-  "dashboard.startReview": "Start review",
+  "dashboard.startPlanning": "Plan Tomorrow",
+  "dashboard.startReview": "Finish Today",
   "dashboard.countdown": "Period countdown",
   "dashboard.countdown.life": "Life",
   "dashboard.countdown.year": "Year",

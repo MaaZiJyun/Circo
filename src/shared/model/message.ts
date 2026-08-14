@@ -21,6 +21,16 @@ export interface FutureMessage extends BaseEntity {
   messageType?: "dailySummary" | "dailyPlan";
   celebratedAt?: string;
   dailyPlan?: DailyPlanMessage;
+  dailyReview?: DailyReviewAnswers;
+}
+
+export interface DailyReviewAnswers {
+  accomplished: string;
+  learned: string;
+  wentWrong: string;
+  unfinished: string;
+  changeNextTime: string;
+  tomorrowPriority: string;
 }
 
 export interface DailyPlanItem {

@@ -168,7 +168,11 @@ export function AppShell() {
     const updateCurrentTime = () => setCurrentTime(Date.now());
     updateCurrentTime();
     const timer = window.setInterval(updateCurrentTime, 60000);
-    return () => window.clearInterval(timer);
+    window.addEventListener("circo-message-delivered", updateCurrentTime);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("circo-message-delivered", updateCurrentTime);
+    };
   }, []);
   if (!state && !error) return <LoadingState label={t("common.loading")} />;
   if (!state)
@@ -191,7 +195,7 @@ export function AppShell() {
     (source) => source.readingStatus !== "read",
   );
   const views: Record<AppSection, React.ReactNode> = {
-    dashboard: <DashboardView navigate={setSection} />,
+    dashboard: <DashboardView />,
     me: <MeView />,
     find: <FindView />,
     mind: <MindView />,

@@ -1,6 +1,25 @@
 export const dashboardFocusZh = {
   "status.overdue": "超时",
-  "dashboard.startFocus": "开始专注",
+  "dashboard.startFocus": "专注",
+  "dashboard.finishTodayIntro":
+    "回答六个问题后，将立即结算今天的 score，并向消息收件箱发送一封未读 Daily Summary。",
+  "dashboard.finishToday.question.accomplished": "What did I accomplish today?",
+  "dashboard.finishToday.hint.accomplished": "今天实际完成了什么？",
+  "dashboard.finishToday.question.learned": "What did I learn today?",
+  "dashboard.finishToday.hint.learned": "今天获得了什么新知识、发现或经验？",
+  "dashboard.finishToday.question.wentWrong": "What went wrong, and why?",
+  "dashboard.finishToday.hint.wentWrong": "什么没做好？根本原因是什么？",
+  "dashboard.finishToday.question.unfinished":
+    "What remains unfinished, and why?",
+  "dashboard.finishToday.hint.unfinished": "哪些任务没完成？为什么？",
+  "dashboard.finishToday.question.changeNextTime":
+    "What should I do differently next time?",
+  "dashboard.finishToday.hint.changeNextTime": "下次应该改变什么？",
+  "dashboard.finishToday.question.tomorrowPriority":
+    "What is the most important thing tomorrow?",
+  "dashboard.finishToday.hint.tomorrowPriority": "明天最重要的一件事是什么？",
+  "dashboard.finishTodaySubmit": "提交并生成 Daily Summary",
+  "dashboard.finishToday.reflection": "Finish Today 回答：",
   "dashboard.totalTime": "累计投入",
   "dashboard.focusTimer": "专注计时",
   "dashboard.focusReady": "准备开始",
@@ -35,7 +54,32 @@ export const dashboardFocusZh = {
 
 export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
   "status.overdue": "Overdue",
-  "dashboard.startFocus": "Start focus",
+  "dashboard.startFocus": "Focus",
+  "dashboard.finishTodayIntro":
+    "Answer all six questions to settle today's score now and receive an unread Daily Summary in Messages.",
+  "dashboard.finishToday.question.accomplished": "What did I accomplish today?",
+  "dashboard.finishToday.hint.accomplished":
+    "What did you actually complete today?",
+  "dashboard.finishToday.question.learned": "What did I learn today?",
+  "dashboard.finishToday.hint.learned":
+    "What new knowledge, discovery, or experience did you gain?",
+  "dashboard.finishToday.question.wentWrong": "What went wrong, and why?",
+  "dashboard.finishToday.hint.wentWrong":
+    "What did not go well, and what was the root cause?",
+  "dashboard.finishToday.question.unfinished":
+    "What remains unfinished, and why?",
+  "dashboard.finishToday.hint.unfinished":
+    "Which tasks remain incomplete, and why?",
+  "dashboard.finishToday.question.changeNextTime":
+    "What should I do differently next time?",
+  "dashboard.finishToday.hint.changeNextTime":
+    "What should change the next time you face a similar day?",
+  "dashboard.finishToday.question.tomorrowPriority":
+    "What is the most important thing tomorrow?",
+  "dashboard.finishToday.hint.tomorrowPriority":
+    "Identify tomorrow's single most important thing.",
+  "dashboard.finishTodaySubmit": "Submit and generate Daily Summary",
+  "dashboard.finishToday.reflection": "Finish Today responses:",
   "dashboard.totalTime": "Total effort",
   "dashboard.focusTimer": "Focus timer",
   "dashboard.focusReady": "Ready to start",

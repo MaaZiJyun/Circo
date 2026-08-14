@@ -1,40 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import {
-  ArrowPathIcon,
-  CalendarDaysIcon,
-  ClockIcon,
-} from "@heroicons/react/20/solid";
-import type { AppSection } from "@/shared/model/app-section";
-import { PageHeader, SectionHeader } from "@/shared/components/page-elements";
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  ProgressBar,
-} from "@/shared/components/ui";
-import { statusLabels } from "@/shared/i18n/domain-labels";
+import { PageHeader } from "@/shared/components/page-elements";
+import { Button, Card } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import { SummaryCelebration } from "@/modules/messages/views/summary-celebration";
+import { shouldCelebrateFinishToday } from "../model/daily-summary-message";
 import { useDashboardViewModel } from "../view-models/use-dashboard-view-model";
 import { ContributionCalendar } from "./contribution-calendar";
 import { PeriodCountdown } from "./period-countdown";
 import { DailyTaskList } from "@/modules/me/views/daily-task-list";
 import { FocusTimerDialog } from "./focus-timer-dialog";
+import { FinishTodayDialog } from "./finish-today-dialog";
 import { PlanningDialog } from "./planning-dialog";
+import {
+  PowerIcon,
+  CalendarDaysIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 
-export function DashboardView({
-  navigate,
-}: {
-  navigate: (section: AppSection) => void;
-}) {
-  const { t, formatDate } = useI18n();
+export function DashboardView() {
+  const { t } = useI18n();
   const [focusOpen, setFocusOpen] = useState(false);
   const [planningOpen, setPlanningOpen] = useState(false);
+  const [finishOpen, setFinishOpen] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
   const viewModel = useDashboardViewModel();
   if (!viewModel) return null;
-  const { activeCycle, goals, dailyTasks } = viewModel;
+  const { dailyTasks, finishedToday } = viewModel;
   return (
     <div className="space-y-8">
       <PageHeader
@@ -51,8 +44,12 @@ export function DashboardView({
               <CalendarDaysIcon className="size-4" />
               {t("dashboard.startPlanning")}
             </Button>
-            <Button variant="secondary" onClick={() => navigate("me")}>
-              <ArrowPathIcon className="size-4" />
+            <Button
+              variant="secondary"
+              disabled={finishedToday}
+              onClick={() => setFinishOpen(true)}
+            >
+              <PowerIcon className="size-4" />
               {t("dashboard.startReview")}
             </Button>
           </>
@@ -71,6 +68,16 @@ export function DashboardView({
       {planningOpen && (
         <PlanningDialog onClose={() => setPlanningOpen(false)} />
       )}
+      {finishOpen && (
+        <FinishTodayDialog
+          onClose={() => setFinishOpen(false)}
+          onFinished={(score) => {
+            setFinishOpen(false);
+            setCelebrating(shouldCelebrateFinishToday(score));
+          }}
+        />
+      )}
+      {celebrating && <SummaryCelebration />}
     </div>
   );
 }

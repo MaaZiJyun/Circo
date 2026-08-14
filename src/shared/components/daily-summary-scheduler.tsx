@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { calculateDailyScore } from "@/modules/dashboard/model/daily-score";
+import {
+  buildDailySummaryMessage,
+  dailySummaryId,
+} from "@/modules/dashboard/model/daily-summary-message";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { FutureMessage } from "@/shared/model/message";
 import { now } from "@/shared/model/factories";
-import { isOverdue } from "@/shared/model/task-status";
 import { useStore } from "@/shared/view-models/store-context";
-
-const summaryId = (date: string) => `message_daily_summary_${date}`;
 
 function dateKey(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -43,73 +42,20 @@ export function DailySummaryScheduler() {
       .filter((task) => task.date <= dueDate)
       .map((task) => task.date);
     const dates = [...new Set([...historicalDates, dueDate])]
-      .filter((date) => !existing.has(summaryId(date)))
+      .filter((date) => !existing.has(dailySummaryId(date)))
       .sort();
     if (dates.length) {
       const stamp = now();
-      const generated = dates.map((date) => {
-        const tasks = state.dailyTasks.filter(
-          (task) => task.date === date && !task.deletedAt,
-        );
-        const result = calculateDailyScore(state.dailyTasks, date);
-        const scoringTime = new Date(`${date}T23:59:59.999`).getTime();
-        const taskLines = tasks.length
-          ? tasks.map(
-              (task) =>
-                `${task.completed ? "✓" : isOverdue(task.dueAt, false, scoringTime) ? "!" : "○"} ${task.title} · ${formatNumber(task.actualMinutes, { maximumFractionDigits: 1 })} ${t("common.minutes")}`,
-            )
-          : [t("messages.dailySummary.noTasks")];
-        const breakdown = t("dashboard.scoreBreakdown")
-          .replace("{completed}", String(result.completed))
-          .replace("{incomplete}", String(result.incomplete))
-          .replace("{overdue}", String(result.overdue))
-          .replace(
-            "{actual}",
-            formatNumber(result.actualMinutes, { maximumFractionDigits: 1 }),
-          )
-          .replace("{planned}", formatNumber(result.plannedMinutes))
-          .replace("{completionScore}", formatNumber(result.completionScore))
-          .replace("{timeScore}", formatNumber(result.timeScore))
-          .replace("{priorityScore}", formatNumber(result.priorityScore))
-          .replace(
-            "{overdueDiscount}",
-            formatNumber(result.overdueDiscount),
-          );
-        return {
-          id: summaryId(date),
-          subject: t("messages.dailySummary.subject").replace("{date}", date),
-          body: [
-            t("messages.dailySummary.intro").replace("{date}", date),
-            "",
-            t("messages.dailySummary.activities"),
-            ...taskLines,
-            "",
-            `score: ${result.score} / 100`,
-            t("dashboard.scoreFormula"),
-            breakdown,
-            t(`dashboard.scoreReason.${result.reason}`),
-          ].join("\n"),
-          recipient: "futureSelf",
-          deliveryMode: "scheduled",
-          deliverAt: `${date}T23:59:00`,
-          references: tasks.flatMap((task) =>
-            task.sourceTaskId
-              ? [
-                  {
-                    kind: "task" as const,
-                    id: task.sourceTaskId,
-                    label: task.title,
-                  },
-                ]
-              : [],
-          ),
-          attachments: [],
-          systemGenerated: true,
-          messageType: "dailySummary",
-          createdAt: stamp,
-          updatedAt: stamp,
-        } satisfies FutureMessage;
-      });
+      const generated = dates.map(
+        (date) =>
+          buildDailySummaryMessage({
+            dailyTasks: state.dailyTasks,
+            date,
+            stamp,
+            t,
+            formatNumber,
+          }).message,
+      );
       mutate((currentState) => ({
         ...currentState,
         messages: [...(currentState.messages ?? []), ...generated],

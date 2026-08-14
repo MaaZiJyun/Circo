@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import { dailySummaryId } from "@/modules/dashboard/model/daily-summary-message";
 import { activeItems } from "@/shared/model/app-state";
+import { today } from "@/shared/model/factories";
 import { calculateMetrics, progressPercent } from "@/shared/model/metrics";
 import { useStore } from "@/shared/view-models/store-context";
 
@@ -28,6 +30,9 @@ export function useDashboardViewModel() {
       recentArtifacts,
       sessions: activeItems(state.sessions),
       dailyTasks: activeItems(state.dailyTasks),
+      finishedToday: (state.messages ?? []).some(
+        (message) => message.id === dailySummaryId(today()),
+      ),
       metrics: calculateMetrics(state),
     };
   }, [state]);
