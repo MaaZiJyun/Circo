@@ -8,7 +8,7 @@ import {
   PaperClipIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { Badge, Button, IconButton } from "@/shared/components/ui";
+import { Alert, Badge, Button, IconButton } from "@/shared/components/ui";
 import { ProfileAvatar } from "@/shared/components/profile-avatar";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { FutureMessage } from "@/shared/model/message";
@@ -133,16 +133,16 @@ function PlanMessageAction({
   const imported = Boolean(plan.importedAt);
   const expired = current > plan.date;
   return (
-    <section className="mb-6 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+    <>
       {imported ? (
-        <p className="text-sm text-green-600">{t("planning.imported")}</p>
+        <Alert tone="success">{t("planning.imported")}</Alert>
       ) : current === plan.date ? (
         <Button onClick={onImport}>{t("planning.importToday")}</Button>
       ) : (
-        <p className="text-sm text-zinc-500">
+        <Alert tone={expired ? "danger" : "info"}>
           {t(expired ? "planning.expired" : "planning.availableToday")}
-        </p>
+        </Alert>
       )}
-    </section>
+    </>
   );
 }

@@ -18,6 +18,8 @@ export interface FutureMessage extends BaseEntity {
   readAt?: string;
   favorite?: boolean;
   systemGenerated?: boolean;
+  messageType?: "dailySummary" | "dailyPlan";
+  celebratedAt?: string;
   dailyPlan?: DailyPlanMessage;
 }
 

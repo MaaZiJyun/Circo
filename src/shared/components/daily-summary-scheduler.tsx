@@ -98,6 +98,7 @@ export function DailySummaryScheduler() {
           ),
           attachments: [],
           systemGenerated: true,
+          messageType: "dailySummary",
           createdAt: stamp,
           updatedAt: stamp,
         } satisfies FutureMessage;

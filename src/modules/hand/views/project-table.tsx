@@ -52,10 +52,9 @@ export function ProjectTable({
                 />
               </th>
             )}
-            <th className="h-8 w-[30%] min-w-72 px-3 py-0">
+            <th className="h-8 px-3 py-0">
               {t("common.title")}
             </th>
-            <th className="h-8 w-56 px-3 py-0">{t("hand.purpose")}</th>
             <th className="h-8 px-3 py-0">{t("common.status")}</th>
             <th className="h-8 px-3 py-0">{t("hand.projectScore")}</th>
             <th className="h-8 px-3 py-0">{t("hand.startDate")}</th>
@@ -117,14 +116,9 @@ export function ProjectTable({
                   />
                 </td>
               )}
-              <td className="w-[30%] min-w-72 px-3 py-3 align-top font-semibold">
+              <td className="max-w-[30%] min-w-[200px] px-3 py-3 align-top font-semibold">
                 <div className="line-clamp-4 max-h-24 break-words leading-6">
                   {project.name}
-                </div>
-              </td>
-              <td className="w-56 max-w-56 px-3 py-3 align-top text-zinc-500">
-                <div className="line-clamp-4 max-h-24 whitespace-normal break-words leading-6">
-                  {project.purpose || "—"}
                 </div>
               </td>
               <td className="px-3 py-3 align-top">

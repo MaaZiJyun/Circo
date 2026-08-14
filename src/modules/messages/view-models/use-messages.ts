@@ -7,6 +7,7 @@ import type {
   MessageReferenceKind,
 } from "@/shared/model/message";
 import { createId, now, today } from "@/shared/model/factories";
+import { isDailySummary } from "@/shared/model/message-kind";
 import { useStore } from "@/shared/view-models/store-context";
 
 export type MessageInput = Pick<
@@ -95,10 +96,33 @@ export function useMessages() {
       ...current,
       messages: (current.messages ?? []).map((item) =>
         item.id === id
-          ? { ...item, readAt: undefined, updatedAt: now() }
+          ? {
+              ...item,
+              readAt: undefined,
+              celebratedAt:
+                item.celebratedAt ??
+                (isDailySummary(item) ? item.readAt ?? now() : undefined),
+              updatedAt: now(),
+            }
           : item,
       ),
     }));
+  const openMessage = (id: string, celebrate: boolean) => {
+    const stamp = now();
+    mutate((current) => ({
+      ...current,
+      messages: (current.messages ?? []).map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              readAt: item.readAt ?? stamp,
+              celebratedAt: celebrate ? stamp : item.celebratedAt,
+              updatedAt: stamp,
+            }
+          : item,
+      ),
+    }));
+  };
   const updateMany = (ids: string[], change: Partial<FutureMessage>) =>
     mutate((current) => ({
       ...current,
@@ -167,6 +191,7 @@ export function useMessages() {
     send,
     markRead,
     markUnread,
+    openMessage,
     deleteMany,
     favoriteMany,
     importDailyPlan,

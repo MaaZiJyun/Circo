@@ -167,6 +167,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       ),
       attachments: [],
       systemGenerated: true,
+      messageType: "dailyPlan",
       dailyPlan: { date: planDate, items: plannedItems },
       createdAt: existing?.createdAt ?? stamp,
       updatedAt: stamp,

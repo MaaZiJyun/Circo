@@ -172,7 +172,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "hand.projects": "Projects",
   "hand.purpose": "Purpose",
   "hand.expected": "Expected outcome",
-  "hand.projectScore": "Project score (0–100)",
+  "hand.projectScore": "score",
   "hand.taskDescription": "Task description",
   "hand.expectedOutput": "Expected output",
   "hand.startDate": "Start date",

@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { Card } from "@/shared/components/ui";
 import type { FutureMessage } from "@/shared/model/message";
+import { shouldCelebrateDailySummary } from "@/shared/model/message-kind";
 import { useMessages } from "../view-models/use-messages";
 import { MessageComposeDialog } from "./message-compose-dialog";
 import { MessageList } from "./message-list";
 import { MessageReader } from "./message-reader";
 import { MessageSidebar, type Mailbox } from "./message-sidebar";
+import { SummaryCelebration } from "./summary-celebration";
 
 type ComposeSeed = { subject: string; body: string } | null;
 export function MessagesView() {
@@ -16,6 +18,7 @@ export function MessagesView() {
   const [selected, setSelected] = useState<string[]>([]);
   const [openedId, setOpenedId] = useState<string | null>(null);
   const [compose, setCompose] = useState<ComposeSeed | undefined>();
+  const [celebratingId, setCelebratingId] = useState<string | null>(null);
   if (!vm) return null;
   const rows =
     mailbox === "inbox"
@@ -85,8 +88,10 @@ export function MessagesView() {
                 selected={selected}
                 onSelected={setSelected}
                 onOpen={(message) => {
+                  const celebrate = shouldCelebrateDailySummary(message);
+                  setCelebratingId(celebrate ? message.id : null);
                   setOpenedId(message.id);
-                  vm.markRead(message.id);
+                  vm.openMessage(message.id, celebrate);
                 }}
                 onDelete={remove}
                 onFavorite={vm.favoriteMany}
@@ -107,6 +112,7 @@ export function MessagesView() {
           />
         )}
       </Card>
+      {opened?.id === celebratingId && <SummaryCelebration />}
     </div>
   );
 }

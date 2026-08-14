@@ -56,6 +56,53 @@ body {
   }
 }
 
+@keyframes summary-confetti-fall {
+  0% {
+    left: var(--celebration-x);
+    opacity: 0;
+    transform: translate3d(0, -2rem, 0) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    left: var(--celebration-x);
+    opacity: 0;
+    transform: translate3d(var(--celebration-drift), 105vh, 0)
+      rotate(var(--celebration-rotation));
+  }
+}
+
+@keyframes summary-celebration-glow {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.5);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.65);
+  }
+}
+
+.summary-celebration-piece {
+  animation: summary-confetti-fall var(--celebration-duration) ease-in
+    var(--celebration-delay) forwards;
+}
+
+.summary-celebration-glow {
+  animation: summary-celebration-glow 1.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-celebration-piece,
+  .summary-celebration-glow {
+    display: none;
+  }
+}
+
 table thead th {
   white-space: nowrap;
 }
