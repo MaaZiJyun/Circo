@@ -1,13 +1,27 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { CheckIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
+import { PhotoIcon } from "@heroicons/react/24/outline";
 import { Button, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { MarkdownPreview } from "./markdown-preview";
 import { ReaderSwitch } from "./reader-switch";
 
-export function LiteratureNotePane({ noteId }: { noteId: string }) {
+export interface LiteratureNoteHandle {
+  save: () => Promise<void>;
+}
+
+export const LiteratureNotePane = forwardRef<
+  LiteratureNoteHandle,
+  { noteId: string; onDirtyChange: (dirty: boolean) => void }
+>(function LiteratureNotePane({ noteId, onDirtyChange }, ref) {
   const { t } = useI18n();
   const [mode, setMode] = useState<"view" | "edit">("view");
   const [content, setContent] = useState("");
@@ -41,7 +55,8 @@ export function LiteratureNotePane({ noteId }: { noteId: string }) {
       active = false;
     };
   }, [noteId, t]);
-  const save = async () => {
+  useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
+  const save = useCallback(async () => {
     setBusy(true);
     setError("");
     try {
@@ -57,7 +72,8 @@ export function LiteratureNotePane({ noteId }: { noteId: string }) {
     } finally {
       setBusy(false);
     }
-  };
+  }, [content, noteId, t]);
+  useImperativeHandle(ref, () => ({ save }), [save]);
   const upload = async (file?: File) => {
     if (!file) return;
     setBusy(true);
@@ -112,14 +128,6 @@ export function LiteratureNotePane({ noteId }: { noteId: string }) {
               {t("find.insertImage")}
             </Button>
           )}
-          <Button
-            className="min-h-8 px-2 text-xs"
-            disabled={!dirty || busy}
-            onClick={() => void save()}
-          >
-            <CheckIcon className="size-4" />
-            {t(busy ? "common.saving" : "common.save")}
-          </Button>
           <input
             ref={fileRef}
             hidden
@@ -152,4 +160,4 @@ export function LiteratureNotePane({ noteId }: { noteId: string }) {
       )}
     </section>
   );
-}
+});

@@ -17,7 +17,10 @@ import { CitationButton } from "./citation-button";
 import { clampReaderRatio, readerRatioKey } from "./reader-layout";
 import type { LiteratureReaderProps } from "./literature-reader-types";
 import { LiteratureViewerPane } from "./literature-viewer-pane";
-import { LiteratureNotePane } from "./literature-note-pane";
+import {
+  LiteratureNotePane,
+  type LiteratureNoteHandle,
+} from "./literature-note-pane";
 
 export function LiteratureReader({
   source,
@@ -40,10 +43,12 @@ export function LiteratureReader({
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [noteDirty, setNoteDirty] = useState(false);
   const [error, setError] = useState("");
   const [showDetails, setShowDetails] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [capture, setCapture] = useState<PointCapture | null>(null);
+  const noteRef = useRef<LiteratureNoteHandle>(null);
   const panesRef = useRef<HTMLDivElement>(null);
   const [pdfRatio, setPdfRatio] = useState(2 / 3);
   const [resizing, setResizing] = useState(false);
@@ -76,8 +81,9 @@ export function LiteratureReader({
     setSaving(true);
     setError("");
     try {
-      await onSave(content);
-      setDirty(false);
+      if (dirty) await onSave(content);
+      if (noteDirty) await noteRef.current?.save();
+      if (dirty) setDirty(false);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("common.error"));
     } finally {
@@ -114,11 +120,14 @@ export function LiteratureReader({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => void save()} disabled={!dirty || saving}>
+          <Button
+            onClick={() => void save()}
+            disabled={(!dirty && !noteDirty) || saving}
+          >
             <CheckIcon className="size-4" />
             {saving
               ? t("common.saving")
-              : dirty
+              : dirty || noteDirty
                 ? t("common.save")
                 : t("common.saved")}
           </Button>
@@ -156,7 +165,13 @@ export function LiteratureReader({
       </header>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {showDetails && (
-        <LiteratureDetailsPanel source={source} onSave={onUpdate} />
+        <LiteratureDetailsPanel
+          source={source}
+          onSave={onUpdate}
+          onConvert={() => void convert()}
+          converting={converting}
+          convertDisabled={dirty || saving}
+        />
       )}
       <div
         ref={panesRef}
@@ -169,7 +184,6 @@ export function LiteratureReader({
             content={content}
             kind={viewerKind}
             mode={viewerMode}
-            converting={converting}
             points={points}
             pointLists={pointLists}
             onKindChange={(kind) => {
@@ -181,7 +195,6 @@ export function LiteratureReader({
               setContent(value);
               setDirty(true);
             }}
-            onConvert={() => void convert()}
             onCapture={setCapture}
             onUpdatePoint={onUpdatePoint}
             onDeletePoint={onDeletePoint}
@@ -235,7 +248,11 @@ export function LiteratureReader({
           <span className="h-16 w-1 rounded-full bg-zinc-300 transition-colors group-hover:bg-zinc-500 group-focus:bg-zinc-700 dark:bg-zinc-700 dark:group-hover:bg-zinc-500" />
         </div>
         <div className="xl:min-w-0 xl:flex-1">
-          <LiteratureNotePane noteId={source.id} />
+          <LiteratureNotePane
+            ref={noteRef}
+            noteId={source.id}
+            onDirtyChange={setNoteDirty}
+          />
         </div>
       </div>
       <ReadingReviewDialog

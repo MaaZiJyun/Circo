@@ -170,7 +170,7 @@ export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
   "find.descending": "Descending",
   "find.markdown": "Markdown",
   "find.markdownHint": "Read or edit converted Markdown alongside the PDF",
-  "find.reconvert": "Convert again",
+  "find.reconvert": "Convert",
   "find.reconverting": "Converting…",
   "find.resizePanes": "Resize PDF and Markdown panes",
   "find.zoomIn": "Zoom in PDF",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import {
   Badge,
   Button,
@@ -49,9 +49,15 @@ function createDraft(source: SourceRecord) {
 export function LiteratureDetailsPanel({
   source,
   onSave,
+  onConvert,
+  converting = false,
+  convertDisabled = false,
 }: {
   source: SourceRecord;
   onSave: (change: Partial<SourceRecord>) => void;
+  onConvert?: () => void;
+  converting?: boolean;
+  convertDisabled?: boolean;
 }) {
   const { t, locale } = useI18n();
   const [editing, setEditing] = useState(false);
@@ -169,16 +175,31 @@ export function LiteratureDetailsPanel({
             ))}
           </div>
         </div>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setDraft(createDraft(source));
-            setReview(source.readingReview);
-            setEditing(true);
-          }}
-        >
-          <PencilSquareIcon className="size-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          {source.fileToken && source.fileType === "pdf" && onConvert && (
+            <Button
+              variant="secondary"
+              disabled={convertDisabled || converting}
+              onClick={onConvert}
+            >
+              <ArrowPathIcon
+                className={`size-4 ${converting ? "animate-spin" : ""}`}
+              />
+              {t(converting ? "find.reconverting" : "find.reconvert")}
+            </Button>
+          )}
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setDraft(createDraft(source));
+              setReview(source.readingReview);
+              setEditing(true);
+            }}
+          >
+            <PencilSquareIcon className="size-4" />
+            {t("find.editMode")}
+          </Button>
+        </div>
       </div>
       <div className="grid gap-3 p-5 sm:grid-cols-2 xl:grid-cols-4">
         {facts.map(([label, value]) => (
