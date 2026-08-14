@@ -7,6 +7,7 @@ import { createId, now, today } from "@/shared/model/factories";
 import { calculateMetrics } from "@/shared/model/metrics";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
+import { isOverdue } from "@/shared/model/task-status";
 import { useStore } from "@/shared/view-models/store-context";
 import { taskCoordinates } from "../model/task-quadrant";
 
@@ -168,9 +169,13 @@ export function useDailyTaskCache() {
       dailyTasks: [...current.dailyTasks, dailyTask],
     }));
   };
-  const toggle = (item: DailyTask) => {
-    const completed = !item.completed;
-    const sourceStatus: TaskRecord["status"] = completed ? "done" : "todo";
+  const setCompleted = (item: DailyTask, completed: boolean) => {
+    if (item.completed === completed) return;
+    const sourceStatus: TaskRecord["status"] = completed
+      ? "done"
+      : isOverdue(item.dueAt, false)
+        ? "overdue"
+        : "todo";
     const stamp = now();
     mutate((current) => {
       const tasks = item.sourceTaskId
@@ -205,6 +210,61 @@ export function useDailyTaskCache() {
       };
     });
   };
+  const updateTask = (item: DailyTask, input: DailyTaskInput) => {
+    if (!input.title.trim()) return;
+    const stamp = now();
+    mutate((current) => ({
+      ...current,
+      tasks: item.sourceTaskId
+        ? current.tasks.map((task) =>
+            task.id === item.sourceTaskId
+              ? {
+                  ...task,
+                  title: input.title.trim(),
+                  description: input.description,
+                  dueDate: input.dueAt,
+                  estimatedMinutes: input.estimatedMinutes,
+                  expectedOutput: input.expectedOutput,
+                  importance: input.importance,
+                  priority: priorityFromImportance(input.importance),
+                  milestone: input.milestone,
+                  recurrence: input.recurrence,
+                  updatedAt: stamp,
+                }
+              : task,
+          )
+        : current.tasks,
+      dailyTasks: current.dailyTasks.map((task) =>
+        task.id === item.id
+          ? {
+              ...task,
+              title: input.title.trim(),
+              description: input.description,
+              dueAt: input.dueAt,
+              estimatedMinutes: input.estimatedMinutes,
+              expectedOutput: input.expectedOutput,
+              importance: input.importance,
+              updatedAt: stamp,
+            }
+          : task,
+      ),
+    }));
+  };
+  const inputFor = (item: DailyTask): DailyTaskInput => {
+    const source = item.sourceTaskId
+      ? view?.tasks.find((task) => task.id === item.sourceTaskId)
+      : undefined;
+    return {
+      title: item.title,
+      description: item.description,
+      dueAt: item.dueAt,
+      estimatedMinutes: item.estimatedMinutes,
+      expectedOutput: item.expectedOutput,
+      importance: item.importance,
+      milestone: source?.milestone ?? false,
+      recurrence: source?.recurrence ?? null,
+    };
+  };
 
   if (!view) return null;
   return {
@@ -213,7 +273,10 @@ export function useDailyTaskCache() {
     setDate,
     addIndependent,
     retrieve,
-    toggle,
+    setCompleted,
+    toggle: (item: DailyTask) => setCompleted(item, !item.completed),
+    updateTask,
+    inputFor,
     deleteTask: (id: string) => softDelete("dailyTasks", id),
     projectName: (id?: string) =>
       view.projects.find((item) => item.id === id)?.name ?? "",

@@ -20,24 +20,28 @@ export function CreateDailyTaskDialog({
   onSave,
   title,
   plannedDate,
+  initial,
 }: {
   open: boolean;
   onClose: () => void;
   onSave: (input: DailyTaskInput) => void;
   title?: string;
   plannedDate?: string;
+  initial?: DailyTaskInput;
 }) {
   const { t } = useI18n();
-  const [input, setInput] = useState<DailyTaskInput>({
-    title: "",
-    description: "",
-    dueAt: `${plannedDate ?? addDays(new Date(), 1)}T23:59`,
-    estimatedMinutes: 30,
-    expectedOutput: "",
-    importance: 50,
-    milestone: false,
-    recurrence: null,
-  });
+  const [input, setInput] = useState<DailyTaskInput>(
+    initial ?? {
+      title: "",
+      description: "",
+      dueAt: `${plannedDate ?? addDays(new Date(), 1)}T23:59`,
+      estimatedMinutes: 30,
+      expectedOutput: "",
+      importance: 50,
+      milestone: false,
+      recurrence: null,
+    },
+  );
   return (
     <Dialog
       open={open}
@@ -135,7 +139,7 @@ export function CreateDailyTaskDialog({
             onClose();
           }}
         >
-          {t("common.add")}
+          {t(initial ? "common.save" : "common.add")}
         </Button>
       </div>
     </Dialog>

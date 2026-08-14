@@ -9,6 +9,8 @@ const scripts = {
     'set selectedPath to choose file name with prompt "选择 SQLite 数据库位置 / Select SQLite database location" default name "circo.db"\nPOSIX path of selectedPath',
   storage:
     'set selectedPath to choose folder with prompt "选择文件存储目录 / Select file storage directory"\nPOSIX path of selectedPath',
+  music:
+    'set selectedPath to choose folder with prompt "选择背景音乐目录 / Select background music directory"\nPOSIX path of selectedPath',
 };
 
 function runPicker(script: string) {
@@ -37,7 +39,7 @@ export async function POST(request: Request) {
       { status: 501 },
     );
   const kind = requestUrl.searchParams.get("kind");
-  if (kind !== "database" && kind !== "storage")
+  if (kind !== "database" && kind !== "storage" && kind !== "music")
     return Response.json({ error: "Invalid picker type." }, { status: 422 });
   try {
     const selected = await runPicker(scripts[kind]);

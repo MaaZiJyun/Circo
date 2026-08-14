@@ -213,7 +213,7 @@ export interface TaskRecord extends BaseEntity {
   description: string;
   dueDate: string;
   priority: "low" | "medium" | "high";
-  status: "todo" | "doing" | "done";
+  status: "todo" | "doing" | "done" | "overdue";
   estimatedMinutes: number;
   actualMinutes: number;
   milestone: boolean;

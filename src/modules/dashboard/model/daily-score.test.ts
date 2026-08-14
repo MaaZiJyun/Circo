@@ -30,6 +30,24 @@ describe("daily score", () => {
     );
     expect(score.completed).toBe(1);
     expect(score.incomplete).toBe(1);
-    expect(score.score).toBe(50);
+    expect(score.overdue).toBe(1);
+    expect(score.overdueDiscount).toBe(10);
+    expect(score.score).toBe(45);
+  });
+
+  it("does not discount unfinished work before its deadline", () => {
+    const score = calculateDailyScore(
+      [
+        task({
+          completed: false,
+          actualMinutes: 60,
+          dueAt: "2026-08-14T12:00",
+        }),
+      ],
+      "2026-08-13",
+    );
+    expect(score.overdue).toBe(0);
+    expect(score.overdueDiscount).toBe(0);
+    expect(score.score).toBe(30);
   });
 });

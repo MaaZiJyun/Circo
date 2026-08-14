@@ -24,6 +24,7 @@ export const statusLabels: Record<string, MessageKey> = {
   todo: "status.todo",
   doing: "status.doing",
   done: "status.done",
+  overdue: "status.overdue",
   draft: "status.draft",
   review: "status.review",
   final: "status.final",

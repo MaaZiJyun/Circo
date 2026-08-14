@@ -2,20 +2,29 @@
 
 import { useState } from "react";
 import {
+  CheckCircleIcon,
   MagnifyingGlassIcon,
+  PencilSquareIcon,
   PlusIcon,
   TrashIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  type MenuPosition,
+} from "@/modules/find/views/context-menu";
 import { SectionHeader } from "@/shared/components/page-elements";
 import { TaskRow } from "@/shared/components/task-row";
 import {
   Badge,
   Button,
   EmptyState,
-  IconButton,
   Input,
 } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import type { DailyTask } from "@/shared/model/entities";
+import { dailyTaskStatusAt } from "@/shared/model/task-status";
 import { useDailyTaskCache } from "../view-models/use-daily-task-cache";
 import {
   CreateDailyTaskDialog,
@@ -26,6 +35,11 @@ export function DailyTaskList() {
   const { t } = useI18n();
   const vm = useDailyTaskCache();
   const [dialog, setDialog] = useState<"retrieve" | "create" | null>(null);
+  const [menu, setMenu] = useState<{
+    task: DailyTask;
+    position: MenuPosition;
+  } | null>(null);
+  const [editing, setEditing] = useState<DailyTask | null>(null);
   if (!vm) return null;
   const completed = vm.dailyTasks.filter((item) => item.completed).length;
   return (
@@ -69,26 +83,26 @@ export function DailyTaskList() {
               key={item.id}
               title={item.title}
               description={item.description}
-              status={item.completed ? "done" : "todo"}
+              status={dailyTaskStatusAt(item)}
               dueAt={item.dueAt}
               completedAt={item.completedAt}
               estimatedMinutes={item.estimatedMinutes}
               actualMinutes={item.actualMinutes ?? 0}
               expectedOutput={item.expectedOutput}
+              deadlineInline
               source={
                 item.sourceTaskId && item.projectId
                   ? `${t("me.fromProject")}: ${vm.projectName(item.projectId)}`
                   : t("me.independentTask")
               }
               onToggle={() => vm.toggle(item)}
-              action={
-                <IconButton
-                  label={t("common.delete")}
-                  onClick={() => vm.deleteTask(item.id)}
-                >
-                  <TrashIcon className="size-4" />
-                </IconButton>
-              }
+              onContextMenu={(event) => {
+                event.preventDefault();
+                setMenu({
+                  task: item,
+                  position: { x: event.clientX, y: event.clientY },
+                });
+              }}
             />
           ))}
         </div>
@@ -113,6 +127,62 @@ export function DailyTaskList() {
         onClose={() => setDialog(null)}
         onSave={vm.addIndependent}
       />
+      {menu && (
+        <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
+          <ContextMenuItem
+            disabled={menu.task.completed}
+            onClick={() => {
+              vm.setCompleted(menu.task, true);
+              setMenu(null);
+            }}
+          >
+            <CheckCircleIcon className="size-4" />
+            {t("me.markComplete")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={!menu.task.completed}
+            onClick={() => {
+              vm.setCompleted(menu.task, false);
+              setMenu(null);
+            }}
+          >
+            <XCircleIcon className="size-4" />
+            {t("me.markIncomplete")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            onClick={() => {
+              setEditing(menu.task);
+              setMenu(null);
+            }}
+          >
+            <PencilSquareIcon className="size-4" />
+            {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            danger
+            onClick={() => {
+              const task = menu.task;
+              setMenu(null);
+              if (window.confirm(t("common.confirmDelete"))) {
+                vm.deleteTask(task.id);
+              }
+            }}
+          >
+            <TrashIcon className="size-4" />
+            {t("common.delete")}
+          </ContextMenuItem>
+        </ContextMenu>
+      )}
+      {editing && (
+        <CreateDailyTaskDialog
+          key={editing.id}
+          open
+          title={t("common.edit")}
+          initial={vm.inputFor(editing)}
+          onClose={() => setEditing(null)}
+          onSave={(input) => vm.updateTask(editing, input)}
+        />
+      )}
     </>
   );
 }

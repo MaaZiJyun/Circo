@@ -1,5 +1,5 @@
 import fs from "node:fs/promises";
-import { getStoragePath } from "@/shared/infrastructure/storage-config";
+import { getBackgroundMusicPath } from "@/shared/infrastructure/storage-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export async function GET(
   if (!validToken(id))
     return Response.json({ error: "Invalid audio file." }, { status: 400 });
   try {
-    const file = await fs.readFile(getStoragePath("background-audio", id));
+    const file = await fs.readFile(getBackgroundMusicPath(id));
     const range = request.headers.get("range")?.match(/bytes=(\d+)-(\d*)/);
     const extension = id.split(".").pop()?.toLowerCase() ?? "";
     const headers = {
@@ -62,6 +62,6 @@ export async function DELETE(
   const { id } = await context.params;
   if (!validToken(id))
     return Response.json({ error: "Invalid audio file." }, { status: 400 });
-  await fs.rm(getStoragePath("background-audio", id), { force: true });
+  await fs.rm(getBackgroundMusicPath(id), { force: true });
   return Response.json({ ok: true });
 }

@@ -35,7 +35,12 @@ export function SidebarProfile({
           className={musicPlaying ? "background-music-avatar" : ""}
         />
         {!collapsed && (
-          <span className="truncate text-sm font-medium">{name}</span>
+          <div className="flex flex-col">
+            <span className="truncate text-sm font-medium">{name}</span>
+            <span className="truncate text-xs text-zinc-500">
+              {musicPlaying ? "Music Playing" : "Everything is fine"}
+            </span>
+          </div>
         )}
       </button>
       <button

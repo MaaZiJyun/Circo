@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
-import { getStoragePath } from "@/shared/infrastructure/storage-config";
+import { getBackgroundMusicPath } from "@/shared/infrastructure/storage-config";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     if (file.size > 50 * 1024 * 1024)
       return Response.json({ error: "Audio exceeds 50 MB." }, { status: 413 });
     const token = `${randomUUID()}.${extension}`;
-    const directory = getStoragePath("background-audio");
+    const directory = getBackgroundMusicPath();
     await fs.mkdir(directory, { recursive: true });
     await fs.writeFile(
       path.join(/* turbopackIgnore: true */ directory, token),

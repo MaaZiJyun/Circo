@@ -195,6 +195,7 @@ function ScoreDetails({
   const breakdown = t("dashboard.scoreBreakdown")
     .replace("{completed}", String(result.completed))
     .replace("{incomplete}", String(result.incomplete))
+    .replace("{overdue}", String(result.overdue))
     .replace(
       "{actual}",
       formatNumber(result.actualMinutes, { maximumFractionDigits: 1 }),
@@ -202,7 +203,11 @@ function ScoreDetails({
     .replace("{planned}", formatNumber(result.plannedMinutes))
     .replace("{completionScore}", formatNumber(result.completionScore))
     .replace("{timeScore}", formatNumber(result.timeScore))
-    .replace("{priorityScore}", formatNumber(result.priorityScore));
+    .replace("{priorityScore}", formatNumber(result.priorityScore))
+    .replace(
+      "{overdueDiscount}",
+      formatNumber(result.overdueDiscount),
+    );
   return (
     <div className="mt-4 rounded-xl bg-zinc-50 p-4 text-sm dark:bg-zinc-900">
       <div className="flex items-center justify-between gap-3">

@@ -1,4 +1,5 @@
 export const dashboardFocusZh = {
+  "status.overdue": "超时",
   "dashboard.startFocus": "开始专注",
   "dashboard.totalTime": "累计投入",
   "dashboard.focusTimer": "专注计时",
@@ -17,9 +18,9 @@ export const dashboardFocusZh = {
   "dashboard.editFocusTime": "编辑专注时间，格式为时:分:秒.毫秒",
   "dashboard.averageScore": "日均 score",
   "dashboard.scoreFormula":
-    "score = 完成率 40 分 + 投入时间 30 分 + 紧急/重要任务完成度 30 分。投入时间按累计实际用时 ÷ 计划用时计算，最高 30 分。",
+    "基础分 = 完成率 40 分 + 投入时间 30 分 + 紧急/重要任务完成度 30 分；最终 score = 基础分 ×（1 − 超时任务占比 × 20%）。",
   "dashboard.scoreBreakdown":
-    "完成 {completed} 项，未完成 {incomplete} 项；投入 {actual} / {planned} 分钟。完成率 +{completionScore}，投入时间 +{timeScore}，紧急/重要程度 +{priorityScore}。",
+    "完成 {completed} 项，未完成 {incomplete} 项，其中超时 {overdue} 项；投入 {actual} / {planned} 分钟。完成率 +{completionScore}，投入时间 +{timeScore}，紧急/重要程度 +{priorityScore}；最终得分折扣 {overdueDiscount}%。",
   "dashboard.scoreReason.empty":
     "当天没有加入每日清单的任务，因此 score 为 0。",
   "dashboard.scoreReason.excellent":
@@ -27,12 +28,13 @@ export const dashboardFocusZh = {
   "dashboard.scoreReason.good":
     "当天完成度和投入较好，但仍有部分计划或高优先级任务可以推进。",
   "dashboard.scoreReason.partial":
-    "当天已有有效投入，但未完成任务、投入不足或高优先级任务未完成拉低了得分。",
+    "当天已有有效投入，但未完成或超时任务、投入不足、高优先级任务未完成拉低了得分。",
   "dashboard.scoreReason.low":
-    "当天完成任务和实际投入较少，尤其需要优先处理紧急且重要的未完成任务。",
+    "当天完成任务和实际投入较少，超时折扣也可能进一步降低得分，需要优先处理紧急且重要的未完成任务。",
 } as const;
 
 export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
+  "status.overdue": "Overdue",
   "dashboard.startFocus": "Start focus",
   "dashboard.totalTime": "Total effort",
   "dashboard.focusTimer": "Focus timer",
@@ -52,9 +54,9 @@ export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
     "Edit focus time in hours:minutes:seconds.milliseconds",
   "dashboard.averageScore": "Average daily score",
   "dashboard.scoreFormula":
-    "score = completion rate (40) + invested time (30) + urgent/important task completion (30). Invested time is actual accumulated time ÷ planned time, capped at 30.",
+    "Base score = completion rate (40) + invested time (30) + urgent/important task completion (30); final score = base score × (1 − overdue task ratio × 20%).",
   "dashboard.scoreBreakdown":
-    "{completed} completed, {incomplete} incomplete; {actual} / {planned} minutes invested. Completion +{completionScore}, time +{timeScore}, urgency/importance +{priorityScore}.",
+    "{completed} completed, {incomplete} incomplete, including {overdue} overdue; {actual} / {planned} minutes invested. Completion +{completionScore}, time +{timeScore}, urgency/importance +{priorityScore}; final-score discount {overdueDiscount}%.",
   "dashboard.scoreReason.empty":
     "No tasks were added to the daily list, so the score is 0.",
   "dashboard.scoreReason.excellent":
@@ -62,7 +64,7 @@ export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
   "dashboard.scoreReason.good":
     "Completion and investment were good, with some planned or high-priority work still available to advance.",
   "dashboard.scoreReason.partial":
-    "There was useful investment, but incomplete work, insufficient time, or unfinished high-priority tasks reduced the score.",
+    "There was useful investment, but incomplete or overdue work, insufficient time, or unfinished high-priority tasks reduced the score.",
   "dashboard.scoreReason.low":
-    "Few tasks and little invested time were completed; urgent important unfinished work needs attention first.",
+    "Few tasks and little invested time were completed, and the overdue discount may have reduced the score further; urgent important unfinished work needs attention first.",
 };

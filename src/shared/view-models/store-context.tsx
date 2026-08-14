@@ -16,6 +16,7 @@ import type {
   CollectionName,
 } from "@/shared/model/app-state";
 import { isAppState } from "@/shared/model/app-state";
+import { deadlineTime, taskStatusAt } from "@/shared/model/task-status";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -47,6 +48,21 @@ function changeDeletion(
     item.id === id ? { ...item, deletedAt, updatedAt } : item,
   );
   return { ...state, [collection]: nextItems, updatedAt };
+}
+
+function synchronizeTaskStatuses(mutate: StoreValue["mutate"]) {
+  const currentTime = Date.now();
+  const stamp = new Date(currentTime).toISOString();
+  mutate((current) => ({
+    ...current,
+    tasks: current.tasks.map((task) => {
+      if (task.deletedAt) return task;
+      const status = taskStatusAt(task, currentTime);
+      return status === task.status
+        ? task
+        : { ...task, status, updatedAt: stamp };
+    }),
+  }));
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
@@ -161,6 +177,31 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setStatus("saved");
     return true;
   }, []);
+
+  useEffect(() => {
+    if (!state) return;
+    const currentTime = Date.now();
+    const changed = state.tasks.some(
+      (task) =>
+        !task.deletedAt && task.status !== taskStatusAt(task, currentTime),
+    );
+    if (changed) {
+      const timer = window.setTimeout(() => synchronizeTaskStatuses(mutate), 0);
+      return () => window.clearTimeout(timer);
+    }
+    const nextDeadline = state.tasks.reduce<number | undefined>((next, task) => {
+      if (task.deletedAt || task.status === "done") return next;
+      const deadline = deadlineTime(task.dueDate);
+      if (!Number.isFinite(deadline) || deadline <= currentTime) return next;
+      return next === undefined || deadline < next ? deadline : next;
+    }, undefined);
+    if (nextDeadline === undefined) return;
+    const timer = window.setTimeout(
+      () => synchronizeTaskStatuses(mutate),
+      Math.min(nextDeadline - currentTime + 50, 2_147_483_647),
+    );
+    return () => window.clearTimeout(timer);
+  }, [mutate, state]);
 
   const value = useMemo(
     () => ({

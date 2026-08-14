@@ -108,6 +108,7 @@ export function ProjectWorkspace({
                   expectedOutput={task.expectedOutput}
                   milestone={task.milestone}
                   onToggle={() => vm.advanceTask(task)}
+                  deadlineInline
                   onContextMenu={(event) => {
                     event.preventDefault();
                     onOpenTaskMenu(task, {

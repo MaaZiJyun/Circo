@@ -12,11 +12,12 @@ export const dynamic = "force-dynamic";
 const repository = new SqliteAppRepository();
 export async function GET() {
   try {
-    const dataDirectory = getStorageConfig().storageDirectory;
+    const config = getStorageConfig();
+    const dataDirectory = config.storageDirectory;
     const state = await repository.load();
     const zip = new AdmZip();
     zip.addFile("circo.json", Buffer.from(JSON.stringify(state, null, 2)));
-    for (const folder of ["files", "attachments", "background-audio"]) {
+    for (const folder of ["files", "attachments"]) {
       const localPath = path.join(
         /* turbopackIgnore: true */ dataDirectory,
         folder,
@@ -24,6 +25,8 @@ export async function GET() {
       if (fs.existsSync(/* turbopackIgnore: true */ localPath))
         zip.addLocalFolder(localPath, folder);
     }
+    if (fs.existsSync(config.backgroundMusicDirectory))
+      zip.addLocalFolder(config.backgroundMusicDirectory, "background-audio");
     return new Response(new Uint8Array(zip.toBuffer()), {
       headers: {
         "Content-Type": "application/zip",
@@ -37,7 +40,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const dataDirectory = getStorageConfig().storageDirectory;
+  const config = getStorageConfig();
+  const dataDirectory = config.storageDirectory;
   const temporary = path.join(dataDirectory, `restore-${randomUUID()}`);
   try {
     const form = await request.formData();
@@ -80,7 +84,7 @@ export async function POST(request: Request) {
       fs.writeFileSync(destination, entry.getData());
     }
     await repository.restore(parsed);
-    for (const folder of ["files", "attachments", "background-audio"]) {
+    for (const folder of ["files", "attachments"]) {
       const source = path.join(temporary, folder);
       const destination = path.join(
         /* turbopackIgnore: true */ dataDirectory,
@@ -89,6 +93,12 @@ export async function POST(request: Request) {
       if (fs.existsSync(source))
         fs.cpSync(source, destination, { recursive: true, force: true });
     }
+    const musicSource = path.join(temporary, "background-audio");
+    if (fs.existsSync(musicSource))
+      fs.cpSync(musicSource, config.backgroundMusicDirectory, {
+        recursive: true,
+        force: true,
+      });
     return Response.json(await repository.load());
   } catch (error) {
     const message = error instanceof Error ? error.message : "Restore failed.";

@@ -43,7 +43,9 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
         ? "doing"
         : task.status === "doing"
           ? "done"
-          : "todo";
+          : task.status === "overdue"
+            ? "done"
+            : "todo";
     const stamp = now();
     mutate((current) => {
       const tasks = current.tasks.map((item) =>

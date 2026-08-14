@@ -5,6 +5,7 @@ import { calculateDailyScore } from "@/modules/dashboard/model/daily-score";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { FutureMessage } from "@/shared/model/message";
 import { now } from "@/shared/model/factories";
+import { isOverdue } from "@/shared/model/task-status";
 import { useStore } from "@/shared/view-models/store-context";
 
 const summaryId = (date: string) => `message_daily_summary_${date}`;
@@ -51,15 +52,17 @@ export function DailySummaryScheduler() {
           (task) => task.date === date && !task.deletedAt,
         );
         const result = calculateDailyScore(state.dailyTasks, date);
+        const scoringTime = new Date(`${date}T23:59:59.999`).getTime();
         const taskLines = tasks.length
           ? tasks.map(
               (task) =>
-                `${task.completed ? "✓" : "○"} ${task.title} · ${formatNumber(task.actualMinutes, { maximumFractionDigits: 1 })} ${t("common.minutes")}`,
+                `${task.completed ? "✓" : isOverdue(task.dueAt, false, scoringTime) ? "!" : "○"} ${task.title} · ${formatNumber(task.actualMinutes, { maximumFractionDigits: 1 })} ${t("common.minutes")}`,
             )
           : [t("messages.dailySummary.noTasks")];
         const breakdown = t("dashboard.scoreBreakdown")
           .replace("{completed}", String(result.completed))
           .replace("{incomplete}", String(result.incomplete))
+          .replace("{overdue}", String(result.overdue))
           .replace(
             "{actual}",
             formatNumber(result.actualMinutes, { maximumFractionDigits: 1 }),
@@ -67,7 +70,11 @@ export function DailySummaryScheduler() {
           .replace("{planned}", formatNumber(result.plannedMinutes))
           .replace("{completionScore}", formatNumber(result.completionScore))
           .replace("{timeScore}", formatNumber(result.timeScore))
-          .replace("{priorityScore}", formatNumber(result.priorityScore));
+          .replace("{priorityScore}", formatNumber(result.priorityScore))
+          .replace(
+            "{overdueDiscount}",
+            formatNumber(result.overdueDiscount),
+          );
         return {
           id: summaryId(date),
           subject: t("messages.dailySummary.subject").replace("{date}", date),
