@@ -10,8 +10,14 @@ import {
 } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { TaskRecurrenceFields } from "@/shared/components/task-recurrence-fields";
+import { TaskImportanceFields } from "@/shared/components/task-importance-fields";
+import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
+import { TaskEffortFields } from "@/shared/components/task-effort-fields";
 import type { TaskRecord } from "@/shared/model/entities";
 import { addDays, today } from "@/shared/model/factories";
+import { defaultTaskImportance, taskImportance } from "@/shared/model/task-importance";
+import { defaultTaskUrgency } from "@/shared/model/task-urgency";
+import { defaultTaskEffort } from "@/shared/model/task-effort";
 import type { DailyTaskInput } from "../view-models/use-daily-task-cache";
 
 export function CreateDailyTaskDialog({
@@ -37,7 +43,10 @@ export function CreateDailyTaskDialog({
       dueAt: `${plannedDate ?? addDays(new Date(), 1)}T23:59`,
       estimatedMinutes: 30,
       expectedOutput: "",
-      importance: 50,
+      ...defaultTaskImportance,
+      importance: taskImportance(defaultTaskImportance),
+      ...defaultTaskUrgency,
+      ...defaultTaskEffort,
       milestone: false,
       recurrence: null,
     },
@@ -101,23 +110,20 @@ export function CreateDailyTaskDialog({
             }
           />
         </Field>
-        <Field label={t("me.taskImportance")}>
-          <Input
-            type="number"
-            min="0"
-            max="100"
-            value={input.importance}
-            onChange={(event) =>
-              setInput({
-                ...input,
-                importance: Math.min(
-                  100,
-                  Math.max(0, Number(event.target.value)),
-                ),
-              })
-            }
-          />
-        </Field>
+        <TaskImportanceFields
+          value={input}
+          onChange={(dimensions) =>
+            setInput({
+              ...input,
+              ...dimensions,
+              importance: taskImportance(dimensions),
+            })
+          }
+        />
+        <TaskUrgencyFields deadline={input.dueAt} delayLoss={input.delayLoss}
+          dependencyIds={input.dependencyIds} onChange={(urgency) => setInput({ ...input, ...urgency })} />
+        <TaskEffortFields estimatedMinutes={input.estimatedMinutes} complexity={input.complexity}
+          uncertainty={input.uncertainty} onChange={(effort) => setInput({ ...input, ...effort })} />
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -133,7 +139,7 @@ export function CreateDailyTaskDialog({
           onChange={(recurrence) => setInput({ ...input, recurrence })}
         />
         <Button
-          disabled={!input.title.trim() || !input.dueAt}
+          disabled={!input.title.trim()}
           onClick={() => {
             onSave(input);
             onClose();

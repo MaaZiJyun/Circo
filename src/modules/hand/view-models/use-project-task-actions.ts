@@ -5,6 +5,7 @@ import { createId, now } from "@/shared/model/factories";
 import { today } from "@/shared/model/factories";
 import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
+import { taskImportance } from "@/shared/model/task-importance";
 import { useStore } from "@/shared/view-models/store-context";
 
 export type TaskInput = Pick<
@@ -16,6 +17,14 @@ export type TaskInput = Pick<
   | "expectedOutput"
   | "milestone"
   | "importance"
+  | "impact"
+  | "goal"
+  | "risk"
+  | "value"
+  | "delayLoss"
+  | "dependencyIds"
+  | "complexity"
+  | "uncertainty"
   | "recurrence"
 >;
 
@@ -28,7 +37,8 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       id: createId("task"),
       projectId: selected.id,
       ...input,
-      priority: priorityFromImportance(input.importance),
+      importance: taskImportance(input),
+      priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
       actualMinutes: 0,
       completedAt: undefined,
@@ -85,7 +95,15 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     mutate((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
-        item.id === id ? { ...item, ...input, updatedAt: now() } : item,
+        item.id === id
+          ? {
+              ...item,
+              ...input,
+              importance: taskImportance(input),
+              priority: priorityFromImportance(taskImportance(input)),
+              updatedAt: now(),
+            }
+          : item,
       ),
     }));
   const moveTask = (id: string, projectId: string) => {

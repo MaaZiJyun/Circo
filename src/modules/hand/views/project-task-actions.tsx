@@ -16,6 +16,9 @@ const taskInput = (task: TaskRecord): TaskInput => ({
   estimatedMinutes: task.estimatedMinutes,
   expectedOutput: task.expectedOutput, milestone: task.milestone,
   importance: task.importance,
+  impact: task.impact, goal: task.goal, risk: task.risk, value: task.value,
+  delayLoss: task.delayLoss, dependencyIds: task.dependencyIds,
+  complexity: task.complexity, uncertainty: task.uncertainty,
   recurrence: task.recurrence,
 });
 
@@ -49,7 +52,7 @@ export function ProjectTaskActions({
         </ContextMenu>
       )}
       {editing && (
-        <TaskDialog key={editing.id} open edit initial={taskInput(editing)}
+        <TaskDialog key={editing.id} open edit taskId={editing.id} initial={taskInput(editing)}
           onClose={() => setEditing(null)}
           onSave={(input) => vm.updateTask(editing.id, input)} />
       )}

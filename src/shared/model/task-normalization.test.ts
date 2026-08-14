@@ -42,8 +42,8 @@ describe("task normalization", () => {
   });
 
   it("derives the task priority from numeric importance", () => {
-    expect(priorityFromImportance(20)).toBe("low");
-    expect(priorityFromImportance(50)).toBe("medium");
-    expect(priorityFromImportance(80)).toBe("high");
+    expect(priorityFromImportance(4)).toBe("low");
+    expect(priorityFromImportance(12)).toBe("medium");
+    expect(priorityFromImportance(16)).toBe("high");
   });
 });

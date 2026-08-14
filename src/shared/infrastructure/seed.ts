@@ -1,8 +1,6 @@
 import type { AppState } from "@/shared/model/app-state";
 import * as seeds from "./seed-project-lists";
-
 const stamp = "2026-08-11T08:00:00.000Z";
-
 export function createSeedState(): AppState {
   return {
     schemaVersion: 1,
@@ -227,7 +225,8 @@ export function createSeedState(): AppState {
         actualMinutes: 90,
         milestone: true,
         expectedOutput: "原型范围说明",
-        importance: 82,
+        ...{ impact: 4, goal: 4, risk: 4, value: 4, delayLoss: 3, dependencyIds: [], complexity: 3, uncertainty: 3 },
+        importance: 16,
         recurrence: null,
         completedAt: stamp,
         createdAt: stamp,
@@ -245,7 +244,8 @@ export function createSeedState(): AppState {
         actualMinutes: 60,
         milestone: false,
         expectedOutput: "验证记录",
-        importance: 82,
+        ...{ impact: 4, goal: 4, risk: 4, value: 4, delayLoss: 3, dependencyIds: [], complexity: 3, uncertainty: 3 },
+        importance: 16,
         recurrence: null,
         createdAt: stamp,
         updatedAt: stamp,

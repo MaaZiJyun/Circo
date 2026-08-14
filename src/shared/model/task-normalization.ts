@@ -1,6 +1,9 @@
 import type { AppState } from "./app-state";
 import type { BaseEntity, TaskRecord } from "./entities";
 import { addDays } from "./factories";
+import { normalizeTaskImportance } from "./task-importance";
+import { normalizeTaskUrgency } from "./task-urgency";
+import { normalizeTaskEffort } from "./task-effort";
 
 type LegacyRoutineTask = BaseEntity &
   Pick<
@@ -25,20 +28,34 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
   const projectScore = (projectId?: string) =>
     state.projects.find((project) => project.id === projectId)?.score ?? 50;
   return [
-    ...state.tasks.map((task) => ({
-      ...task,
-      description: task.description ?? "",
-      expectedOutput: task.expectedOutput ?? "",
-      actualMinutes: task.actualMinutes ?? 0,
-      importance: task.importance ?? projectScore(task.projectId),
-      recurrence: task.recurrence ?? null,
-    })),
+    ...state.tasks.map((task) => {
+      const scores = normalizeTaskImportance(
+        task,
+        task.importance ?? projectScore(task.projectId),
+      );
+      return {
+        ...task,
+        description: task.description ?? "",
+        expectedOutput: task.expectedOutput ?? "",
+        actualMinutes: task.actualMinutes ?? 0,
+        ...scores,
+        ...normalizeTaskUrgency(task),
+        ...normalizeTaskEffort(task),
+        priority: priorityFromImportance(scores.importance),
+        recurrence: task.recurrence ?? null,
+      };
+    }),
     ...legacy
       .filter((task) => !existingIds.has(task.id))
       .map((task): TaskRecord => ({
         ...task,
+        ...normalizeTaskImportance({}, task.importance),
+        ...normalizeTaskUrgency({}),
+        ...normalizeTaskEffort({}),
         dueDate: `${addDays(new Date(), 1)}T23:59`,
-        priority: priorityFromImportance(task.importance),
+        priority: priorityFromImportance(
+          normalizeTaskImportance({}, task.importance).importance,
+        ),
         status: "todo",
         actualMinutes: 0,
         milestone: false,
@@ -50,5 +67,5 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
 export function priorityFromImportance(
   importance: number,
 ): TaskRecord["priority"] {
-  return importance >= 67 ? "high" : importance >= 34 ? "medium" : "low";
+  return importance >= 15 ? "high" : importance >= 9 ? "medium" : "low";
 }

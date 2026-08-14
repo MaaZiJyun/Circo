@@ -43,7 +43,11 @@ export function MeView() {
       </div>
       <Card>
         <SectionHeader title={t("me.taskQuadrant")} />
-        <TaskQuadrant tasks={vm.dailyTasks} coordinates={vm.coordinates} />
+        <TaskQuadrant
+          tasks={vm.dailyTasks}
+          coordinates={vm.coordinates}
+          formulas={vm.profile.matrixFormulas}
+        />
       </Card>
     </div>
   );

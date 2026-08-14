@@ -12,6 +12,7 @@ import type { TaskRecord } from "@/shared/model/entities";
 import type { DailyPlanItem, FutureMessage } from "@/shared/model/message";
 import { addDays, createId, now } from "@/shared/model/factories";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
+import { taskImportance } from "@/shared/model/task-importance";
 import { useStore } from "@/shared/view-models/store-context";
 import {
   dayMinutes,
@@ -68,9 +69,17 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       dueDate: input.dueAt,
       estimatedMinutes: input.estimatedMinutes,
       expectedOutput: input.expectedOutput,
-      importance: input.importance,
+      importance: taskImportance(input),
+      impact: input.impact,
+      goal: input.goal,
+      risk: input.risk,
+      value: input.value,
+      delayLoss: input.delayLoss,
+      dependencyIds: input.dependencyIds,
+      complexity: input.complexity,
+      uncertainty: input.uncertainty,
       recurrence: input.recurrence,
-      priority: priorityFromImportance(input.importance),
+      priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
       actualMinutes: 0,
       milestone: input.milestone,
@@ -120,7 +129,8 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
           ? {
               ...item,
               ...input,
-              priority: priorityFromImportance(input.importance),
+              importance: taskImportance(input),
+              priority: priorityFromImportance(taskImportance(input)),
               updatedAt: stamp,
             }
           : item,
@@ -145,7 +155,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
           dueAt: input.dueDate,
           estimatedMinutes: input.estimatedMinutes,
           expectedOutput: input.expectedOutput,
-          importance: input.importance,
+          importance: taskImportance(input),
         },
       ];
     });

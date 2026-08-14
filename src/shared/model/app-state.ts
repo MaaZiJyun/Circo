@@ -64,6 +64,16 @@ export interface UserProfile {
   backgroundMusicEnabled?: boolean;
   backgroundAudioTracks?: BackgroundAudioTrack[];
   countdownTaskSlots?: Array<string | null>;
+  matrixFormulas?: MatrixFormulaSettings;
+}
+
+export interface MatrixFormulaSettings {
+  urgency?: string;
+  importance?: string;
+  x: string;
+  y: string;
+  size: string;
+  dispersion?: number;
 }
 
 export interface BackgroundAudioTrack {
@@ -122,6 +132,21 @@ function isProfile(value: unknown) {
         profile.countdownTaskSlots.every(
           (taskId) => taskId === null || typeof taskId === "string",
         ))) &&
+    (profile.matrixFormulas === undefined ||
+      (profile.matrixFormulas !== null &&
+        typeof profile.matrixFormulas === "object" &&
+        [profile.matrixFormulas.x, profile.matrixFormulas.y, profile.matrixFormulas.size]
+          .every((formula) => typeof formula === "string" && formula.length <= 300) &&
+        (profile.matrixFormulas.urgency === undefined ||
+          (typeof profile.matrixFormulas.urgency === "string" &&
+            profile.matrixFormulas.urgency.length <= 300)) &&
+        (profile.matrixFormulas.importance === undefined ||
+          (typeof profile.matrixFormulas.importance === "string" &&
+            profile.matrixFormulas.importance.length <= 300)) &&
+        (profile.matrixFormulas.dispersion === undefined ||
+          (typeof profile.matrixFormulas.dispersion === "number" &&
+            profile.matrixFormulas.dispersion >= 0.1 &&
+            profile.matrixFormulas.dispersion <= 10)))) &&
     (profile.birthDate === undefined ||
       /^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate))
   );

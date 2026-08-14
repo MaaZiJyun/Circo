@@ -13,6 +13,7 @@ import { PageHeader, SectionHeader } from "./page-elements";
 import { ProfileSettings } from "./profile-settings";
 import { StorageSettings } from "./storage-settings";
 import { BackgroundMusicSettings } from "./background-music-settings";
+import { MatrixFormulaSettings } from "@/modules/me/views/matrix-formula-settings";
 import { Alert, Button, Card, EmptyState, Field, Select } from "./ui";
 
 export function SettingsView() {
@@ -85,6 +86,7 @@ export function SettingsView() {
           </Field>
         </Card>
       </div>
+      <MatrixFormulaSettings />
       <BackgroundMusicSettings />
       <StorageSettings />
       <Card>

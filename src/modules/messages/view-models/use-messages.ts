@@ -7,6 +7,9 @@ import type {
   MessageReferenceKind,
 } from "@/shared/model/message";
 import { createId, now, today } from "@/shared/model/factories";
+import { normalizeTaskImportance } from "@/shared/model/task-importance";
+import { normalizeTaskUrgency } from "@/shared/model/task-urgency";
+import { normalizeTaskEffort } from "@/shared/model/task-effort";
 import { isDailySummary } from "@/shared/model/message-kind";
 import { useStore } from "@/shared/view-models/store-context";
 
@@ -149,22 +152,27 @@ export function useMessages() {
           (item) =>
             !item.sourceTaskId || !existingSourceIds.has(item.sourceTaskId),
         )
-        .map((item) => ({
-          id: `daily_plan_${message.id}_${item.kind}_${item.id}`,
-          date: plan.date,
-          title: item.title,
-          description: item.description,
-          completed: false,
-          dueAt: item.dueAt ?? `${plan.date}T23:59`,
-          estimatedMinutes: item.estimatedMinutes,
-          actualMinutes: 0,
-          expectedOutput: item.expectedOutput,
-          importance: item.importance,
-          sourceTaskId: item.sourceTaskId,
-          projectId: item.projectId,
-          createdAt: stamp,
-          updatedAt: stamp,
-        }))
+        .map((item) => {
+          const source = current.tasks.find((task) => task.id === item.sourceTaskId);
+          return {
+            id: `daily_plan_${message.id}_${item.kind}_${item.id}`,
+            date: plan.date,
+            title: item.title,
+            description: item.description,
+            completed: false,
+            dueAt: item.dueAt ?? `${plan.date}T23:59`,
+            estimatedMinutes: item.estimatedMinutes,
+            actualMinutes: 0,
+            expectedOutput: item.expectedOutput,
+            ...normalizeTaskImportance(source ?? {}, item.importance),
+            ...normalizeTaskUrgency(source ?? {}),
+            ...normalizeTaskEffort(source ?? {}),
+            sourceTaskId: item.sourceTaskId,
+            projectId: item.projectId,
+            createdAt: stamp,
+            updatedAt: stamp,
+          };
+        })
         .filter((task) => !existingIds.has(task.id));
       return {
         ...current,

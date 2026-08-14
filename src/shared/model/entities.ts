@@ -1,11 +1,11 @@
 export type EntityKind = "goal" | "source" | "idea" | "project" | "artifact";
 import type { TaskRecurrence } from "./task-recurrence-types";
+import type { TaskImportanceDimensions } from "./task-importance-types";
+import type { TaskUrgencyInputs } from "./task-urgency-types";
+import type { TaskEffortInputs } from "./task-effort-types";
 export type { TaskRecurrence } from "./task-recurrence-types";
-export type {
-  PointList,
-  ReferencePoint,
-  ReferencePointInput,
-} from "./reference-point";
+export type { TaskImportanceDimensions } from "./task-importance-types";
+export type { PointList, ReferencePoint, ReferencePointInput } from "./reference-point";
 export interface BaseEntity {
   id: string;
   createdAt: string;
@@ -205,8 +205,7 @@ export interface ProjectRecord extends BaseEntity {
   tags: string[];
   score: number;
 }
-
-export interface TaskRecord extends BaseEntity {
+export interface TaskRecord extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
   projectId?: string;
   parentId?: string;
   title: string;
@@ -224,7 +223,7 @@ export interface TaskRecord extends BaseEntity {
   completedAt?: string;
 }
 
-export interface DailyTask extends BaseEntity {
+export interface DailyTask extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
   date: string;
   title: string;
   description: string;

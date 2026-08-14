@@ -1,6 +1,6 @@
 import type { DailyTask } from "@/shared/model/entities";
-import { taskCoordinates } from "@/modules/me/model/task-quadrant";
 import { isOverdue } from "@/shared/model/task-status";
+import { taskUrgency } from "@/shared/model/task-urgency";
 
 export interface DailyScore {
   score: number;
@@ -38,13 +38,8 @@ export function calculateDailyScore(
     0,
   );
   const priority = (task: DailyTask) => {
-    const coordinates = taskCoordinates(
-      task.dueAt,
-      task.estimatedMinutes,
-      task.importance,
-      scoringTime,
-    );
-    return (coordinates.urgency + coordinates.importance) / 200;
+    const urgency = taskUrgency(task, active, scoringTime).urgency / 15;
+    return (urgency + task.importance / 20) / 2;
   };
   const totalPriority = active.reduce((sum, task) => sum + priority(task), 0);
   const completedPriority = completed.reduce(

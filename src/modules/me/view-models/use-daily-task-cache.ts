@@ -1,30 +1,18 @@
 "use client";
-
 import { useEffect, useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
 import type { DailyTask, TaskRecord } from "@/shared/model/entities";
 import { createId, now, today } from "@/shared/model/factories";
 import { calculateMetrics } from "@/shared/model/metrics";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
+import { taskImportance, taskImportanceDimensions } from "@/shared/model/task-importance";
+import { normalizeTaskFactors } from "@/shared/model/task-factors";
 import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
-import {
-  dailyTaskStatusAt,
-  isOverdue,
-} from "@/shared/model/task-status";
+import { dailyTaskStatusAt, isOverdue } from "@/shared/model/task-status";
 import { useStore } from "@/shared/view-models/store-context";
-import { taskCoordinates } from "../model/task-quadrant";
-
-export type DailyTaskInput = Pick<
-  DailyTask,
-  | "title"
-  | "description"
-  | "dueAt"
-  | "estimatedMinutes"
-  | "expectedOutput"
-  | "importance"
-> &
-  Pick<TaskRecord, "milestone" | "recurrence">;
-
+import { taskCoordinatesFromFormula } from "../model/task-coordinate-formula";
+export type { DailyTaskInput } from "../model/daily-task-input";
+import type { DailyTaskInput } from "../model/daily-task-input";
 export function useDailyTaskCache() {
   const { state, mutate, softDelete } = useStore();
   const [date, setDate] = useState(today());
@@ -73,13 +61,14 @@ export function useDailyTaskCache() {
           estimatedMinutes: source.estimatedMinutes,
           expectedOutput: source.expectedOutput,
           importance: source.importance,
+          ...taskImportanceDimensions(source),
+          ...normalizeTaskFactors(source),
           projectId: source.projectId,
         };
       })
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-    return { projects, tasks, dailyTasks, metrics: calculateMetrics(state) };
+    return { projects, tasks, dailyTasks, profile: state.profile, metrics: calculateMetrics(state) };
   }, [date, state]);
-
   const add = (
     input: DailyTaskInput & Pick<DailyTask, "sourceTaskId" | "projectId">,
   ) => {
@@ -99,7 +88,9 @@ export function useDailyTaskCache() {
       estimatedMinutes: input.estimatedMinutes,
       actualMinutes: 0,
       expectedOutput: input.expectedOutput,
-      importance: input.importance,
+      importance: taskImportance(input),
+      ...taskImportanceDimensions(input),
+      ...normalizeTaskFactors(input),
       sourceTaskId: input.sourceTaskId,
       projectId: input.projectId,
       createdAt: stamp,
@@ -126,6 +117,8 @@ export function useDailyTaskCache() {
         task.importance ??
         view?.projects.find((item) => item.id === task.projectId)?.score ??
         50,
+      ...taskImportanceDimensions(task),
+      ...normalizeTaskFactors(task),
       sourceTaskId: task.id,
       projectId: task.projectId,
       milestone: task.milestone,
@@ -140,13 +133,15 @@ export function useDailyTaskCache() {
       title: input.title.trim(),
       description: input.description,
       dueDate: input.dueAt,
-      priority: priorityFromImportance(input.importance),
+      priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
       estimatedMinutes: input.estimatedMinutes,
       actualMinutes: 0,
       milestone: input.milestone,
       expectedOutput: input.expectedOutput,
-      importance: input.importance,
+      importance: taskImportance(input),
+      ...taskImportanceDimensions(input),
+      ...normalizeTaskFactors(input),
       recurrence: input.recurrence,
       createdAt: stamp,
       updatedAt: stamp,
@@ -162,6 +157,8 @@ export function useDailyTaskCache() {
       actualMinutes: 0,
       expectedOutput: source.expectedOutput,
       importance: source.importance,
+      ...taskImportanceDimensions(source),
+      ...normalizeTaskFactors(source),
       sourceTaskId: source.id,
       createdAt: stamp,
       updatedAt: stamp,
@@ -228,8 +225,10 @@ export function useDailyTaskCache() {
                   dueDate: input.dueAt,
                   estimatedMinutes: input.estimatedMinutes,
                   expectedOutput: input.expectedOutput,
-                  importance: input.importance,
-                  priority: priorityFromImportance(input.importance),
+                  importance: taskImportance(input),
+                  ...taskImportanceDimensions(input),
+                  ...normalizeTaskFactors(input),
+                  priority: priorityFromImportance(taskImportance(input)),
                   milestone: input.milestone,
                   recurrence: input.recurrence,
                   updatedAt: stamp,
@@ -246,7 +245,9 @@ export function useDailyTaskCache() {
               dueAt: input.dueAt,
               estimatedMinutes: input.estimatedMinutes,
               expectedOutput: input.expectedOutput,
-              importance: input.importance,
+              importance: taskImportance(input),
+              ...taskImportanceDimensions(input),
+              ...normalizeTaskFactors(input),
               updatedAt: stamp,
             }
           : task,
@@ -264,11 +265,12 @@ export function useDailyTaskCache() {
       estimatedMinutes: item.estimatedMinutes,
       expectedOutput: item.expectedOutput,
       importance: item.importance,
+      ...taskImportanceDimensions(item),
+      ...normalizeTaskFactors(source ?? item),
       milestone: source?.milestone ?? false,
       recurrence: source?.recurrence ?? null,
     };
   };
-
   if (!view) return null;
   return {
     ...view,
@@ -292,7 +294,6 @@ export function useDailyTaskCache() {
     deleteTask: (id: string) => softDelete("dailyTasks", id),
     projectName: (id?: string) =>
       view.projects.find((item) => item.id === id)?.name ?? "",
-    coordinates: (item: DailyTask) =>
-      taskCoordinates(item.dueAt, item.estimatedMinutes, item.importance),
+    coordinates: (item: DailyTask) => taskCoordinatesFromFormula(item, state?.profile.matrixFormulas, Date.now(), view.dailyTasks),
   };
 }

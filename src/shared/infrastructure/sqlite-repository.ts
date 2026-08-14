@@ -8,10 +8,9 @@ import { createSeedState } from "./seed";
 import { seedPointLists } from "./seed-project-lists";
 import { emptyReadingReview } from "@/modules/find/model/reading-record";
 import { normalizeBackgroundAudio } from "@/shared/model/background-audio";
-import {
-  normalizeTasks,
-  withoutLegacyRoutineTasks,
-} from "@/shared/model/task-normalization";
+import { normalizeTaskImportance } from "@/shared/model/task-importance";
+import { normalizeTaskFactors } from "@/shared/model/task-factors";
+import { normalizeTasks, withoutLegacyRoutineTasks } from "@/shared/model/task-normalization";
 const systemLists = [
   {
     id: "library_default",
@@ -96,7 +95,6 @@ function readSnapshot(database: Database.Database): AppState | null {
     throw new Error("Stored data uses an unsupported schema.");
   return normalizeState(parsed);
 }
-
 function normalizeState(state: AppState): AppState {
   const stamp = state.updatedAt || new Date().toISOString();
   const systemPointLists = seedPointLists(stamp);
@@ -122,6 +120,7 @@ function normalizeState(state: AppState): AppState {
       ...(state.profile?.countdownTaskSlots ? {
         countdownTaskSlots: state.profile.countdownTaskSlots.slice(0, 3),
       } : {}),
+      matrixFormulas: state.profile?.matrixFormulas,
     },
     aiJobs: state.aiJobs ?? [],
     messages: state.messages ?? [],
@@ -211,7 +210,8 @@ function normalizeState(state: AppState): AppState {
       estimatedMinutes: item.estimatedMinutes ?? 30,
       actualMinutes: item.actualMinutes ?? 0,
       expectedOutput: item.expectedOutput ?? "",
-      importance: item.importance ?? 50,
+      ...normalizeTaskImportance(item, item.importance ?? 50),
+      ...normalizeTaskFactors(item),
     })),
     tasks: normalizeTasks(state),
     logs: Array.from(
