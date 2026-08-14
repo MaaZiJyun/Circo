@@ -135,9 +135,30 @@ function MarkdownTable({ rows }: { rows: string[][] }) {
 
 function inlineMarkdown(value: string): ReactNode[] {
   const parts = value.split(
-    /(\$[^$\n]+\$|\\\([^\n]*?\\\)|\*\*[^*\n]+\*\*|\*[^*\n]+\*|`[^`\n]+`)/g,
+    /(\{\{(?:highlight|underline):#[0-9A-Fa-f]{6}\|[^{}\n]*\}\}|\$[^$\n]+\$|\\\([^\n]*?\\\)|\*\*[^*\n]+\*\*|\*[^*\n]+\*|`[^`\n]+`)/g,
   );
   return parts.map((part, index) => {
+    const decoration = part.match(
+      /^\{\{(highlight|underline):(#[0-9A-Fa-f]{6})\|([^{}\n]*)\}\}$/,
+    );
+    if (decoration)
+      return decoration[1] === "highlight" ? (
+        <mark
+          key={index}
+          className="rounded px-0.5 text-inherit"
+          style={{ backgroundColor: decoration[2] }}
+        >
+          {inlineMarkdown(decoration[3])}
+        </mark>
+      ) : (
+        <span
+          key={index}
+          className="underline decoration-2 underline-offset-2"
+          style={{ textDecorationColor: decoration[2] }}
+        >
+          {inlineMarkdown(decoration[3])}
+        </span>
+      );
     const dollar = part.match(/^\$([^$\n]+)\$$/);
     const parenthesized = part.match(/^\\\(([^\n]*?)\\\)$/);
     const expression = dollar?.[1] ?? parenthesized?.[1];

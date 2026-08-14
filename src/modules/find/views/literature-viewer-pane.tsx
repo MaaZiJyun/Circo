@@ -10,6 +10,7 @@ import {
 } from "./interactive-pdf-viewer";
 import { MarkdownPreview } from "./markdown-preview";
 import { MarkdownCardPicker } from "./markdown-card-picker";
+import { MarkdownEditorToolbar } from "./markdown-editor-toolbar";
 import { ReaderSwitch } from "./reader-switch";
 
 export function LiteratureViewerPane({
@@ -76,6 +77,18 @@ export function LiteratureViewerPane({
           />
         </div>
       </header>
+      {kind === "md" && mode === "edit" && (
+        <div className="border-b border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+          <MarkdownEditorToolbar
+            value={content}
+            getSelection={() => selectionRef.current}
+            onChange={(value, selection) => {
+              selectionRef.current = selection;
+              onContentChange(value);
+            }}
+          />
+        </div>
+      )}
       <div className="min-h-0 flex-1">
         {kind === "pdf" && hasPdf ? (
           <InteractivePdfViewer

@@ -6,7 +6,7 @@ import { dashboardCountdownEn } from "./dashboard-countdown-labels";
 import { dashboardFocusEn } from "./dashboard-focus-labels";
 import { messageEn } from "./message-labels";
 import { settingsMediaEn } from "./settings-media-labels";
-import { planningEn } from "./planning-labels";
+import { planningEn } from "./planning-labels"; import { markdownEditorEn } from "./markdown-editor-labels";
 export const en: Record<import("./zh").MessageKey, string> = {
   "app.name": "Circo",
   "app.tagline": "Give every effort an origin and a destination",
@@ -18,7 +18,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "nav.land": "Land",
   "nav.settings": "Settings",
   ...messageEn,
-  ...planningEn,
+  ...planningEn, ...markdownEditorEn,
   "common.add": "New",
   "common.save": "Save",
   "common.cancel": "Cancel",

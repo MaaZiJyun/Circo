@@ -12,6 +12,16 @@ describe("MarkdownPreview", () => {
     expect(html).toContain("<strong>strong text</strong>");
   });
 
+  it("renders Circo colored highlight and underline extensions", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownPreview content="{{highlight:#FFE066|marked}} and {{underline:#4F46E5|underlined}}" />,
+    );
+    expect(html).toContain("background-color:#FFE066");
+    expect(html).toContain("text-decoration-color:#4F46E5");
+    expect(html).toContain("marked");
+    expect(html).toContain("underlined");
+  });
+
   it("renders pipe tables as a single semantic table", () => {
     const html = renderToStaticMarkup(
       <MarkdownPreview

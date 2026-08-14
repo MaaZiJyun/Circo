@@ -4,11 +4,13 @@ import { useRef, useState } from "react";
 import { CheckIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { MarkdownPreview } from "@/modules/find/views/markdown-preview";
 import { MarkdownCardPicker } from "@/modules/find/views/markdown-card-picker";
+import { MarkdownEditorToolbar } from "@/modules/find/views/markdown-editor-toolbar";
 import { Button, Field, Select, Textarea } from "@/shared/components/ui";
 import { typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { createId } from "@/shared/model/factories";
 import type { LogInput } from "../view-models/use-hand-view-model";
+import { ProjectLogSplitPanes } from "./project-log-split-panes";
 
 export function ProjectLogEditor({
   open,
@@ -143,60 +145,79 @@ export function ProjectLogEditor({
             {t(error ? "hand.logSaveFailed" : "hand.imageUploadFailed")}
           </p>
         )}
-        <div className="grid min-h-0 flex-1 md:grid-cols-2">
-          <section className="min-h-[520px] min-w-0 overflow-y-auto border-b border-zinc-200 md:border-b-0 md:border-r dark:border-zinc-800">
-            <h3 className="border-b border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800">
-              {t("hand.markdownPreview")}
-            </h3>
-            <div className="p-6">
-              <MarkdownPreview content={input.content} />
-            </div>
-          </section>
-          <section className="flex min-h-[520px] min-w-0 flex-col">
-            <LogMetadata input={input} onChange={setInput} />
-            <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                {t("hand.markdownSource")}
+        <ProjectLogSplitPanes
+          label={t("hand.resizeEditorPanes")}
+          preview={
+            <section className="h-full min-h-[520px] min-w-0 overflow-y-auto border-b border-zinc-200 md:border-b-0 dark:border-zinc-800">
+              <h3 className="border-b border-zinc-200 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800">
+                {t("hand.markdownPreview")}
               </h3>
-              <div className="flex items-center gap-2">
-                <MarkdownCardPicker onInsert={insertCard} />
-                <Button
-                  variant="ghost"
-                  className="min-h-8 px-2 text-xs"
-                  disabled={uploadingImage}
-                  onClick={() => fileRef.current?.click()}
-                >
-                  <PhotoIcon className="size-4" />
-                  {t(
-                    uploadingImage ? "hand.uploadingImage" : "hand.insertImage",
-                  )}
-                </Button>
+              <div className="p-6">
+                <MarkdownPreview content={input.content} />
               </div>
-              <input
-                ref={fileRef}
-                hidden
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
-                onChange={(event) => void uploadImage(event.target.files?.[0])}
+            </section>
+          }
+          editor={
+            <section className="flex h-full min-h-[520px] min-w-0 flex-col">
+              <LogMetadata input={input} onChange={setInput} />
+              <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+                  {t("hand.markdownSource")}
+                </h3>
+                <div className="flex items-center gap-2">
+                  <MarkdownCardPicker onInsert={insertCard} />
+                  <Button
+                    variant="ghost"
+                    className="min-h-8 px-2 text-xs"
+                    disabled={uploadingImage}
+                    onClick={() => fileRef.current?.click()}
+                  >
+                    <PhotoIcon className="size-4" />
+                    {t(
+                      uploadingImage
+                        ? "hand.uploadingImage"
+                        : "hand.insertImage",
+                    )}
+                  </Button>
+                </div>
+                <input
+                  ref={fileRef}
+                  hidden
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={(event) =>
+                    void uploadImage(event.target.files?.[0])
+                  }
+                />
+              </div>
+              <div className="border-b border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+                <MarkdownEditorToolbar
+                  value={input.content}
+                  getSelection={() => selectionRef.current}
+                  onChange={(content, selection) => {
+                    selectionRef.current = selection;
+                    setInput({ ...input, content });
+                  }}
+                />
+              </div>
+              <Textarea
+                autoFocus
+                spellCheck
+                value={input.content}
+                onChange={(event) =>
+                  setInput({ ...input, content: event.target.value })
+                }
+                onSelect={(event) => {
+                  selectionRef.current = {
+                    start: event.currentTarget.selectionStart,
+                    end: event.currentTarget.selectionEnd,
+                  };
+                }}
+                className="min-h-0 flex-1 resize-none rounded-none border-0 font-mono leading-7"
               />
-            </div>
-            <Textarea
-              autoFocus
-              spellCheck
-              value={input.content}
-              onChange={(event) =>
-                setInput({ ...input, content: event.target.value })
-              }
-              onSelect={(event) => {
-                selectionRef.current = {
-                  start: event.currentTarget.selectionStart,
-                  end: event.currentTarget.selectionEnd,
-                };
-              }}
-              className="min-h-0 flex-1 resize-none rounded-none border-0 font-mono leading-7"
-            />
-          </section>
-        </div>
+            </section>
+          }
+        />
       </section>
     </div>
   );

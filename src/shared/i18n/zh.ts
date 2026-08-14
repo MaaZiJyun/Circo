@@ -7,6 +7,7 @@ import { dashboardFocusZh } from "./dashboard-focus-labels";
 import { messageZh } from "./message-labels";
 import { settingsMediaZh } from "./settings-media-labels";
 import { planningZh } from "./planning-labels";
+import { markdownEditorZh } from "./markdown-editor-labels";
 
 export const zh = {
   "app.name": "Circo",
@@ -20,6 +21,7 @@ export const zh = {
   "nav.settings": "设置",
   ...messageZh,
   ...planningZh,
+  ...markdownEditorZh,
   "common.add": "新建",
   "common.save": "保存",
   "common.cancel": "取消",

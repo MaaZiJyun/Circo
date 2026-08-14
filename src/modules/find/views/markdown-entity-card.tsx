@@ -126,21 +126,28 @@ export function MarkdownEntityCard({
   const { state } = useStore();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
-  const [noteContent, setNoteContent] = useState<string | null>(null);
+  const [noteValue, setNoteValue] = useState<{
+    id: string;
+    content: string;
+  } | null>(null);
   useEffect(() => {
     if (reference.kind !== "note") return;
     let active = true;
-    setNoteContent(null);
     void fetch(`/api/notes/${encodeURIComponent(reference.id)}`)
       .then(async (response) => {
         const payload = (await response.json()) as { content?: string };
-        if (active) setNoteContent(response.ok ? (payload.content ?? "") : "");
+        if (active)
+          setNoteValue({
+            id: reference.id,
+            content: response.ok ? (payload.content ?? "") : "",
+          });
       })
-      .catch(() => active && setNoteContent(""));
+      .catch(() => active && setNoteValue({ id: reference.id, content: "" }));
     return () => {
       active = false;
     };
   }, [reference.id, reference.kind]);
+  const noteContent = noteValue?.id === reference.id ? noteValue.content : null;
   const item = state ? resolveCard(state, reference, noteContent) : null;
   return (
     <>

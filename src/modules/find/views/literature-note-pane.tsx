@@ -13,6 +13,7 @@ import { Button, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { MarkdownPreview } from "./markdown-preview";
 import { MarkdownCardPicker } from "./markdown-card-picker";
+import { MarkdownEditorToolbar } from "./markdown-editor-toolbar";
 import { ReaderSwitch } from "./reader-switch";
 
 export interface LiteratureNoteHandle {
@@ -149,6 +150,19 @@ export const LiteratureNotePane = forwardRef<
           />
         </div>
       </header>
+      {mode === "edit" && (
+        <div className="border-b border-zinc-200 px-3 py-1.5 dark:border-zinc-800">
+          <MarkdownEditorToolbar
+            value={content}
+            getSelection={() => selectionRef.current}
+            onChange={(value, selection) => {
+              setContent(value);
+              selectionRef.current = selection;
+              setDirty(true);
+            }}
+          />
+        </div>
+      )}
       {error && <p className="px-4 py-2 text-xs text-red-600">{error}</p>}
       {mode === "edit" ? (
         <Textarea
