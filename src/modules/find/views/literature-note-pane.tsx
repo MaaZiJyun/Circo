@@ -12,6 +12,7 @@ import { PhotoIcon } from "@heroicons/react/24/outline";
 import { Button, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { MarkdownPreview } from "./markdown-preview";
+import { MarkdownCardPicker } from "./markdown-card-picker";
 import { ReaderSwitch } from "./reader-switch";
 
 export interface LiteratureNoteHandle {
@@ -104,6 +105,14 @@ export const LiteratureNotePane = forwardRef<
       if (fileRef.current) fileRef.current.value = "";
     }
   };
+  const insertCard = (token: string) => {
+    const { start, end } = selectionRef.current;
+    setContent(
+      (current) =>
+        `${current.slice(0, start)}${start ? "\n" : ""}${token}\n${current.slice(end)}`,
+    );
+    setDirty(true);
+  };
   return (
     <section className="flex h-[calc(100dvh-12rem)] max-h-dvh min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <header className="flex items-center justify-between gap-2 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
@@ -118,15 +127,18 @@ export const LiteratureNotePane = forwardRef<
             ]}
           />
           {mode === "edit" && (
-            <Button
-              variant="ghost"
-              className="min-h-8 px-2 text-xs"
-              disabled={busy}
-              onClick={() => fileRef.current?.click()}
-            >
-              <PhotoIcon className="size-4" />
-              {t("find.insertImage")}
-            </Button>
+            <>
+              <MarkdownCardPicker onInsert={insertCard} />
+              <Button
+                variant="ghost"
+                className="min-h-8 px-2 text-xs"
+                disabled={busy}
+                onClick={() => fileRef.current?.click()}
+              >
+                <PhotoIcon className="size-4" />
+                {t("find.insertImage")}
+              </Button>
+            </>
           )}
           <input
             ref={fileRef}

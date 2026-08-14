@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { CheckIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { MarkdownPreview } from "@/modules/find/views/markdown-preview";
+import { MarkdownCardPicker } from "@/modules/find/views/markdown-card-picker";
 import { Button, Field, Select, Textarea } from "@/shared/components/ui";
 import { typeLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
@@ -44,10 +45,7 @@ export function ProjectLogEditor({
   const submittingRef = useRef(false);
   if (!open) return null;
   const submit = async () => {
-    if (
-      submittingRef.current ||
-      !input.content.replace(/^#+\s*/gm, "").trim()
-    )
+    if (submittingRef.current || !input.content.replace(/^#+\s*/gm, "").trim())
       return;
     submittingRef.current = true;
     setSaving(true);
@@ -108,6 +106,13 @@ export function ProjectLogEditor({
       };
     });
   };
+  const insertCard = (token: string) => {
+    const { start, end } = selectionRef.current;
+    setInput((current) => ({
+      ...current,
+      content: `${current.content.slice(0, start)}${start ? "\n" : ""}${token}\n${current.content.slice(end)}`,
+    }));
+  };
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4">
       <section
@@ -118,7 +123,9 @@ export function ProjectLogEditor({
       >
         <header className="flex items-center justify-between gap-4 border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
           <div>
-            <h2 className="text-lg font-semibold">{t("hand.markdownEditor")}</h2>
+            <h2 className="text-lg font-semibold">
+              {t("hand.markdownEditor")}
+            </h2>
             <p className="text-xs text-zinc-500">{t("hand.markdownHint")}</p>
           </div>
           <div className="flex items-center gap-2">
@@ -151,19 +158,20 @@ export function ProjectLogEditor({
               <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 {t("hand.markdownSource")}
               </h3>
-              <Button
-                variant="ghost"
-                className="min-h-8 px-2 text-xs"
-                disabled={uploadingImage}
-                onClick={() => fileRef.current?.click()}
-              >
-                <PhotoIcon className="size-4" />
-                {t(
-                  uploadingImage
-                    ? "hand.uploadingImage"
-                    : "hand.insertImage",
-                )}
-              </Button>
+              <div className="flex items-center gap-2">
+                <MarkdownCardPicker onInsert={insertCard} />
+                <Button
+                  variant="ghost"
+                  className="min-h-8 px-2 text-xs"
+                  disabled={uploadingImage}
+                  onClick={() => fileRef.current?.click()}
+                >
+                  <PhotoIcon className="size-4" />
+                  {t(
+                    uploadingImage ? "hand.uploadingImage" : "hand.insertImage",
+                  )}
+                </Button>
+              </div>
               <input
                 ref={fileRef}
                 hidden

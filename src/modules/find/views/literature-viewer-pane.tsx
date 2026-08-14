@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { LiteratureReaderProps } from "./literature-reader-types";
@@ -8,6 +9,7 @@ import {
   type PointCapture,
 } from "./interactive-pdf-viewer";
 import { MarkdownPreview } from "./markdown-preview";
+import { MarkdownCardPicker } from "./markdown-card-picker";
 import { ReaderSwitch } from "./reader-switch";
 
 export function LiteratureViewerPane({
@@ -36,6 +38,7 @@ export function LiteratureViewerPane({
   onCapture: (capture: PointCapture) => void;
 }) {
   const { t } = useI18n();
+  const selectionRef = useRef({ start: 0, end: 0 });
   const hasPdf = Boolean(source.fileToken && source.fileType === "pdf");
   return (
     <section className="flex h-[calc(100dvh-12rem)] max-h-dvh min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -50,6 +53,16 @@ export function LiteratureViewerPane({
               { value: "md", label: "MD" },
             ]}
           />
+          {kind === "md" && mode === "edit" && (
+            <MarkdownCardPicker
+              onInsert={(token) => {
+                const { start, end } = selectionRef.current;
+                onContentChange(
+                  `${content.slice(0, start)}${start ? "\n" : ""}${token}\n${content.slice(end)}`,
+                );
+              }}
+            />
+          )}
           <ReaderSwitch
             value={mode}
             onChange={(next) => {
@@ -80,6 +93,12 @@ export function LiteratureViewerPane({
             spellCheck
             value={content}
             onChange={(event) => onContentChange(event.target.value)}
+            onSelect={(event) => {
+              selectionRef.current = {
+                start: event.currentTarget.selectionStart,
+                end: event.currentTarget.selectionEnd,
+              };
+            }}
             className="h-full min-h-0 resize-none rounded-none border-0 font-mono leading-7"
           />
         ) : (

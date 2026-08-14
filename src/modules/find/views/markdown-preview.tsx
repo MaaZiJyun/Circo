@@ -1,11 +1,17 @@
 import type { ReactNode } from "react";
 import katex from "katex";
+import {
+  parseMarkdownCard,
+  type MarkdownCardReference,
+} from "../model/markdown-card";
+import { MarkdownEntityCard } from "./markdown-entity-card";
 
 type MarkdownBlock =
   | { kind: "line"; value: string; key: number }
   | { kind: "math"; value: string; key: number }
   | { kind: "code"; value: string; language: string; key: number }
-  | { kind: "table"; rows: string[][]; key: number };
+  | { kind: "table"; rows: string[][]; key: number }
+  | { kind: "card"; reference: MarkdownCardReference; key: number };
 
 export function MarkdownPreview({ content }: { content: string }) {
   return (
@@ -18,8 +24,9 @@ export function MarkdownPreview({ content }: { content: string }) {
 }
 
 function MarkdownBlockView({ block }: { block: MarkdownBlock }) {
-  if (block.kind === "math")
-    return <MathFormula value={block.value} display />;
+  if (block.kind === "card")
+    return <MarkdownEntityCard reference={block.reference} />;
+  if (block.kind === "math") return <MathFormula value={block.value} display />;
   if (block.kind === "code")
     return (
       <div className="overflow-hidden rounded-xl border border-zinc-200 bg-zinc-950 text-zinc-100 dark:border-zinc-800">
@@ -180,6 +187,11 @@ function markdownBlocks(content: string): MarkdownBlock[] {
   const blocks: MarkdownBlock[] = [];
   for (let index = 0; index < lines.length; index += 1) {
     const trimmed = lines[index].trim();
+    const card = parseMarkdownCard(trimmed);
+    if (card) {
+      blocks.push({ kind: "card", reference: card, key: index });
+      continue;
+    }
     const fence = trimmed.match(/^```\s*([^`]*)$/);
     if (fence) {
       const start = index;
