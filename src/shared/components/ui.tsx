@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -183,17 +183,47 @@ export function Tabs<T extends string>({
   onChange: (value: T) => void;
   items: { value: T; label: string }[];
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  useLayoutEffect(() => {
+    const updateIndicator = () => {
+      const container = containerRef.current;
+      const button = buttonRefs.current[value];
+      if (!container || !button) return;
+      setIndicator({ left: button.offsetLeft, width: button.offsetWidth });
+    };
+    updateIndicator();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(updateIndicator);
+    if (observer && containerRef.current) observer.observe(containerRef.current);
+    return () => observer?.disconnect();
+  }, [items, value]);
   return (
     <div
-      className="flex gap-1 rounded-full bg-zinc-100 p-1 dark:bg-zinc-900"
+      ref={containerRef}
+      className="relative inline-flex rounded-full bg-zinc-100 p-1 dark:bg-zinc-900"
       role="tablist"
     >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-1 rounded-full bg-white shadow-sm transition-[width,transform] duration-300 ease-out dark:bg-zinc-800"
+        style={{
+          width: indicator.width,
+          transform: `translateX(${indicator.left - 4}px)`,
+        }}
+      />
       {items.map((item) => (
         <button
           key={item.value}
+          ref={(button) => {
+            buttonRefs.current[item.value] = button;
+          }}
           role="tab"
           aria-selected={value === item.value}
-          className={`min-h-9 flex-1 rounded-full px-3 text-sm font-medium ${focusRing} ${value === item.value ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50" : "text-zinc-500"}`}
+          className={`relative z-10 min-h-9 rounded-full px-3 text-sm font-medium transition-colors duration-200 ${focusRing} ${value === item.value ? "text-zinc-950 dark:text-zinc-50" : "text-zinc-500"}`}
           onClick={() => onChange(item.value)}
         >
           {item.label}

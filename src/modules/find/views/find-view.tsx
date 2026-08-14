@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import { Tabs } from "@/shared/components/ui";
 import type {
   LibraryList,
   PointList,
@@ -21,7 +22,7 @@ import {
 import { LibrarySidebar } from "./library-sidebar";
 import { LibraryWorkspace } from "./library-workspace";
 import { ActiveLiteratureReader } from "./active-literature-reader";
-import { FindModeSwitch, type FindMode } from "./find-mode-switch";
+import type { FindMode } from "./find-mode-switch";
 import { ReferenceWorkspace } from "./reference-workspace";
 import { ReferencePointDialog } from "./reference-point-dialog";
 import {
@@ -90,7 +91,14 @@ export function FindView() {
     <div className="space-y-6">
       <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
         <div className="space-y-3">
-          <FindModeSwitch mode={mode} onChange={setMode} />
+          <Tabs
+            value={mode}
+            onChange={setMode}
+            items={[
+              { value: "library", label: t("find.library") },
+              { value: "reference", label: t("find.reference") },
+            ]}
+          />
           {mode === "library" ? (
             <LibrarySidebar
               library={library}
