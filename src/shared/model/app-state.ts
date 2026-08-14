@@ -63,6 +63,7 @@ export interface UserProfile {
   backgroundAudioName?: string;
   backgroundMusicEnabled?: boolean;
   backgroundAudioTracks?: BackgroundAudioTrack[];
+  countdownTaskSlots?: Array<string | null>;
 }
 
 export interface BackgroundAudioTrack {
@@ -114,6 +115,12 @@ function isProfile(value: unknown) {
             ) &&
             typeof track.name === "string" &&
             track.name.length <= 200,
+        ))) &&
+    (profile.countdownTaskSlots === undefined ||
+      (Array.isArray(profile.countdownTaskSlots) &&
+        profile.countdownTaskSlots.length <= 3 &&
+        profile.countdownTaskSlots.every(
+          (taskId) => taskId === null || typeof taskId === "string",
         ))) &&
     (profile.birthDate === undefined ||
       /^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate))

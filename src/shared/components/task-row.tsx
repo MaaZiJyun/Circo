@@ -18,8 +18,10 @@ export function TaskRow({
   source,
   milestone,
   deadlineInline = false,
+  draggable = false,
   onToggle,
   onContextMenu,
+  onDragStart,
   action,
 }: {
   title: string;
@@ -33,14 +35,21 @@ export function TaskRow({
   source?: string;
   milestone?: boolean;
   deadlineInline?: boolean;
+  draggable?: boolean;
   onToggle: () => void;
   onContextMenu?: React.MouseEventHandler<HTMLDivElement>;
+  onDragStart?: React.DragEventHandler<HTMLDivElement>;
   action?: React.ReactNode;
 }) {
   const { t, formatDate, locale } = useI18n();
   const completed = status === "done";
   return (
-    <div className="flex items-start gap-3 py-3" onContextMenu={onContextMenu}>
+    <div
+      draggable={draggable}
+      className={`flex items-start gap-3 py-3 ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+      onContextMenu={onContextMenu}
+      onDragStart={onDragStart}
+    >
       <button
         className="mt-0.5 shrink-0 rounded-full"
         aria-label={t(statusLabels[status])}

@@ -7,7 +7,10 @@ import { createId, now, today } from "@/shared/model/factories";
 import { calculateMetrics } from "@/shared/model/metrics";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
-import { isOverdue } from "@/shared/model/task-status";
+import {
+  dailyTaskStatusAt,
+  isOverdue,
+} from "@/shared/model/task-status";
 import { useStore } from "@/shared/view-models/store-context";
 import { taskCoordinates } from "../model/task-quadrant";
 
@@ -277,6 +280,15 @@ export function useDailyTaskCache() {
     toggle: (item: DailyTask) => setCompleted(item, !item.completed),
     updateTask,
     inputFor,
+    statusFor: (item: DailyTask): TaskRecord["status"] => {
+      const deadlineStatus = dailyTaskStatusAt(item);
+      if (deadlineStatus !== "todo") return deadlineStatus;
+      return item.sourceTaskId &&
+        view.tasks.find((task) => task.id === item.sourceTaskId)?.status ===
+          "doing"
+        ? "doing"
+        : "todo";
+    },
     deleteTask: (id: string) => softDelete("dailyTasks", id),
     projectName: (id?: string) =>
       view.projects.find((item) => item.id === id)?.name ?? "",

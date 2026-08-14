@@ -24,7 +24,6 @@ import {
 } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { DailyTask } from "@/shared/model/entities";
-import { dailyTaskStatusAt } from "@/shared/model/task-status";
 import { useDailyTaskCache } from "../view-models/use-daily-task-cache";
 import {
   CreateDailyTaskDialog,
@@ -83,13 +82,22 @@ export function DailyTaskList() {
               key={item.id}
               title={item.title}
               description={item.description}
-              status={dailyTaskStatusAt(item)}
+              status={vm.statusFor(item)}
               dueAt={item.dueAt}
               completedAt={item.completedAt}
               estimatedMinutes={item.estimatedMinutes}
               actualMinutes={item.actualMinutes ?? 0}
               expectedOutput={item.expectedOutput}
               deadlineInline
+              draggable={!item.completed}
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData(
+                  "application/x-circo-daily-task",
+                  item.id,
+                );
+                event.dataTransfer.setData("text/plain", item.id);
+              }}
               source={
                 item.sourceTaskId && item.projectId
                   ? `${t("me.fromProject")}: ${vm.projectName(item.projectId)}`

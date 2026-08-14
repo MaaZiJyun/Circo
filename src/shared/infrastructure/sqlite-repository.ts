@@ -12,7 +12,6 @@ import {
   normalizeTasks,
   withoutLegacyRoutineTasks,
 } from "@/shared/model/task-normalization";
-
 const systemLists = [
   {
     id: "library_default",
@@ -87,7 +86,6 @@ function openDatabase(databasePath: string) {
   `);
   return database;
 }
-
 function readSnapshot(database: Database.Database): AppState | null {
   const row = database
     .prepare("SELECT payload FROM app_snapshots WHERE id = 1")
@@ -121,6 +119,9 @@ function normalizeState(state: AppState): AppState {
         ? { birthDate: state.profile.birthDate }
         : {}),
       ...normalizeBackgroundAudio(state.profile),
+      ...(state.profile?.countdownTaskSlots ? {
+        countdownTaskSlots: state.profile.countdownTaskSlots.slice(0, 3),
+      } : {}),
     },
     aiJobs: state.aiJobs ?? [],
     messages: state.messages ?? [],

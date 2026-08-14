@@ -6,6 +6,7 @@ import { Tabs } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
 import { useStore } from "@/shared/view-models/store-context";
+import { CountdownTaskSlots } from "./countdown-task-slots";
 
 type Scale = "life" | "year" | "month" | "day" | "hour";
 const scales: Scale[] = ["life", "year", "month", "day", "hour"];
@@ -175,6 +176,7 @@ export function PeriodCountdown() {
           </div>
         </div>
       </div>
+      <CountdownTaskSlots />
     </>
   );
 }
