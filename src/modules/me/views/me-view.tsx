@@ -15,27 +15,6 @@ export function MeView() {
       : formatNumber(value, { style: "percent", maximumFractionDigits: 0 });
   return (
     <div className="space-y-8">
-      <PageHeader
-        eyebrow={t("me.eyebrow")}
-        title={t("me.profileTitle")}
-        subtitle={t("me.profileSubtitle")}
-      />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard
-          label={t("dashboard.totalTime")}
-          value={`${formatNumber(vm.metrics.totalMinutes / 60, { maximumFractionDigits: 1 })} ${t("common.hours")}`}
-        />
-        <StatCard
-          label={t("dashboard.effectiveRate")}
-          value={rate(vm.metrics.effectiveRate)}
-          hint={t("dashboard.metricEffective")}
-        />
-        <StatCard
-          label={t("dashboard.completionRate")}
-          value={rate(vm.metrics.completionRate)}
-          hint={t("dashboard.metricCompletion")}
-        />
-      </div>
       <DailyTaskHistory />
     </div>
   );
