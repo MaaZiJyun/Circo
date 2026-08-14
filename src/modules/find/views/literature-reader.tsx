@@ -4,23 +4,20 @@ import {
   ArrowLeftIcon,
   CheckIcon,
   ChevronDownIcon,
-  ArrowPathIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
-import { Button, Textarea } from "@/shared/components/ui";
+import { Button } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { completeReading } from "../model/reading-record";
 import { LiteratureDetailsPanel } from "./literature-details-panel";
-import { MarkdownPreview } from "./markdown-preview";
 import { ReadingReviewDialog } from "./reading-review-dialog";
-import {
-  InteractivePdfViewer,
-  type PointCapture,
-} from "./interactive-pdf-viewer";
+import type { PointCapture } from "./interactive-pdf-viewer";
 import { PointDialog } from "./point-dialog";
 import { CitationButton } from "./citation-button";
 import { clampReaderRatio, readerRatioKey } from "./reader-layout";
 import type { LiteratureReaderProps } from "./literature-reader-types";
+import { LiteratureViewerPane } from "./literature-viewer-pane";
+import { LiteratureNotePane } from "./literature-note-pane";
 
 export function LiteratureReader({
   source,
@@ -35,7 +32,10 @@ export function LiteratureReader({
   onDeletePoint,
 }: LiteratureReaderProps) {
   const { t } = useI18n();
-  const [mode, setMode] = useState<"read" | "edit">("read");
+  const [viewerKind, setViewerKind] = useState<"pdf" | "md">(
+    source.fileToken && source.fileType === "pdf" ? "pdf" : "md",
+  );
+  const [viewerMode, setViewerMode] = useState<"view" | "edit">("view");
   const [content, setContent] = useState(source.content);
   const [saving, setSaving] = useState(false);
   const [converting, setConverting] = useState(false);
@@ -91,7 +91,8 @@ export function LiteratureReader({
       const converted = await onConvert();
       setContent(converted);
       setDirty(false);
-      setMode("read");
+      setViewerKind("md");
+      setViewerMode("view");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : t("common.error"));
     } finally {
@@ -162,25 +163,30 @@ export function LiteratureReader({
         className={`relative grid gap-4 xl:flex xl:gap-0 ${resizing ? "select-none [&_*]:!select-none" : ""}`}
         style={{ "--pdf-pane": `${pdfRatio * 100}%` } as CSSProperties}
       >
-        <section className="h-[calc(100dvh-12rem)] max-h-dvh overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 xl:w-[var(--pdf-pane)] xl:min-w-0">
-          {source.fileToken && source.fileType === "pdf" ? (
-            <div className="h-full">
-              <InteractivePdfViewer
-                url={`/api/files/${source.fileToken}`}
-                source={source}
-                points={points}
-                pointLists={pointLists}
-                onCapture={setCapture}
-                onUpdatePoint={onUpdatePoint}
-                onDeletePoint={onDeletePoint}
-              />
-            </div>
-          ) : (
-            <p className="grid h-full place-items-center p-8 text-sm text-zinc-500">
-              {t("find.originalUnavailable")}
-            </p>
-          )}
-        </section>
+        <div className="xl:w-[var(--pdf-pane)] xl:min-w-0">
+          <LiteratureViewerPane
+            source={source}
+            content={content}
+            kind={viewerKind}
+            mode={viewerMode}
+            converting={converting}
+            points={points}
+            pointLists={pointLists}
+            onKindChange={(kind) => {
+              setViewerKind(kind);
+              if (kind === "pdf") setViewerMode("view");
+            }}
+            onModeChange={setViewerMode}
+            onContentChange={(value) => {
+              setContent(value);
+              setDirty(true);
+            }}
+            onConvert={() => void convert()}
+            onCapture={setCapture}
+            onUpdatePoint={onUpdatePoint}
+            onDeletePoint={onDeletePoint}
+          />
+        </div>
         <div
           role="separator"
           aria-label={t("find.resizePanes")}
@@ -228,50 +234,9 @@ export function LiteratureReader({
         >
           <span className="h-16 w-1 rounded-full bg-zinc-300 transition-colors group-hover:bg-zinc-500 group-focus:bg-zinc-700 dark:bg-zinc-700 dark:group-hover:bg-zinc-500" />
         </div>
-        <section className="flex h-[calc(100dvh-12rem)] max-h-dvh min-w-0 flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 xl:flex-1">
-          <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
-            <div className="flex rounded-lg bg-zinc-100 p-1 dark:bg-zinc-900">
-              {(["read", "edit"] as const).map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setMode(item)}
-                  className={`rounded-md px-3 py-1 text-xs font-medium ${mode === item ? "bg-white shadow-sm dark:bg-zinc-800" : "text-zinc-500"}`}
-                >
-                  {t(item === "read" ? "find.readMode" : "find.editMode")}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center gap-2">
-              {source.fileToken && source.fileType === "pdf" && (
-                <Button
-                  variant="ghost"
-                  className="min-h-8 px-2 text-xs"
-                  disabled={dirty || saving || converting}
-                  onClick={() => void convert()}
-                >
-                  <ArrowPathIcon
-                    className={`size-4 ${converting ? "animate-spin" : ""}`}
-                  />
-                  {t(converting ? "find.reconverting" : "find.reconvert")}
-                </Button>
-              )}
-            </div>
-          </div>
-          {mode === "edit" ? (
-            <Textarea
-              value={content}
-              onChange={(event) => {
-                setContent(event.target.value);
-                setDirty(true);
-              }}
-              className="min-h-0 flex-1 resize-none rounded-none border-0 font-mono leading-7"
-            />
-          ) : (
-            <div className="min-h-0 flex-1 overflow-y-auto p-6">
-              <MarkdownPreview content={content} />
-            </div>
-          )}
-        </section>
+        <div className="xl:min-w-0 xl:flex-1">
+          <LiteratureNotePane noteId={source.id} />
+        </div>
       </div>
       <ReadingReviewDialog
         open={showReview}

@@ -57,7 +57,7 @@ export function InteractivePdfViewer({
   const [error, setError] = useState("");
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [pendingText, setPendingText] = useState<PointCapture | null>(null);
-  const [textCapture, setTextCapture] = useState<PointCapture | null>(null);
+  const [stagedCapture, setStagedCapture] = useState<PointCapture | null>(null);
   const [screenshotMode, setScreenshotMode] = useState(false);
   const [zoom, setZoom] = useState(1);
   const clipboardWriteRef = useRef<Promise<boolean>>(Promise.resolve(false));
@@ -66,7 +66,7 @@ export function InteractivePdfViewer({
   );
   const [selectionRect, setSelectionRect] = useState<DOMRect | null>(null);
   const stageCapture = (capture: PointCapture) => {
-    setTextCapture(capture);
+    setStagedCapture(capture);
     clipboardWriteRef.current = writePointCaptureToClipboard(capture);
   };
   useEffect(() => {
@@ -214,26 +214,6 @@ export function InteractivePdfViewer({
             />
           ))}
         </div>
-        {textCapture && (
-          <div className="sticky bottom-3 mx-auto mt-3 flex w-fit gap-2 rounded-xl bg-zinc-950 p-2 text-white shadow-xl">
-            <Button
-              onClick={() => {
-                void clipboardWriteRef.current.then(async (clipboardReady) => {
-                  const capture = clipboardReady
-                    ? await readPointCaptureFromClipboard(textCapture)
-                    : textCapture;
-                  onCapture(capture);
-                  setTextCapture(null);
-                });
-              }}
-            >
-              {t("find.generatePoint")}
-            </Button>
-            <Button variant="ghost" onClick={() => setTextCapture(null)}>
-              {t("common.cancel")}
-            </Button>
-          </div>
-        )}
         {selectionRect && (
           <div
             className="pointer-events-none fixed z-30 border-2 border-blue-500 bg-blue-500/15"
@@ -286,6 +266,26 @@ export function InteractivePdfViewer({
           />
         )}
       </div>
+      {stagedCapture && (
+        <div className="absolute bottom-4 left-1/2 z-40 flex -translate-x-1/2 gap-2 rounded-xl bg-zinc-950 p-2 text-white shadow-xl">
+          <Button
+            onClick={() => {
+              void clipboardWriteRef.current.then(async (clipboardReady) => {
+                const capture = clipboardReady
+                  ? await readPointCaptureFromClipboard(stagedCapture)
+                  : stagedCapture;
+                onCapture(capture);
+                setStagedCapture(null);
+              });
+            }}
+          >
+            {t("find.generatePoint")}
+          </Button>
+          <Button variant="ghost" onClick={() => setStagedCapture(null)}>
+            {t("common.cancel")}
+          </Button>
+        </div>
+      )}
       <PdfZoomControls zoom={zoom} onChange={setZoom} />
     </div>
   );
