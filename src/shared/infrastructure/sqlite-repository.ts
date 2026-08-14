@@ -196,6 +196,7 @@ function normalizeState(state: AppState): AppState {
       ...item,
       listIds: item.listIds ?? [],
       tags: item.tags ?? [],
+      chatMessages: item.chatMessages ?? [],
     })),
     projects: state.projects.map((item) => ({
       ...item,

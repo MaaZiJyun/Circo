@@ -1,19 +1,12 @@
 "use client";
-
 import { useMemo, useState } from "react";
 import { LocalAssistant } from "@/shared/infrastructure/local-assistant";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { activeItems } from "@/shared/model/app-state";
-import type {
-  AIJob,
-  Idea,
-  ProjectRecord,
-  Relation,
-} from "@/shared/model/entities";
+import type { AIJob, Idea, ProjectRecord, Relation } from "@/shared/model/entities";
 import { addDays, createId, now, today } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
 import { canPromoteIdea, evaluateIdea } from "../model/idea-evaluation";
-
 const assistant = new LocalAssistant();
 const defaultScores = {
   value: 3,
@@ -22,7 +15,6 @@ const defaultScores = {
   cost: 3,
   risk: 3,
 };
-
 export interface IdeaInput {
   title: string;
   definition: string;
@@ -30,7 +22,6 @@ export interface IdeaInput {
   date: string;
   tags: string[];
 }
-
 export function useMindViewModel() {
   const { state, mutate, softDelete } = useStore();
   const { locale } = useI18n();
@@ -48,7 +39,6 @@ export function useMindViewModel() {
     () => (state ? activeItems(state.libraryLists) : []),
     [state],
   );
-
   const sourcesForList = (listId: string) => {
     if (!state) return [];
     const list = state.libraryLists.find((item) => item.id === listId);
@@ -58,7 +48,6 @@ export function useMindViewModel() {
       return sources.filter((source) => source.favorite);
     return sources.filter((source) => source.listIds.includes(listId));
   };
-
   const saveIdea = (
     input: IdeaInput,
     method: Idea["method"] = "capture",
@@ -84,7 +73,6 @@ export function useMindViewModel() {
     };
     mutate((current) => ({ ...current, ideas: [...current.ideas, idea] }));
   };
-
   const generateIdea = async (
     listId: string,
     method: Idea["method"],
@@ -137,7 +125,6 @@ export function useMindViewModel() {
       setBusy(false);
     }
   };
-
   const updateIdea = (id: string, input: IdeaInput) => {
     mutate((current) => ({
       ...current,
@@ -146,7 +133,7 @@ export function useMindViewModel() {
           ? {
               ...idea,
               title: input.title.trim(),
-              content: input.definition.trim(),
+              content: idea.chatMessages?.length ? idea.content : input.definition.trim(),
               definition: input.definition.trim(),
               reason: input.reason.trim(),
               date: input.date,
@@ -157,7 +144,6 @@ export function useMindViewModel() {
       ),
     }));
   };
-
   const updateScores = (id: string, scores: Idea["scores"]) => {
     mutate((current) => ({
       ...current,
@@ -166,7 +152,70 @@ export function useMindViewModel() {
       ),
     }));
   };
-
+  const deleteIdeaMessage = (ideaId: string, messageId: string) => {
+    mutate((current) => ({
+      ...current,
+      ideas: current.ideas.map((idea) =>
+        idea.id === ideaId
+          ? { ...idea, chatMessages: idea.chatMessages?.filter((message) => message.id !== messageId), updatedAt: now() }
+          : idea,
+      ),
+    }));
+  };
+  const continueIdea = async (id: string, message: string) => {
+    const idea = ideas.find((item) => item.id === id);
+    const content = message.trim();
+    if (!idea || !content) return;
+    const userStamp = now();
+    mutate((current) => ({
+      ...current,
+      ideas: current.ideas.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              content: [item.content, content].filter(Boolean).join("\n\n"),
+              chatMessages: [
+                ...(item.chatMessages ?? []),
+                {
+                  id: createId("idea_message"),
+                  role: "user" as const,
+                  content,
+                  createdAt: userStamp,
+                },
+              ],
+              updatedAt: userStamp,
+            }
+          : item,
+      ),
+    }));
+    setBusy(true);
+    try {
+      const reply = await assistant.explore(content, idea.method, locale);
+      const assistantStamp = now();
+      mutate((current) => ({
+        ...current,
+        ideas: current.ideas.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                chatMessages: [
+                  ...(item.chatMessages ?? []),
+                  {
+                    id: createId("idea_message"),
+                    role: "assistant" as const,
+                    content: reply,
+                    createdAt: assistantStamp,
+                  },
+                ],
+                updatedAt: assistantStamp,
+              }
+            : item,
+        ),
+      }));
+    } finally {
+      setBusy(false);
+    }
+  };
   const saveEvaluation = (
     id: string,
     answers: number[],
@@ -190,7 +239,6 @@ export function useMindViewModel() {
       ),
     }));
   };
-
   const convertToProject = (idea: Idea) => {
     if (!canPromoteIdea(idea.evaluation)) return;
     const stamp = now();
@@ -232,7 +280,6 @@ export function useMindViewModel() {
       relations: [...current.relations, relation],
     }));
   };
-
   return {
     ideas,
     libraryLists,
@@ -242,6 +289,8 @@ export function useMindViewModel() {
     generateIdea,
     updateIdea,
     updateScores,
+    deleteIdeaMessage,
+    continueIdea,
     saveEvaluation,
     convertToProject,
     deleteIdea: (id: string) => softDelete("ideas", id),

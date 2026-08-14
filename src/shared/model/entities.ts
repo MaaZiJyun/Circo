@@ -133,7 +133,6 @@ export interface Annotation extends BaseEntity {
   kind: "positive" | "negative" | "neutral";
   reason: string;
 }
-
 export interface Idea extends BaseEntity {
   title: string;
   content: string;
@@ -165,6 +164,7 @@ export interface Idea extends BaseEntity {
   sourceIds: string[];
   listIds: string[];
   tags: string[];
+  chatMessages?: IdeaChatMessage[];
   scores: {
     value: number;
     feasibility: number;
@@ -174,7 +174,7 @@ export interface Idea extends BaseEntity {
   };
   evaluation?: IdeaEvaluation;
 }
-
+export type IdeaChatMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string };
 export type IdeaDimension =
   "value" | "relevance" | "feasibility" | "testability" | "opportunity";
 

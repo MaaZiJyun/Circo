@@ -6,25 +6,21 @@ import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { SectionHeader } from "@/shared/components/page-elements";
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import {
-  Badge,
   Button,
   Card,
   Dialog,
   EmptyState,
 } from "@/shared/components/ui";
-import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Idea, IdeaList } from "@/shared/model/entities";
 import { sortIdeas, type IdeaSort } from "../model/idea-sorting";
 import { useIdeaLibrary } from "../view-models/use-idea-library";
 import type { IdeaInput } from "../view-models/use-mind-view-model";
 import { useMindViewModel } from "../view-models/use-mind-view-model";
-import {
-  EvaluationSummary,
-  IdeaEvaluationDialog,
-} from "./idea-evaluation-dialog";
+import { IdeaEvaluationDialog } from "./idea-evaluation-dialog";
 import { IdeaComposer, IdeaFields } from "./idea-form";
 import { IdeaGrid } from "./idea-grid";
+import { IdeaReader } from "./idea-reader";
 import {
   ChooseIdeaListDialog,
   IdeaListDialog,
@@ -43,7 +39,7 @@ export function MindView() {
   const { t } = useI18n();
   const vm = useMindViewModel();
   const library = useIdeaLibrary();
-  const [viewing, setViewing] = useState<Idea | null>(null);
+  const [viewingId, setViewingId] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
   const [evaluating, setEvaluating] = useState<Idea | null>(null);
   const [editing, setEditing] = useState<Idea | null>(null);
@@ -57,6 +53,7 @@ export function MindView() {
   );
   const [editingList, setEditingList] = useState<IdeaList | null>(null);
   const selectionMode = library.selectedIds.length > 0;
+  const viewing = vm.ideas.find((idea) => idea.id === viewingId) ?? null;
   const sortedIdeas = useMemo(
     () => sortIdeas(library.ideas, sort),
     [library.ideas, sort],
@@ -79,44 +76,18 @@ export function MindView() {
     <div className="space-y-8">
       {viewing ? (
         <>
-          <Button variant="ghost" onClick={() => setViewing(null)}>
+          <Button variant="ghost" onClick={() => setViewingId(null)}>
             <ArrowLeftIcon className="size-4" />
             {t("mind.backToLibrary")}
           </Button>
-          <Card>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <Badge>{t(statusLabels[viewing.status])}</Badge>
-                <h1 className="mt-3 text-2xl font-semibold">{viewing.title}</h1>
-              </div>
-              <Badge tone={viewing.evaluation ? "info" : "neutral"}>
-                {t("mind.scoreLabel")}: {viewing.evaluation?.totalScore ?? "—"}
-              </Badge>
-            </div>
-            <div className="mt-6 grid gap-5">
-              <section>
-                <h2 className="text-sm font-semibold">
-                  {t("mind.definition")}
-                </h2>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-zinc-600 dark:text-zinc-300">
-                  {viewing.definition || viewing.content}
-                </p>
-              </section>
-              <section>
-                <h2 className="text-sm font-semibold">{t("mind.reason")}</h2>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-zinc-600 dark:text-zinc-300">
-                  {viewing.reason || "—"}
-                </p>
-              </section>
-              <EvaluationSummary idea={viewing} />
-              <div className="flex flex-wrap gap-2">
-                <span className="text-sm text-zinc-500">{viewing.date}</span>
-                {viewing.tags.map((tag) => (
-                  <Badge key={tag}>{tag}</Badge>
-                ))}
-              </div>
-            </div>
-          </Card>
+          <IdeaReader
+            idea={viewing}
+            busy={vm.busy}
+            onSend={(message) => vm.continueIdea(viewing.id, message)}
+            onDeleteMessage={(messageId) =>
+              vm.deleteIdeaMessage(viewing.id, messageId)
+            }
+          />
         </>
       ) : (
         <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
@@ -202,7 +173,7 @@ export function MindView() {
                 library={library}
                 ideas={sortedIdeas}
                 selectionMode={selectionMode}
-                onOpen={setViewing}
+                onOpen={(idea) => setViewingId(idea.id)}
                 onEdit={edit}
                 onDelete={remove}
                 onEvaluate={setEvaluating}

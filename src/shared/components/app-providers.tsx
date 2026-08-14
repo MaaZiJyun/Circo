@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/shared/theme/theme-context";
 import { StoreProvider } from "@/shared/view-models/store-context";
 import { BackgroundMusicPlayer } from "./background-music-player";
 import { DailySummaryScheduler } from "./daily-summary-scheduler";
+import { TaskDeadlineReminder } from "./task-deadline-reminder";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +14,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         <StoreProvider>
           <BackgroundMusicPlayer />
           <DailySummaryScheduler />
+          <TaskDeadlineReminder />
           {children}
         </StoreProvider>
       </I18nProvider>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { memo, useEffect } from "react";
 import { useStore } from "@/shared/view-models/store-context";
 
 const targetVolume = 0.35;
@@ -9,10 +9,22 @@ const fadeDuration = 2000;
 export function BackgroundMusicPlayer() {
   const { state } = useStore();
   const enabled = state?.profile.backgroundMusicEnabled ?? false;
-  const tracks = state?.profile.backgroundAudioTracks;
+  const trackTokens =
+    state?.profile.backgroundAudioTracks?.map((track) => track.token).join("|") ??
+    "";
+  return <BackgroundAudioEngine enabled={enabled} trackTokens={trackTokens} />;
+}
 
+const BackgroundAudioEngine = memo(function BackgroundAudioEngine({
+  enabled,
+  trackTokens,
+}: {
+  enabled: boolean;
+  trackTokens: string;
+}) {
   useEffect(() => {
-    if (!enabled || !tracks?.length) return;
+    if (!enabled || !trackTokens) return;
+    const tracks = trackTokens.split("|");
     const audio = new Audio();
     audio.preload = "auto";
     let disposed = false;
@@ -40,7 +52,7 @@ export function BackgroundMusicPlayer() {
     const randomTrack = () => {
       const choices =
         tracks.length > 1
-          ? tracks.filter((track) => track.token !== lastToken)
+          ? tracks.filter((token) => token !== lastToken)
           : tracks;
       return choices[Math.floor(Math.random() * choices.length)];
     };
@@ -62,11 +74,11 @@ export function BackgroundMusicPlayer() {
     };
     const startRandomTrack = () => {
       if (disposed) return;
-      const track = randomTrack();
-      lastToken = track.token;
+      const token = randomTrack();
+      lastToken = token;
       fadingOut = false;
       audio.volume = 0;
-      audio.src = `/api/background-audio/${track.token}`;
+      audio.src = `/api/background-audio/${token}`;
       attemptPlay();
     };
     function unlock() {
@@ -101,7 +113,7 @@ export function BackgroundMusicPlayer() {
         }
       }, 40);
     };
-  }, [enabled, tracks]);
+  }, [enabled, trackTokens]);
 
   return null;
-}
+});
