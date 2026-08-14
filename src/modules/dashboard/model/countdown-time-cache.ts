@@ -7,28 +7,47 @@ export type CountdownTimeCache = Record<string, CountdownTimeEntry>;
 
 const cacheKey = "circo-countdown-task-time";
 
-export function readCountdownTimeCache(currentTime: number) {
+export function normalizeCountdownTimeCache(
+  value: unknown,
+  currentTime: number,
+) {
+  if (!value || typeof value !== "object")
+    return { cache: {}, migrated: false } as const;
+  let migrated = false;
+  const entries = Object.entries(value).flatMap(([id, entry]) => {
+    if (typeof entry === "number" && entry >= 0) {
+      migrated = true;
+      return [[id, { startedAt: currentTime, accumulatedSeconds: entry }]];
+    }
+    if (
+      entry &&
+      typeof entry === "object" &&
+      "startedAt" in entry &&
+      "accumulatedSeconds" in entry &&
+      typeof entry.startedAt === "number" &&
+      typeof entry.accumulatedSeconds === "number"
+    )
+      return [[id, entry as CountdownTimeEntry]];
+    migrated = true;
+    return [];
+  });
+  return {
+    cache: Object.fromEntries(entries) as CountdownTimeCache,
+    migrated,
+  };
+}
+
+export function readCountdownTimeCache(
+  currentTime: number,
+): CountdownTimeCache {
   if (typeof window === "undefined") return {};
   try {
     const value: unknown = JSON.parse(
       window.localStorage.getItem(cacheKey) ?? "{}",
     );
-    if (!value || typeof value !== "object") return {};
-    const entries = Object.entries(value).flatMap(([id, entry]) => {
-      if (typeof entry === "number" && entry >= 0)
-        return [[id, { startedAt: currentTime, accumulatedSeconds: entry }]];
-      if (
-        entry &&
-        typeof entry === "object" &&
-        "startedAt" in entry &&
-        "accumulatedSeconds" in entry &&
-        typeof entry.startedAt === "number" &&
-        typeof entry.accumulatedSeconds === "number"
-      )
-        return [[id, entry as CountdownTimeEntry]];
-      return [];
-    });
-    return Object.fromEntries(entries) as CountdownTimeCache;
+    const result = normalizeCountdownTimeCache(value, currentTime);
+    if (result.migrated) writeCountdownTimeCache(result.cache);
+    return result.cache;
   } catch {
     return {};
   }
