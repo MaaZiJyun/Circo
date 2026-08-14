@@ -20,7 +20,7 @@ import {
   Badge,
   Button,
   EmptyState,
-  Input,
+  Tabs,
 } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { DailyTask } from "@/shared/model/entities";
@@ -29,11 +29,13 @@ import {
   CreateDailyTaskDialog,
   RetrieveTaskDialog,
 } from "./daily-task-dialogs";
+import { TaskQuadrant } from "./task-quadrant";
 
 export function DailyTaskList() {
   const { t } = useI18n();
   const vm = useDailyTaskCache();
   const [dialog, setDialog] = useState<"retrieve" | "create" | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "diagram">("list");
   const [menu, setMenu] = useState<{
     task: DailyTask;
     position: MenuPosition;
@@ -45,6 +47,16 @@ export function DailyTaskList() {
     <>
       <SectionHeader
         title={t("me.dailyCache")}
+        controls={
+          <Tabs
+            value={viewMode}
+            onChange={setViewMode}
+            items={[
+              { value: "list", label: t("me.listView") },
+              { value: "diagram", label: t("me.diagramView") },
+            ]}
+          />
+        }
         action={
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => setDialog("retrieve")}>
@@ -58,13 +70,7 @@ export function DailyTaskList() {
           </div>
         }
       />
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <Input
-          className="w-40"
-          type="date"
-          value={vm.date}
-          onChange={(event) => vm.setDate(event.target.value)}
-        />
+      <div className="mb-3 flex flex-wrap items-center justify-start gap-3">
         <Badge
           tone={
             completed === vm.dailyTasks.length && completed > 0
@@ -75,7 +81,13 @@ export function DailyTaskList() {
           {completed} / {vm.dailyTasks.length}
         </Badge>
       </div>
-      {vm.dailyTasks.length ? (
+      {viewMode === "diagram" ? (
+        <TaskQuadrant
+          tasks={vm.dailyTasks}
+          coordinates={vm.coordinates}
+          formulas={vm.profile.matrixFormulas}
+        />
+      ) : vm.dailyTasks.length ? (
         <div className="max-h-96 divide-y divide-zinc-200 overflow-y-auto dark:divide-zinc-800">
           {vm.dailyTasks.map((item) => (
             <TaskRow

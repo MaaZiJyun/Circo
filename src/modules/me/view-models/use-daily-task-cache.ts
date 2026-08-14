@@ -102,7 +102,7 @@ export function useDailyTaskCache() {
     }));
   };
   const retrieve = (task: TaskRecord) => {
-    if (view?.dailyTasks.some((item) => item.sourceTaskId === task.id)) return;
+    if (task.status === "done" || view?.dailyTasks.some((item) => item.sourceTaskId === task.id)) return;
     add({
       title: task.title,
       description: task.description,
@@ -274,8 +274,6 @@ export function useDailyTaskCache() {
   if (!view) return null;
   return {
     ...view,
-    date,
-    setDate,
     addIndependent,
     retrieve,
     setCompleted,

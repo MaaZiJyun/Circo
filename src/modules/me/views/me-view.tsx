@@ -1,14 +1,9 @@
 "use client";
 
-import {
-  PageHeader,
-  SectionHeader,
-  StatCard,
-} from "@/shared/components/page-elements";
-import { Card } from "@/shared/components/ui";
+import { PageHeader, StatCard } from "@/shared/components/page-elements";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useDailyTaskCache } from "../view-models/use-daily-task-cache";
-import { TaskQuadrant } from "./task-quadrant";
+import { DailyTaskHistory } from "./daily-task-history";
 
 export function MeView() {
   const { t, formatNumber } = useI18n();
@@ -41,14 +36,7 @@ export function MeView() {
           hint={t("dashboard.metricCompletion")}
         />
       </div>
-      <Card>
-        <SectionHeader title={t("me.taskQuadrant")} />
-        <TaskQuadrant
-          tasks={vm.dailyTasks}
-          coordinates={vm.coordinates}
-          formulas={vm.profile.matrixFormulas}
-        />
-      </Card>
+      <DailyTaskHistory />
     </div>
   );
 }

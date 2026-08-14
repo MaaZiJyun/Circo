@@ -173,6 +173,7 @@ export function RetrieveTaskDialog({
     () =>
       tasks.filter(
         (task) =>
+          task.status !== "done" &&
           !existingIds.includes(task.id) &&
           `${task.title} ${projectName(task.projectId)}`
             .toLowerCase()

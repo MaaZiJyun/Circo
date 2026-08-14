@@ -185,7 +185,7 @@ export function Tabs<T extends string>({
 }) {
   return (
     <div
-      className="flex gap-1 rounded-xl bg-zinc-100 p-1 dark:bg-zinc-900"
+      className="flex gap-1 rounded-full bg-zinc-100 p-1 dark:bg-zinc-900"
       role="tablist"
     >
       {items.map((item) => (
@@ -193,7 +193,7 @@ export function Tabs<T extends string>({
           key={item.value}
           role="tab"
           aria-selected={value === item.value}
-          className={`min-h-9 flex-1 rounded-lg px-3 text-sm font-medium ${focusRing} ${value === item.value ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50" : "text-zinc-500"}`}
+          className={`min-h-9 flex-1 rounded-full px-3 text-sm font-medium ${focusRing} ${value === item.value ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50" : "text-zinc-500"}`}
           onClick={() => onChange(item.value)}
         >
           {item.label}
