@@ -1,4 +1,4 @@
-export type EntityKind = "goal" | "source" | "idea" | "project" | "artifact";
+export type EntityKind = "goal" | "source" | "point" | "idea" | "project" | "artifact";
 import type { TaskRecurrence } from "./task-recurrence-types";
 import type { TaskImportanceDimensions } from "./task-importance-types";
 import type { TaskUrgencyInputs } from "./task-urgency-types";

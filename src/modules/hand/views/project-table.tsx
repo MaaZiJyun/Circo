@@ -137,7 +137,7 @@ export function ProjectTable({
               </td>
               <td className="px-3 py-3 align-top">
                 <div className="flex max-h-24 flex-wrap gap-1 overflow-hidden">
-                  {project.tags.map((tag) => (
+                  {project.tags.slice(0, 3).map((tag) => (
                     <Badge key={tag}>{tag}</Badge>
                   ))}
                 </div>

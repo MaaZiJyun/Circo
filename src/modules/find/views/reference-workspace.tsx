@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import {
   FolderPlusIcon,
@@ -15,6 +16,7 @@ import type {
   ReferencePoint,
   SourceRecord,
 } from "@/shared/model/entities";
+import { PointContextMenu, type PointMenu } from "./point-context-menu";
 
 export function ReferenceWorkspace({
   points,
@@ -26,6 +28,7 @@ export function ReferenceWorkspace({
   onAddToList,
   onRemoveFromList,
   onDragStart,
+  onConvertToIdea,
   canRemoveFromList,
 }: {
   points: ReferencePoint[];
@@ -37,9 +40,11 @@ export function ReferenceWorkspace({
   onAddToList: (point: ReferencePoint) => void;
   onRemoveFromList: (point: ReferencePoint) => void;
   onDragStart: (point: ReferencePoint) => void;
+  onConvertToIdea: (point: ReferencePoint) => void;
   canRemoveFromList: boolean;
 }) {
   const { t } = useI18n();
+  const [menu, setMenu] = useState<PointMenu | null>(null);
   const sourceName = (id: string) =>
     sources.find((item) => item.id === id)?.title ?? t("find.unknownSource");
   return (
@@ -56,7 +61,7 @@ export function ReferenceWorkspace({
           <EmptyState title={t("find.noPoints")} />
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="columns-1 gap-4 md:columns-2 2xl:columns-3">
           {points
             .slice()
             .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -66,9 +71,17 @@ export function ReferenceWorkspace({
                 <div
                   key={point.id}
                   draggable
+                  className="mb-4 inline-block w-full break-inside-avoid align-top"
                   onDragStart={(event) => {
                     onDragStart(point);
                     event.dataTransfer.setData("text/plain", point.id);
+                  }}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    setMenu({
+                      point,
+                      position: { x: event.clientX, y: event.clientY },
+                    });
                   }}
                 >
                   <Card className="min-w-0 cursor-grab">
@@ -160,6 +173,33 @@ export function ReferenceWorkspace({
               );
             })}
         </div>
+      )}
+      {menu && (
+        <PointContextMenu
+          menu={menu}
+          canRemoveFromList={canRemoveFromList}
+          onClose={() => setMenu(null)}
+          onEdit={() => {
+            onEdit(menu.point);
+            setMenu(null);
+          }}
+          onAddToList={() => {
+            onAddToList(menu.point);
+            setMenu(null);
+          }}
+          onRemoveFromList={() => {
+            onRemoveFromList(menu.point);
+            setMenu(null);
+          }}
+          onDelete={() => {
+            onDelete(menu.point);
+            setMenu(null);
+          }}
+          onConvertToIdea={() => {
+            onConvertToIdea(menu.point);
+            setMenu(null);
+          }}
+        />
       )}
     </section>
   );

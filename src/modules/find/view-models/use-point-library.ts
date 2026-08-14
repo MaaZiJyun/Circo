@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
-import type { PointList, ReferencePoint } from "@/shared/model/entities";
+import { useI18n } from "@/shared/i18n/i18n-context";
+import type {
+  Idea,
+  PointList,
+  ReferencePoint,
+  Relation,
+} from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
 import { isRecentlyAdded } from "./use-library-management";
@@ -13,6 +19,7 @@ export type PointListInput = Pick<PointList, "name" | "note" | "color">;
 
 export function usePointLibrary() {
   const { state, mutate } = useStore();
+  const { locale } = useI18n();
   const [activeListId, setActiveListId] = useState(DEFAULT_POINT_LIST_ID);
   const [draggedIds, setDraggedIds] = useState<string[]>([]);
   const points = useMemo(
@@ -136,6 +143,59 @@ export function usePointLibrary() {
       ),
     }));
   };
+  const convertToIdea = (point: ReferencePoint) => {
+    const stamp = now();
+    const source = state?.sources.find((item) => item.id === point.sourceId);
+    const sourceTitle = source?.title.trim() ?? "";
+    const imageLabel =
+      locale === "zh-CN"
+        ? `${sourceTitle ? `《${sourceTitle}》的` : ""}图片观点`
+        : `Image Point${sourceTitle ? ` from “${sourceTitle}”` : ""}`;
+    const definition =
+      point.type === "text"
+        ? point.content.trim()
+        : point.note.trim() || imageLabel;
+    const title =
+      definition
+        .split(/\r?\n/)
+        .find((line) => line.trim())
+        ?.trim() || imageLabel;
+    const idea: Idea = {
+      id: createId("idea"),
+      title: title.slice(0, 80),
+      content: definition,
+      definition,
+      reason:
+        locale === "zh-CN"
+          ? `由参考库中的 Point 转化${sourceTitle ? `，来源为《${sourceTitle}》` : ""}。`
+          : `Converted from a Point in Reference${sourceTitle ? `, sourced from “${sourceTitle}”` : ""}.`,
+      date: point.date || stamp.slice(0, 10),
+      status: "spark",
+      method: "capture",
+      sourceIds: [point.sourceId],
+      listIds: [],
+      tags: source?.tags ?? [],
+      scores: { value: 3, feasibility: 3, novelty: 3, cost: 3, risk: 3 },
+      createdAt: stamp,
+      updatedAt: stamp,
+    };
+    const relation: Relation = {
+      id: createId("relation"),
+      fromKind: "point",
+      fromId: point.id,
+      toKind: "idea",
+      toId: idea.id,
+      relation: "derived",
+      createdBy: "user",
+      createdAt: stamp,
+      updatedAt: stamp,
+    };
+    mutate((current) => ({
+      ...current,
+      ideas: [...current.ideas, idea],
+      relations: [...current.relations, relation],
+    }));
+  };
   return {
     points,
     lists,
@@ -153,5 +213,6 @@ export function usePointLibrary() {
     deleteList,
     addToList,
     removeFromCurrentList,
+    convertToIdea,
   };
 }

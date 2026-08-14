@@ -149,6 +149,7 @@ export function FindView() {
               pointLibrary.removeFromCurrentList(point.id)
             }
             onDragStart={(point) => pointLibrary.setDraggedIds([point.id])}
+            onConvertToIdea={pointLibrary.convertToIdea}
             canRemoveFromList={
               pointLibrary.lists.find(
                 (list) => list.id === pointLibrary.activeListId,

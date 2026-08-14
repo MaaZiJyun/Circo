@@ -87,6 +87,12 @@ export function PeriodCountdown() {
   const progress = timing && current
     ? Math.max(0, Math.min(1, (current.getTime() - timing.start) / (timing.end - timing.start)))
     : 0;
+  const remainingRatio = 1 - progress;
+  const warningColor = remainingRatio < 0.1
+    ? "text-red-500"
+    : remainingRatio < 0.3
+      ? "text-yellow-400"
+      : null;
   const radius = 82;
   const circumference = 2 * Math.PI * radius;
   const labels = scaleLabels(scale, current);
@@ -128,7 +134,7 @@ export function PeriodCountdown() {
                   transform={`rotate(${-90 + start * 360} 96 96)`}
                   strokeDasharray={`${circumference * segmentLength} ${circumference}`} />,
                 <circle key={stage.label} cx="96" cy="96" r={radius} fill="none"
-                  stroke="currentColor" strokeWidth="12" className={stage.color}
+                  stroke="currentColor" strokeWidth="12" className={warningColor ?? stage.color}
                   transform={`rotate(${-90 + remainingStart * 360} 96 96)`}
                   strokeDasharray={`${circumference * remainingLength} ${circumference}`} />,
               ];
@@ -137,7 +143,7 @@ export function PeriodCountdown() {
                 <circle cx="96" cy="96" r={radius} fill="none" stroke="currentColor" strokeWidth="12" className="text-zinc-100 dark:text-zinc-800" />
                 <circle cx="96" cy="96" r={radius} fill="none" stroke="currentColor" strokeWidth="12"
                   transform="rotate(-90 96 96)" strokeDasharray={circumference}
-                  strokeDashoffset={circumference * progress} className="text-zinc-950 transition-[stroke-dashoffset] duration-1000 dark:text-zinc-50" />
+                  strokeDashoffset={circumference * progress} className={`${warningColor ?? "text-zinc-950 dark:text-zinc-50"} transition-[stroke-dashoffset,color] duration-1000`} />
               </>
             )}
           </svg>

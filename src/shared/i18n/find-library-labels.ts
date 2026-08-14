@@ -118,6 +118,7 @@ export const findLibraryZh = {
   "find.confirmDeletePointList": "确定删除此观点列表吗？观点本身不会被删除。",
   "find.addPointToList": "加入观点列表",
   "find.confirmDeletePoint": "确定将此观点移至回收站吗？",
+  "find.pointToIdea": "转化为 Idea",
   "find.pointImage": "图片",
   "find.currentImageKept": "未选择新图片时保留当前图片",
   "find.imageRequiredUpload": "请选择一张 PNG 或 JPEG 图片。",
@@ -268,6 +269,7 @@ export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
     "Delete this Point List? The Points themselves will be kept.",
   "find.addPointToList": "Add to Point List",
   "find.confirmDeletePoint": "Move this Point to trash?",
+  "find.pointToIdea": "Convert to Idea",
   "find.pointImage": "Image",
   "find.currentImageKept":
     "The current image is kept unless you choose a new one",

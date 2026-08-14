@@ -97,7 +97,7 @@ export function IdeaGrid({
             <span className="text-xs text-zinc-500">
               {idea.date || idea.createdAt.slice(0, 10)}
             </span>
-            {idea.tags.map((tag) => (
+            {idea.tags.slice(0, 3).map((tag) => (
               <Badge key={tag}>{tag}</Badge>
             ))}
             <Badge tone={idea.evaluation ? "info" : "neutral"}>
