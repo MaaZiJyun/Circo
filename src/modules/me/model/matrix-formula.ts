@@ -143,7 +143,7 @@ export function resolveMatrixFormulas(value?: MatrixFormulaSettings) {
   if (
     replacedDefaultMatrixFormulas.some(
       (item) =>
-        value?.x === item.x && value.y === item.y && value.size === item.size,
+      value?.x === item.x && value?.y === item.y && value?.size === item.size,
     )
   )
     return defaultMatrixFormulas;
@@ -209,11 +209,11 @@ export function matrixBubble(
     }
   };
   return {
-    x: Math.min(100, Math.max(0, calculate(selected.x, fallback.x))),
-    y: Math.min(100, Math.max(0, calculate(selected.y, fallback.y))),
+    x: Math.min(100, Math.max(0, calculate(selected.x ?? fallback.x!, fallback.x!))),
+    y: Math.min(100, Math.max(0, calculate(selected.y ?? fallback.y!, fallback.y!))),
     diameter: Math.min(
       200,
-      Math.max(32, calculate(selected.size, fallback.size)),
+      Math.max(32, calculate(selected.size ?? fallback.size!, fallback.size!)),
     ),
   };
 }
@@ -222,9 +222,9 @@ export function validateMatrixFormulas(formulas: MatrixFormulaSettings) {
   const variables = Object.fromEntries(
     matrixFormulaVariables.map((name) => [name, 1]),
   ) as Variables;
-  evaluateMatrixFormula(formulas.x, variables);
-  evaluateMatrixFormula(formulas.y, variables);
-  evaluateMatrixFormula(formulas.size, variables);
+  evaluateMatrixFormula(formulas.x ?? defaultMatrixFormulas.x!, variables);
+  evaluateMatrixFormula(formulas.y ?? defaultMatrixFormulas.y!, variables);
+  evaluateMatrixFormula(formulas.size ?? defaultMatrixFormulas.size!, variables);
   const dispersion = formulas.dispersion ?? 1;
   if (!Number.isFinite(dispersion) || dispersion < 0.1 || dispersion > 10)
     throw new Error("Dispersion must be between 0.1 and 10");

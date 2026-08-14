@@ -13,7 +13,7 @@ import {
   ContextMenuItem,
   type MenuPosition,
 } from "@/modules/find/views/context-menu";
-import { EmptyState, IconButton } from "@/shared/components/ui";
+import { Checkbox, EmptyState, IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { FutureMessage } from "@/shared/model/message";
 import type { Mailbox } from "./message-sidebar";
@@ -116,13 +116,12 @@ export function MessageList({
               }}
               className={`flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 ${unread ? "text-zinc-950 dark:text-zinc-50" : "text-zinc-500 dark:text-zinc-400"} ${selected.includes(message.id) ? "bg-zinc-100 dark:bg-zinc-900" : ""}`}
             >
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={selected.includes(message.id)}
                 aria-label={t("messages.select")}
-                onChange={(event) =>
+                onChange={(checked) =>
                   onSelected(
-                    event.target.checked
+                    checked
                       ? [...selected, message.id]
                       : selected.filter((id) => id !== message.id),
                   )

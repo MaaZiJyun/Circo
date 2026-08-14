@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Button,
+  Checkbox,
   Dialog,
   Field,
   Input,
@@ -255,12 +256,11 @@ function PointListChoices({
             key={list.id}
             className="flex min-h-10 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
           >
-            <input
-              type="checkbox"
+            <Checkbox
               checked={selectedIds.includes(list.id)}
-              onChange={(event) =>
+              onChange={(checked) =>
                 onChange(
-                  event.target.checked
+                  checked
                     ? [...selectedIds, list.id]
                     : selectedIds.filter((id) => id !== list.id),
                 )

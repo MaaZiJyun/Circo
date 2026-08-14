@@ -5,7 +5,7 @@ import { activeItems } from "@/shared/model/app-state";
 import { taskBlocking, taskDueRange } from "@/shared/model/task-urgency";
 import { useStore } from "@/shared/view-models/store-context";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import { Button, Field, Select } from "./ui";
+import { Button, Checkbox, Field, Select } from "./ui";
 
 const delayLossLabels = [
   "",
@@ -84,8 +84,7 @@ export function TaskUrgencyFields({
             )}
             {options.map((task) => (
               <label key={task.id} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={draftDependencyIds.includes(task.id)}
                   onChange={() =>
                     setDraftDependencyIds((current) =>

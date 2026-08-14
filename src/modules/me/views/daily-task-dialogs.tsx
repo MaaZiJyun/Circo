@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Button,
+  Switch,
   Dialog,
   EmptyState,
   Field,
@@ -125,11 +126,10 @@ export function CreateDailyTaskDialog({
         <TaskEffortFields estimatedMinutes={input.estimatedMinutes} complexity={input.complexity}
           uncertainty={input.uncertainty} onChange={(effort) => setInput({ ...input, ...effort })} />
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+          <Switch
             checked={input.milestone}
-            onChange={(event) =>
-              setInput({ ...input, milestone: event.target.checked })
+            onChange={(checked) =>
+              setInput({ ...input, milestone: checked })
             }
           />
           {t("hand.milestone")}

@@ -9,19 +9,13 @@ import { SectionHeader } from "@/shared/components/page-elements";
 import { Alert, Button, Card, Field, Input } from "@/shared/components/ui";
 import {
   defaultMatrixFormulas,
-  matrixFormulaVariables,
   resolveMatrixFormulas,
-  validateMatrixFormulas,
 } from "../model/matrix-formula";
 import {
   taskFormulaVariables,
   validateTaskCoordinateFormulas,
 } from "../model/task-coordinate-formula";
 
-const variableHelp = matrixFormulaVariables.map((name) => ({
-  name,
-  label: `settings.matrixVariable.${name}` as const,
-}));
 const taskVariableHelp = taskFormulaVariables.map((name) => ({
   name,
   label: `settings.taskVariable.${name}` as const,
@@ -39,11 +33,16 @@ export function MatrixFormulaSettings() {
   const persist = (formulas: MatrixFormulaConfig) =>
     mutate((current) => ({
       ...current,
-      profile: { ...current.profile, matrixFormulas: formulas },
+      profile: {
+        ...current.profile,
+        matrixFormulas: {
+          urgency: formulas.urgency,
+          importance: formulas.importance,
+        },
+      },
     }));
   const save = () => {
     try {
-      validateMatrixFormulas(draft);
       validateTaskCoordinateFormulas(draft);
       persist(draft);
       setError("");
@@ -59,7 +58,7 @@ export function MatrixFormulaSettings() {
     setError("");
   };
   const update = (
-    key: "urgency" | "importance" | "x" | "y" | "size",
+    key: "urgency" | "importance",
     value: string,
   ) =>
     setDraft((current) => ({ ...current, [key]: value }));
@@ -108,60 +107,6 @@ export function MatrixFormulaSettings() {
           ))}
         </dl>
       )}
-      <p className="mt-4 text-xs leading-5 text-zinc-500">
-        {t("settings.matrixVariables")}: {matrixFormulaVariables.join(", ")}
-      </p>
-      {showHelp && (
-        <dl className="mt-3 grid gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 text-sm dark:border-zinc-800 dark:bg-zinc-900/40 sm:grid-cols-2">
-          {variableHelp.map((item) => (
-            <div key={item.name}>
-              <dt className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                {item.name}
-              </dt>
-              <dd className="mt-1 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
-                {t(item.label)}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
-      <div className="mt-4 grid gap-4 lg:grid-cols-3">
-        <FormulaField
-          label={t("settings.matrixXFormula")}
-          value={draft.x}
-          onChange={(value) => update("x", value)}
-        />
-        <FormulaField
-          label={t("settings.matrixYFormula")}
-          value={draft.y}
-          onChange={(value) => update("y", value)}
-        />
-        <FormulaField
-          label={t("settings.matrixSizeFormula")}
-          value={draft.size}
-          onChange={(value) => update("size", value)}
-        />
-      </div>
-      <div className="mt-4 max-w-xs">
-        <Field
-          label={t("settings.matrixDispersion")}
-          hint={t("settings.matrixDispersionHint")}
-        >
-          <Input
-            type="number"
-            min={0.1}
-            max={10}
-            step={0.1}
-            value={draft.dispersion ?? 1}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                dispersion: Number(event.target.value),
-              }))
-            }
-          />
-        </Field>
-      </div>
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       <div className="mt-4 flex gap-2">
         <Button onClick={save}>{t("common.save")}</Button>

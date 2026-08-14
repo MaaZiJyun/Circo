@@ -55,7 +55,7 @@ export function TaskQuadrant({
         y: bubble.y,
       };
     }),
-    selectedFormulas.dispersion ?? 1,
+    1,
   )
     .map((item) => ({
       ...item,

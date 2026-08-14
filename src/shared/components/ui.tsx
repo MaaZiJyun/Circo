@@ -13,10 +13,12 @@ import { focusRing, IconButton } from "./controls";
 export {
   Button,
   Card,
+  Checkbox,
   Field,
   IconButton,
   Input,
   Select,
+  Switch,
   Textarea,
 } from "./controls";
 

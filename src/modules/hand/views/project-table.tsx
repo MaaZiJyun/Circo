@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { Badge } from "@/shared/components/ui";
+import { Badge, Checkbox } from "@/shared/components/ui";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectRecord } from "@/shared/model/entities";
@@ -38,8 +38,7 @@ export function ProjectTable({
           <tr>
             {selectionMode && (
               <th className="h-8 w-12 px-3 py-0">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label={t("hand.selectAll")}
                   checked={allSelected}
                   onChange={() =>
@@ -108,11 +107,10 @@ export function ProjectTable({
             >
               {selectionMode && (
                 <td className="px-3 py-3 align-top">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     aria-label={project.name}
                     checked={library.selectedIds.includes(project.id)}
-                    readOnly
+                    onChange={() => undefined}
                   />
                 </td>
               )}

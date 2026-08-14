@@ -75,9 +75,10 @@ export interface UserProfile {
 export interface MatrixFormulaSettings {
   urgency?: string;
   importance?: string;
-  x: string;
-  y: string;
-  size: string;
+  /** Legacy layout formulas kept for loading older snapshots; no longer editable. */
+  x?: string;
+  y?: string;
+  size?: string;
   dispersion?: number;
 }
 
@@ -141,7 +142,7 @@ function isProfile(value: unknown) {
       (profile.matrixFormulas !== null &&
         typeof profile.matrixFormulas === "object" &&
         [profile.matrixFormulas.x, profile.matrixFormulas.y, profile.matrixFormulas.size]
-          .every((formula) => typeof formula === "string" && formula.length <= 300) &&
+          .every((formula) => formula === undefined || (typeof formula === "string" && formula.length <= 300)) &&
         (profile.matrixFormulas.urgency === undefined ||
           (typeof profile.matrixFormulas.urgency === "string" &&
             profile.matrixFormulas.urgency.length <= 300)) &&

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button, Dialog, Field, Input } from "@/shared/components/ui";
+import { Button, Dialog, Field, Input, Switch } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { LibraryList, SourceRecord } from "@/shared/model/entities";
 import { parseTags } from "@/shared/model/tags";
@@ -197,11 +197,9 @@ export function EditLiteratureDialog({
         {field("tags", t("common.tags"))}
         {field("rating", t("find.rating"), "number")}
         <Field label={t("find.favorite")}>
-          <input
-            type="checkbox"
+          <Switch
             checked={favorite}
-            onChange={(event) => setFavorite(event.target.checked)}
-            className="size-5"
+            onChange={setFavorite}
           />
         </Field>
         <Field label={t("find.replaceFile")} hint={t("find.replaceFileHint")}>

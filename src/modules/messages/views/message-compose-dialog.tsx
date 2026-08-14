@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Dialog, Field, Input, Select, Textarea } from "@/shared/components/ui";
+import { Button, Checkbox, Dialog, Field, Input, Select, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageReferenceKind } from "@/shared/model/message";
 import type { MessageInput } from "../view-models/use-messages";
@@ -60,8 +60,10 @@ export function MessageComposeDialog({ references, initial, onClose, onSend }: {
         <Field label={t("messages.references")}>
           <div className="max-h-40 overflow-y-auto rounded-xl border border-zinc-200 p-2 dark:border-zinc-800">
             {references.map((item) => <label key={`${item.kind}-${item.id}`} className="flex gap-2 p-2 text-sm">
-              <input type="checkbox" checked={selected.some((value) => value.kind === item.kind && value.id === item.id)}
-                onChange={(e) => setSelected((values) => e.target.checked ? [...values, item] : values.filter((value) => value.kind !== item.kind || value.id !== item.id))} />
+              <Checkbox
+                checked={selected.some((value) => value.kind === item.kind && value.id === item.id)}
+                onChange={(checked) => setSelected((values) => checked ? [...values, item] : values.filter((value) => value.kind !== item.kind || value.id !== item.id))}
+              />
               <span className="text-zinc-500">{t(`messages.reference.${item.kind}`)}</span><span>{item.label}</span>
             </label>)}
           </div>

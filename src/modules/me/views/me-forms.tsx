@@ -14,6 +14,7 @@ import {
   Field,
   Input,
   Select,
+  Switch,
   Textarea,
 } from "@/shared/components/ui";
 
@@ -91,11 +92,10 @@ export function SessionDialog({
           </Field>
         </div>
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+          <Switch
             checked={input.effective}
-            onChange={(event) =>
-              setInput({ ...input, effective: event.target.checked })
+            onChange={(checked) =>
+              setInput({ ...input, effective: checked })
             }
           />
           {t("me.effective")}

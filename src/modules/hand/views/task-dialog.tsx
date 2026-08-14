@@ -5,7 +5,7 @@ import { TaskRecurrenceFields } from "@/shared/components/task-recurrence-fields
 import { TaskImportanceFields } from "@/shared/components/task-importance-fields";
 import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
 import { TaskEffortFields } from "@/shared/components/task-effort-fields";
-import { Button, Dialog, Field, Input, Textarea } from "@/shared/components/ui";
+import { Button, Dialog, Field, Input, Switch, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { addDays } from "@/shared/model/factories";
 import { normalizeTaskImportance, taskImportance } from "@/shared/model/task-importance";
@@ -109,11 +109,10 @@ export function TaskDialog({
           />
         </Field>
         <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
+          <Switch
             checked={input.milestone}
-            onChange={(event) =>
-              setInput({ ...input, milestone: event.target.checked })
+            onChange={(checked) =>
+              setInput({ ...input, milestone: checked })
             }
           />
           {t("hand.milestone")}

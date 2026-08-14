@@ -62,6 +62,64 @@ export function IconButton({
   );
 }
 
+export function Switch({
+  checked,
+  disabled = false,
+  onChange,
+  className = "",
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border p-0.5 transition-colors duration-200 ${focusRing} ${checked ? "border-green-500 bg-green-500" : "border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950"} ${className}`}
+      onClick={() => onChange(!checked)}
+    >
+      <span
+        aria-hidden="true"
+        className={`size-6 rounded-full shadow-sm transition-transform duration-200 ${checked ? "translate-x-5 bg-white" : "translate-x-0 bg-white dark:bg-zinc-400"}`}
+      />
+    </button>
+  );
+}
+
+export function Checkbox({
+  checked,
+  disabled = false,
+  onChange,
+  className = "",
+  "aria-label": ariaLabel,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+  className?: string;
+  "aria-label"?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      className={`inline-grid size-4 shrink-0 place-items-center rounded-full border border-zinc-700 bg-white transition-colors dark:border-white dark:bg-zinc-950 ${focusRing} disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      onClick={() => onChange(!checked)}
+    >
+      {checked && (
+        <span className="size-2 rounded-full bg-zinc-950 dark:bg-white" />
+      )}
+    </button>
+  );
+}
+
 export const Input = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement>

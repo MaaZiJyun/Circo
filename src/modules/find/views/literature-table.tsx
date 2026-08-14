@@ -6,7 +6,7 @@ import {
   FlagIcon as FlagSolidIcon,
   StarIcon as StarSolidIcon,
 } from "@heroicons/react/24/solid";
-import { IconButton } from "@/shared/components/ui";
+import { Checkbox, IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
 import type { useLibraryManagement } from "../view-models/use-library-management";
@@ -44,8 +44,7 @@ export function LiteratureTable({
           <tr>
             {selectionMode && (
               <th className="w-12 p-3">
-                <input
-                  type="checkbox"
+                <Checkbox
                   aria-label={t("find.selectAll")}
                   checked={allSelected}
                   onChange={() =>
@@ -128,11 +127,10 @@ export function LiteratureTable({
             >
               {selectionMode && (
                 <td className="p-3">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     aria-label={source.title}
                     checked={library.selectedIds.includes(source.id)}
-                    readOnly
+                    onChange={() => undefined}
                   />
                 </td>
               )}

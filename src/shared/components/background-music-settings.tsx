@@ -10,7 +10,7 @@ import { useI18n } from "@/shared/i18n/i18n-context";
 import type { BackgroundAudioTrack } from "@/shared/model/app-state";
 import { useStore } from "@/shared/view-models/store-context";
 import { SectionHeader } from "./page-elements";
-import { Button, Card, Field, Input } from "./ui";
+import { Button, Card, Field, Input, Switch } from "./ui";
 
 export function BackgroundMusicSettings() {
   const { t } = useI18n();
@@ -241,17 +241,15 @@ export function BackgroundMusicSettings() {
             {t("settings.backgroundMusicHint")}
           </span>
         </span>
-        <input
-          type="checkbox"
-          className="size-4"
+        <Switch
           checked={enabled}
           disabled={!tracks.length}
-          onChange={(event) =>
+          onChange={(checked) =>
             mutate((current) => ({
               ...current,
               profile: {
                 ...current.profile,
-                backgroundMusicEnabled: event.target.checked,
+                backgroundMusicEnabled: checked,
               },
             }))
           }
