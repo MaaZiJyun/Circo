@@ -8,7 +8,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
-import { Button, Dialog } from "@/shared/components/ui";
+import { Badge, Button, Dialog } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Attachment, ProjectRecord } from "@/shared/model/entities";
 import { MarkdownPreview } from "@/modules/find/views/markdown-preview";
@@ -53,16 +53,16 @@ export function ProjectAttachmentTable({ attachments, projects, onDuplicate, onM
           <Button variant="danger" onClick={() => { if (window.confirm(t("common.confirmDelete"))) { onDelete(selectedIds); setSelectedIds([]); } }}>{t("common.delete")}</Button>
         </SelectionToolbar>
       )}
-      <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-800">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-zinc-50 text-xs text-zinc-500 dark:bg-zinc-900/70">
-            <tr><th className="w-10 px-4 py-3" /><th className="px-4 py-3">{t("common.title")}</th><th className="px-4 py-3">{t("common.type")}</th><th className="px-4 py-3">{t("hand.fileSize")}</th><th className="px-4 py-3">{t("common.date")}</th><th className="px-4 py-3">{t("common.details")}</th></tr>
+      <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead className="border-b border-zinc-200 bg-zinc-50/80 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/70">
+            <tr><th className="w-14 px-4 py-3" /><th className="px-4 py-3">{t("common.title")}</th><th className="px-4 py-3">{t("common.type")}</th><th className="px-4 py-3">{t("hand.fileSize")}</th><th className="px-4 py-3">{t("common.date")}</th><th className="px-4 py-3">{t("common.details")}</th></tr>
           </thead>
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
             {attachments.map((item) => (
               <tr
                 key={item.id}
-                className={`cursor-pointer select-none hover:bg-zinc-50 dark:hover:bg-zinc-900/60 ${selectedIds.includes(item.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
+                className={`cursor-pointer select-none transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/60 ${selectedIds.includes(item.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
                 onClick={() => {
                   if (longPressed.current) { longPressed.current = false; return; }
                   if (selectedIds.length) toggle(item.id);
@@ -74,9 +74,9 @@ export function ProjectAttachmentTable({ attachments, projects, onDuplicate, onM
                 onPointerCancel={() => { if (longPress.current) clearTimeout(longPress.current); }}
                 onPointerLeave={() => { if (longPress.current) clearTimeout(longPress.current); }}
               >
-                <td className="px-4 py-3"><DocumentIcon className="size-5 text-zinc-400" /></td>
-                <td className="max-w-72 px-4 py-3"><p className="truncate font-medium">{item.name}</p><p className="truncate text-xs text-zinc-400">{item.filePath}</p></td>
-                <td className="px-4 py-3 text-zinc-500">{fileType(item)}</td>
+                <td className="px-4 py-4"><span className="grid size-9 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-900"><DocumentIcon className="size-5" /></span></td>
+                <td className="max-w-72 px-4 py-4"><p className="truncate font-semibold text-zinc-900 dark:text-zinc-100">{item.name}</p><p className="mt-1 truncate text-xs text-zinc-400">{item.filePath}</p></td>
+                <td className="px-4 py-4"><Badge>{fileType(item)}</Badge></td>
                 <td className="whitespace-nowrap px-4 py-3 text-zinc-500">{formatNumber(item.size / 1024, { maximumFractionDigits: 1 })} KB</td>
                 <td className="whitespace-nowrap px-4 py-3 text-zinc-500">{formatDate(item.createdAt)}</td>
                 <td className="max-w-64 truncate px-4 py-3 text-zinc-500">{item.description || "—"}</td>

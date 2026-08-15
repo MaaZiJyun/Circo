@@ -32,9 +32,9 @@ export function ProjectTable({
     library.projects.length > 0 &&
     library.projects.every((item) => library.selectedIds.includes(item.id));
   return (
-    <div className="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
+    <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
       <table className="w-full min-w-[960px] text-left text-sm">
-        <thead className="bg-zinc-50 text-xs text-zinc-500 dark:bg-zinc-900">
+        <thead className="border-b border-zinc-200 bg-zinc-50/80 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
           <tr>
             {selectionMode && (
               <th className="h-8 w-12 px-3 py-0">
@@ -67,7 +67,7 @@ export function ProjectTable({
             <tr
               key={project.id}
               draggable
-              className={`${library.selectedIds.includes(project.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""} max-h-[120px] cursor-grab select-none hover:bg-zinc-50 dark:hover:bg-zinc-900/60`}
+              className={`${library.selectedIds.includes(project.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""} max-h-[120px] cursor-grab select-none transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/60`}
               onDragStart={(event) => {
                 cancelPress();
                 const ids = library.selectedIds.includes(project.id)
