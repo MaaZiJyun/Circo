@@ -18,7 +18,7 @@ export function MessageSidebar({ mailbox, counts, onChange, onCompose }: {
 }) {
   const { t } = useI18n();
   return (
-    <aside className="border-b border-zinc-200 p-4 dark:border-zinc-800 md:min-h-[640px] md:border-b-0 md:border-r">
+    <aside className="border-b border-zinc-200 p-4 dark:border-zinc-800 h-full md:border-b-0 md:border-r">
       <Button className="w-full justify-center" onClick={onCompose}>
         <PencilSquareIcon className="size-4" />{t("messages.compose")}
       </Button>

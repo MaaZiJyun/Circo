@@ -23,7 +23,7 @@ export function TableLibraryWorkspace({
 }) {
   const selecting = Boolean(selectionLabel && onCancelSelection);
   return (
-    <Card className="min-w-0">
+    <Card className="flex h-full min-h-0 min-w-0 flex-col">
       <SectionHeader
         title={title}
         controls={!selecting ? controls : undefined}
@@ -34,7 +34,7 @@ export function TableLibraryWorkspace({
           {selectionActions}
         </SelectionToolbar>
       )}
-      {children}
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
     </Card>
   );
 }

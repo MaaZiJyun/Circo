@@ -286,7 +286,7 @@ export function AppShell() {
           </span>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="mx-auto max-w-7xl p-4 sm:p-7 lg:p-10">
+          <div className="h-full mx-auto max-w-7xl p-4 sm:p-7 lg:p-10">
             {views[section]}
           </div>
         </main>

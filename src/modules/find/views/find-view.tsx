@@ -88,8 +88,8 @@ export function FindView() {
       />
     );
   return (
-    <div className="space-y-6">
-      <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
+    <div className="h-full space-y-6">
+      <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 xl:grid-cols-[240px_minmax(0,1fr)] xl:grid-rows-1">
         <div className="space-y-3">
           <Tabs
             value={mode}

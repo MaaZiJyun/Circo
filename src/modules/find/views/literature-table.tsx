@@ -38,7 +38,7 @@ export function LiteratureTable({
     library.sources.length > 0 &&
     library.sources.every((item) => library.selectedIds.includes(item.id));
   return (
-    <div className="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
+    <div className="h-full min-h-0 flex-1 overflow-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
       <table className="w-full min-w-[1100px] text-left text-sm">
         <thead className="bg-zinc-50 text-xs text-zinc-500 dark:bg-zinc-900">
           <tr>
