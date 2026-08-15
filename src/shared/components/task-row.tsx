@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { useState } from "react";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { TaskRecord } from "@/shared/model/entities";
@@ -18,6 +19,7 @@ export function TaskRow({
   source,
   milestone,
   deadlineInline = false,
+  toggleDisabled = false,
   draggable = false,
   onToggle,
   onContextMenu,
@@ -35,6 +37,7 @@ export function TaskRow({
   source?: string;
   milestone?: boolean;
   deadlineInline?: boolean;
+  toggleDisabled?: boolean;
   draggable?: boolean;
   onToggle: () => void;
   onContextMenu?: React.MouseEventHandler<HTMLDivElement>;
@@ -43,17 +46,25 @@ export function TaskRow({
 }) {
   const { t, formatDate, locale } = useI18n();
   const completed = status === "done";
+  const [expandedOverride, setExpandedOverride] = useState<boolean | null>(null);
+  const expanded = expandedOverride ?? !completed;
+
   return (
     <div
       draggable={draggable}
-      className={`flex items-start gap-3 py-3 ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
+      className={`flex items-start gap-3 py-3 ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+      onClick={() => setExpandedOverride(!expanded)}
       onContextMenu={onContextMenu}
       onDragStart={onDragStart}
     >
       <button
         className="mt-0.5 shrink-0 rounded-full"
         aria-label={t(statusLabels[status])}
-        onClick={onToggle}
+        disabled={toggleDisabled}
+        onClick={(event) => {
+          event.stopPropagation();
+          onToggle();
+        }}
       >
         <CheckCircleIcon
           className={`size-5 ${completed ? "text-green-500" : status === "overdue" ? "text-red-500" : status === "doing" ? "text-blue-500" : "text-zinc-300 dark:text-zinc-700"}`}
@@ -80,7 +91,9 @@ export function TaskRow({
               {title}
             </p>
           )}
-          {milestone && <Badge tone="warning">{t("hand.milestone")}</Badge>}
+          {expanded && milestone && (
+            <Badge tone="warning">{t("hand.milestone")}</Badge>
+          )}
           <Badge
             tone={
               completed
@@ -95,7 +108,7 @@ export function TaskRow({
             {t(statusLabels[status])}
           </Badge>
         </div>
-        {status !== "done" && (
+        {expanded && (
           <>
             {source && <p className="mt-1 text-xs text-zinc-500">{source}</p>}
             <p className="mt-1 text-xs text-zinc-500">

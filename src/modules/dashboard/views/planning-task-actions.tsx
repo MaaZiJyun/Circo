@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   ContextMenu,
   ContextMenuItem,
@@ -21,11 +21,13 @@ export function PlanningTaskActions({
   menu,
   onClose,
   onUpdate,
+  onDuplicate,
   onRemove,
 }: {
   menu: PlanningTaskMenu;
   onClose: () => void;
   onUpdate: (task: TaskRecord, input: TaskInput) => void;
+  onDuplicate: (task: TaskRecord) => void;
   onRemove: (task: TaskRecord) => void;
 }) {
   const { t } = useI18n();
@@ -42,6 +44,15 @@ export function PlanningTaskActions({
           >
             <PencilSquareIcon className="size-4" />
             {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            onClick={() => {
+              onDuplicate(menu.task);
+              onClose();
+            }}
+          >
+            <DocumentDuplicateIcon className="size-4" />
+            {t("common.duplicate")}
           </ContextMenuItem>
           <ContextMenuItem
             danger

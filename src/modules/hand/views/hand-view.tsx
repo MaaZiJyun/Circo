@@ -2,6 +2,7 @@
 import { useState } from "react";
 import {
   ArrowLeftIcon,
+  DocumentDuplicateIcon,
   FolderOpenIcon,
   PencilSquareIcon,
   PlusIcon,
@@ -282,6 +283,15 @@ export function HandView() {
           >
             <PencilSquareIcon className="size-4" />
             {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            onClick={() => {
+              vm.duplicateProject(menu.project);
+              setMenu(null);
+            }}
+          >
+            <DocumentDuplicateIcon className="size-4" />
+            {t("common.duplicate")}
           </ContextMenuItem>
           <ContextMenuItem danger onClick={() => removeProject(menu.project)}>
             <TrashIcon className="size-4" />

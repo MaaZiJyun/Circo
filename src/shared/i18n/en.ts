@@ -25,6 +25,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "common.delete": "Move to trash",
   "common.restore": "Restore",
   "common.edit": "Edit",
+  "common.duplicate": "Duplicate",
   "common.close": "Close",
   "common.collapseSidebar": "Collapse sidebar",
   "common.expandSidebar": "Expand sidebar",

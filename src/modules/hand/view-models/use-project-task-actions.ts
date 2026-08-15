@@ -28,6 +28,9 @@ export type TaskInput = Pick<
   | "recurrence"
 >;
 
+const isLockedCompletedPastTask = (task: TaskRecord) =>
+  task.status === "done" && task.dueDate.slice(0, 10) < today();
+
 export function useProjectTaskActions(selected?: ProjectRecord) {
   const { mutate } = useStore();
   const addTask = (input: TaskInput) => {
@@ -47,7 +50,29 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     };
     mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
   };
+  const duplicateTask = (task: TaskRecord) => {
+    if (!selected) return;
+    addTask({
+      title: task.title,
+      description: task.description,
+      dueDate: "",
+      estimatedMinutes: task.estimatedMinutes,
+      expectedOutput: task.expectedOutput,
+      milestone: task.milestone,
+      importance: task.importance,
+      impact: task.impact,
+      goal: task.goal,
+      risk: task.risk,
+      value: task.value,
+      delayLoss: task.delayLoss,
+      dependencyIds: task.dependencyIds,
+      complexity: task.complexity,
+      uncertainty: task.uncertainty,
+      recurrence: task.recurrence,
+    });
+  };
   const advanceTask = (task: TaskRecord) => {
+    if (isLockedCompletedPastTask(task)) return;
     const status: TaskRecord["status"] =
       task.status === "todo"
         ? "doing"
@@ -95,7 +120,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     mutate((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
-        item.id === id
+        item.id === id && !isLockedCompletedPastTask(item)
           ? {
               ...item,
               ...input,
@@ -111,10 +136,15 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     mutate((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
-        item.id === id ? { ...item, projectId, updatedAt: stamp } : item,
+        item.id === id && !isLockedCompletedPastTask(item)
+          ? { ...item, projectId, updatedAt: stamp }
+          : item,
       ),
       dailyTasks: current.dailyTasks.map((item) =>
-        item.sourceTaskId === id
+        item.sourceTaskId === id &&
+        !current.tasks.some(
+          (task) => task.id === id && isLockedCompletedPastTask(task),
+        )
           ? { ...item, projectId, updatedAt: stamp }
           : item,
       ),
@@ -134,5 +164,5 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       ),
     }));
   };
-  return { addTask, advanceTask, updateTask, moveTask, deleteTask };
+  return { addTask, duplicateTask, advanceTask, updateTask, moveTask, deleteTask };
 }

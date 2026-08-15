@@ -65,7 +65,6 @@ export function MatrixFormulaSettings() {
   return (
     <Card>
       <SectionHeader title={t("settings.matrixFormulas")} />
-      <Alert>{t("settings.matrixFormulaHint")}</Alert>
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <FormulaField
           label={t("settings.urgencyFormula")}
@@ -78,35 +77,6 @@ export function MatrixFormulaSettings() {
           onChange={(value) => update("importance", value)}
         />
       </div>
-      <div className="mt-4 flex items-center gap-2 text-xs leading-5 text-zinc-500">
-        <span>
-          {t("settings.taskFormulaVariables")}: {taskFormulaVariables.join(", ")}
-        </span>
-        <button
-          type="button"
-          className="grid size-7 shrink-0 place-items-center rounded-full text-amber-600 transition hover:bg-amber-50 hover:text-amber-700 dark:hover:bg-amber-950/40"
-          aria-label={t("settings.matrixVariableHelp")}
-          title={t("settings.matrixVariableHelp")}
-          aria-expanded={showHelp}
-          onClick={() => setShowHelp((current) => !current)}
-        >
-          <ExclamationCircleIcon className="size-5" />
-        </button>
-      </div>
-      {showHelp && (
-        <dl className="mt-3 grid gap-3 rounded-xl border border-amber-200 bg-amber-50/70 p-4 text-sm dark:border-amber-900 dark:bg-amber-950/20 sm:grid-cols-2">
-          {taskVariableHelp.map((item) => (
-            <div key={item.name}>
-              <dt className="font-mono text-xs font-semibold text-zinc-900 dark:text-zinc-100">
-                {item.name}
-              </dt>
-              <dd className="mt-1 text-xs leading-5 text-zinc-600 dark:text-zinc-400">
-                {t(item.label)}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      )}
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
       <div className="mt-4 flex gap-2">
         <Button onClick={save}>{t("common.save")}</Button>

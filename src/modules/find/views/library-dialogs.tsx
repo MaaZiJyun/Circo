@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { Button, Dialog, Field, Input, Switch } from "@/shared/components/ui";
+import { ColorPalette } from "@/shared/components/color-palette";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { LibraryList, SourceRecord } from "@/shared/model/entities";
 import { parseTags } from "@/shared/model/tags";
@@ -58,11 +59,7 @@ export function ListDialog({
           />
         </Field>
         <Field label={t("find.listColor")}>
-          <Input
-            type="color"
-            value={color}
-            onChange={(event) => setColor(event.target.value)}
-          />
+          <ColorPalette value={color} onChange={setColor} />
         </Field>
         <Button onClick={submit}>{t("common.save")}</Button>
       </div>

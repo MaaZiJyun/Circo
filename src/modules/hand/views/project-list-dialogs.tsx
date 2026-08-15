@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button, Dialog, Field, Input } from "@/shared/components/ui";
+import { ColorPalette } from "@/shared/components/color-palette";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectList } from "@/shared/model/entities";
 import type { ProjectListInput } from "../view-models/use-project-library";
@@ -40,11 +41,7 @@ export function ProjectListDialog({
           />
         </Field>
         <Field label={t("hand.listColor")}>
-          <Input
-            type="color"
-            value={color}
-            onChange={(event) => setColor(event.target.value)}
-          />
+          <ColorPalette value={color} onChange={setColor} />
         </Field>
         <Button
           disabled={!name.trim()}

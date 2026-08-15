@@ -37,7 +37,7 @@ export function useDailyTaskCache() {
     const projects = activeItems(state.projects);
     const tasks = activeItems(state.tasks);
     const taskById = new Map(tasks.map((task) => [task.id, task]));
-    const dailyTasks = activeItems(state.dailyTasks)
+    const dailyTaskItems = activeItems(state.dailyTasks)
       .filter((item) => item.date === date && !isDailyCacheCleared(state, date))
       .map((item) => {
         const source = item.sourceTaskId
@@ -65,8 +65,23 @@ export function useDailyTaskCache() {
           ...normalizeTaskFactors(source),
           projectId: source.projectId,
         };
-      })
-      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+      });
+    const currentTime = Date.parse(date);
+    const dailyTasks = dailyTaskItems.slice().sort((a, b) => {
+      const priorityA = taskCoordinatesFromFormula(
+        a,
+        state.profile.matrixFormulas,
+        currentTime,
+        dailyTaskItems,
+      ).priority;
+      const priorityB = taskCoordinatesFromFormula(
+        b,
+        state.profile.matrixFormulas,
+        currentTime,
+        dailyTaskItems,
+      ).priority;
+      return priorityB - priorityA || a.createdAt.localeCompare(b.createdAt);
+    });
     return { projects, tasks, dailyTasks, profile: state.profile, metrics: calculateMetrics(state) };
   }, [date, state]);
   const add = (

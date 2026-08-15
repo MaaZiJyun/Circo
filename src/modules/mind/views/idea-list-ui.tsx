@@ -14,6 +14,7 @@ import {
   IconButton,
   Input,
 } from "@/shared/components/ui";
+import { ColorPalette } from "@/shared/components/color-palette";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { IdeaList } from "@/shared/model/entities";
 import type {
@@ -193,11 +194,7 @@ export function IdeaListDialog({
           />
         </Field>
         <Field label={t("mind.listColor")}>
-          <Input
-            type="color"
-            value={color}
-            onChange={(event) => setColor(event.target.value)}
-          />
+          <ColorPalette value={color} onChange={setColor} />
         </Field>
         <Button
           disabled={!name.trim()}

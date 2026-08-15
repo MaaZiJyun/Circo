@@ -28,6 +28,7 @@ export const zh = {
   "common.delete": "移至回收站",
   "common.restore": "恢复",
   "common.edit": "编辑",
+  "common.duplicate": "复制",
   "common.close": "关闭",
   "common.collapseSidebar": "收起侧边栏",
   "common.expandSidebar": "展开侧边栏",

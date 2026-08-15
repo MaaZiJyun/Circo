@@ -106,6 +106,21 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         },
       ]);
   };
+  const duplicateIndependent = (task: TaskRecord) => {
+    const stamp = now();
+    const duplicate: TaskRecord = {
+      ...task,
+      id: createId("task"),
+      dueDate: "",
+      status: "todo",
+      actualMinutes: 0,
+      completedAt: undefined,
+      createdAt: stamp,
+      updatedAt: stamp,
+      deletedAt: undefined,
+    };
+    mutate((current) => ({ ...current, tasks: [...current.tasks, duplicate] }));
+  };
   const removeIndependent = (task: TaskRecord) => {
     const stamp = now();
     mutate((current) => ({
@@ -253,6 +268,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         menu={taskMenu}
         onClose={() => setTaskMenu(null)}
         onUpdate={updateIndependent}
+        onDuplicate={duplicateIndependent}
         onRemove={removeIndependent}
       />
     </div>

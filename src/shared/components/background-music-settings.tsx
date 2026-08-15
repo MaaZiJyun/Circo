@@ -176,6 +176,29 @@ export function BackgroundMusicSettings() {
         multiple
         onChange={(event) => void upload(event.target.files)}
       />
+      <label className="flex min-h-11 mt-4 items-center justify-between gap-4 dark:border-zinc-800">
+        <span>
+          <span className="block text-sm font-medium">
+            {t("settings.backgroundMusicPlayback")}
+          </span>
+          <span className="block text-xs text-zinc-500">
+            {t("settings.backgroundMusicHint")}
+          </span>
+        </span>
+        <Switch
+          checked={enabled}
+          disabled={!tracks.length}
+          onChange={(checked) =>
+            mutate((current) => ({
+              ...current,
+              profile: {
+                ...current.profile,
+                backgroundMusicEnabled: checked,
+              },
+            }))
+          }
+        />
+      </label>
       <div className="mt-4">
         <Field label={t("settings.backgroundMusicDirectory")}>
           <div className="flex flex-wrap gap-2">
@@ -205,7 +228,7 @@ export function BackgroundMusicSettings() {
           {t("settings.backgroundMusicDirectoryHint")}
         </p>
       </div>
-      <div className="mt-4 divide-y divide-zinc-200 dark:divide-zinc-800">
+      {/* <div className="mt-4 divide-y divide-zinc-200 dark:divide-zinc-800">
         {tracks.map((track) => (
           <div
             key={track.token}
@@ -230,31 +253,9 @@ export function BackgroundMusicSettings() {
             {t("settings.musicEmpty")}
           </p>
         )}
-      </div>
+      </div> */}
 
-      <label className="flex min-h-11 mt-4 items-center justify-between gap-4 dark:border-zinc-800">
-        <span>
-          <span className="block text-sm font-medium">
-            {t("settings.backgroundMusicPlayback")}
-          </span>
-          <span className="block text-xs text-zinc-500">
-            {t("settings.backgroundMusicHint")}
-          </span>
-        </span>
-        <Switch
-          checked={enabled}
-          disabled={!tracks.length}
-          onChange={(checked) =>
-            mutate((current) => ({
-              ...current,
-              profile: {
-                ...current.profile,
-                backgroundMusicEnabled: checked,
-              },
-            }))
-          }
-        />
-      </label>
+      
       {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
     </Card>
   );

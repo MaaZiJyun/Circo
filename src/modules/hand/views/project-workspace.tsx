@@ -33,6 +33,7 @@ import { projectLogTitle } from "../model/project-log";
 import type { LogInput } from "../view-models/use-hand-view-model";
 import { ProjectLogEditor } from "./project-log-editor";
 import { ProjectLogViewer } from "./project-log-viewer";
+import { isLockedCompletedPastTask } from "./project-task-actions";
 
 type DialogName = "task" | "log" | "attachment" | null;
 type LogMenu = { log: ProjectLog; position: MenuPosition } | null;
@@ -107,6 +108,7 @@ export function ProjectWorkspace({
                   actualMinutes={task.actualMinutes}
                   expectedOutput={task.expectedOutput}
                   milestone={task.milestone}
+                  toggleDisabled={isLockedCompletedPastTask(task)}
                   onToggle={() => vm.advanceTask(task)}
                   deadlineInline
                   onContextMenu={(event) => {

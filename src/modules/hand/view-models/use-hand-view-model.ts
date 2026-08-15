@@ -103,6 +103,20 @@ export function useHandViewModel() {
     }));
     setSelectedId(project.id);
   };
+  const duplicateProject = (project: ProjectRecord) => {
+    const stamp = now();
+    const duplicate: ProjectRecord = {
+      ...project,
+      id: createId("project"),
+      createdAt: stamp,
+      updatedAt: stamp,
+      deletedAt: undefined,
+    };
+    mutate((current) => ({
+      ...current,
+      projects: [...current.projects, duplicate],
+    }));
+  };
 
   const updateProject = (change: Partial<ProjectRecord>) => {
     if (!selected) return;
@@ -267,6 +281,7 @@ export function useHandViewModel() {
     uploadError,
     logError,
     addProject,
+    duplicateProject,
     updateProject,
     updateProjectById,
     ...taskActions,
