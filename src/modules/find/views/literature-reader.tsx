@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   ArrowLeftIcon,
+  ArrowUturnLeftIcon,
   CheckIcon,
   ChevronDownIcon,
   EyeIcon,
@@ -110,7 +111,8 @@ export function LiteratureReader({
       <header className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3 md:w-2/3">
           <Button variant="ghost" onClick={onBack}>
-            <ArrowLeftIcon className="size-4" />
+            <ArrowUturnLeftIcon className="size-4" />
+            <span className="hidden md:inline">{t("hand.back")}</span>
           </Button>
           <div className="min-w-0">
             <h1 className="truncate text-xl font-semibold">{source.title}</h1>

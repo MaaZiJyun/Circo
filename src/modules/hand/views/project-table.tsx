@@ -54,6 +54,7 @@ export function ProjectTable({
             <th className="h-8 px-3 py-0">
               {t("common.title")}
             </th>
+            <th className="h-8 px-3 py-0">{t("hand.introduction")}</th>
             <th className="h-8 px-3 py-0">{t("common.status")}</th>
             <th className="h-8 px-3 py-0">{t("hand.projectScore")}</th>
             <th className="h-8 px-3 py-0">{t("hand.startDate")}</th>
@@ -119,6 +120,9 @@ export function ProjectTable({
                   {project.name}
                 </div>
               </td>
+              <td className="max-w-[30%] min-w-[300px] px-3 py-3 align-top text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+                {truncateIntroduction(project.purpose)}
+              </td>
               <td className="px-3 py-3 align-top">
                 <Badge
                   tone={project.status === "completed" ? "success" : "info"}
@@ -149,4 +153,9 @@ export function ProjectTable({
       </table>
     </div>
   );
+}
+
+function truncateIntroduction(value: string) {
+  const text = value.trim();
+  return text.length > 50 ? `${text.slice(0, 50)}...` : text || "—";
 }

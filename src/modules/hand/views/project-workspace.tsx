@@ -63,7 +63,7 @@ export function ProjectWorkspace({
   return (
     <>
       {section === "overview" && (
-        <Card>
+        <Card className="shadow-sm">
           <SectionHeader
             title={t("hand.projectInformation")}
             action={
@@ -139,7 +139,7 @@ export function ProjectWorkspace({
       )}
       {section === "plan" && (
         <div className="grid gap-5">
-          <Card>
+          <Card className="shadow-sm">
             <SectionHeader
               title={t("hand.timeline")}
               action={
@@ -183,7 +183,7 @@ export function ProjectWorkspace({
         </div>
       )}
       {section === "logs" && (
-        <Card>
+        <Card className="shadow-sm">
           <SectionHeader
             title={t("hand.logs")}
             action={

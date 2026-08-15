@@ -43,7 +43,8 @@ export function HandView() {
   const vm = useHandViewModel();
   const library = useProjectLibrary();
   const [viewing, setViewing] = useState(false);
-  const [projectSection, setProjectSection] = useState<ProjectSection>("overview");
+  const [projectSection, setProjectSection] =
+    useState<ProjectSection>("overview");
   const [dialog, setDialog] = useState<DetailDialog>(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ProjectRecord | null>(null);
@@ -65,14 +66,16 @@ export function HandView() {
     if (window.confirm(t("common.confirmDelete"))) vm.deleteProject(project.id);
   };
   return (
-    <div className="space-y-8">
+    <div className="h-full space-y-6">
       {!viewing ? (
-        <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-          <ProjectSidebar
-            library={library}
-            onCreate={() => setListDialog("create")}
-            onEdit={setEditingList}
-          />
+        <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 xl:grid-cols-[240px_minmax(0,1fr)] xl:grid-rows-1">
+          <div className="space-y-3">
+            <ProjectSidebar
+              library={library}
+              onCreate={() => setListDialog("create")}
+              onEdit={setEditingList}
+            />
+          </div>
           <TableLibraryWorkspace
             title={
               library.selectedList?.system
@@ -169,11 +172,26 @@ export function HandView() {
         </div>
       ) : vm.selected ? (
         <>
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <Button variant="ghost" onClick={() => setViewing(false)}>
-              <ArrowUturnLeftIcon className="size-4" />
-              {t("hand.backToProjects")}
-            </Button>
+          <div className="flex flex-wrap items-center justify-between gap-3 p-2">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                className="rounded-xl"
+                onClick={() => setViewing(false)}
+              >
+                <ArrowUturnLeftIcon className="size-4" />
+                {t("hand.back")}
+              </Button>
+
+              <div className="min-w-0">
+                <h1 className="truncate text-xl font-semibold">
+                  {vm.selected.name}
+                </h1>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {vm.selected.status.toUpperCase()}
+                </p>
+              </div>
+            </div>
             <Tabs
               value={projectSection}
               onChange={setProjectSection}
