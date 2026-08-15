@@ -37,18 +37,20 @@ import { ProjectAttachmentTable } from "./project-attachment-table";
 
 type DialogName = "task" | "log" | "attachment" | null;
 type LogMenu = { log: ProjectLog; position: MenuPosition } | null;
-type ProjectSection = "overview" | "plan" | "logs" | "attachments";
+export type ProjectSection = "overview" | "plan" | "logs" | "attachments";
 
 export function ProjectWorkspace({
   vm,
   openDialog,
   onOpenTaskMenu,
   onEditProject,
+  section,
 }: {
   vm: ReturnType<typeof useHandViewModel>;
   openDialog: (dialog: DialogName) => void;
   onOpenTaskMenu: (task: TaskRecord, position: MenuPosition) => void;
   onEditProject: () => void;
+  section: ProjectSection;
 }) {
   const { t, formatDate } = useI18n();
   const [logPeriod, setLogPeriod] = useState<"day" | "week" | "month" | "year">(
@@ -57,20 +59,9 @@ export function ProjectWorkspace({
   const [openedLog, setOpenedLog] = useState<ProjectLog | null>(null);
   const [logMenu, setLogMenu] = useState<LogMenu>(null);
   const [editingLog, setEditingLog] = useState<ProjectLog | null>(null);
-  const [section, setSection] = useState<ProjectSection>("overview");
   if (!vm.selected) return null;
   return (
     <>
-      <Tabs
-        value={section}
-        onChange={setSection}
-        items={[
-          { value: "overview", label: t("hand.projectOverview") },
-          { value: "plan", label: t("hand.timeline") },
-          { value: "logs", label: t("hand.logs") },
-          { value: "attachments", label: t("hand.attachments") },
-        ]}
-      />
       {section === "overview" && (
         <Card>
           <SectionHeader

@@ -59,12 +59,12 @@ export function ProjectTaskActions({
         </ContextMenu>
       )}
       {editing && (
-        <TaskDialog key={editing.id} open edit taskId={editing.id} initial={taskInput(editing)}
+        <TaskDialog key={`edit-task-${editing.id}`} open edit taskId={editing.id} initial={taskInput(editing)}
           onClose={() => setEditing(null)}
           onSave={(input) => vm.updateTask(editing.id, input)} />
       )}
       {moving && (
-        <TaskMoveDialog key={moving.id} task={moving} projects={vm.projects}
+        <TaskMoveDialog key={`move-task-${moving.id}`} task={moving} projects={vm.projects}
           onClose={() => setMoving(null)}
           onMove={(projectId) => vm.moveTask(moving.id, projectId)} />
       )}

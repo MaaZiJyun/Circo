@@ -2,6 +2,7 @@
 import { useState } from "react";
 import {
   ArrowLeftIcon,
+  ArrowUturnLeftIcon,
   DocumentDuplicateIcon,
   FolderOpenIcon,
   PencilSquareIcon,
@@ -15,7 +16,7 @@ import {
 } from "@/modules/find/views/context-menu";
 import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
-import { Button, EmptyState } from "@/shared/components/ui";
+import { Button, EmptyState, Tabs } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectList, ProjectRecord } from "@/shared/model/entities";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
@@ -32,7 +33,7 @@ import {
 } from "./project-list-dialogs";
 import { ProjectSidebar } from "./project-sidebar";
 import { ProjectTable } from "./project-table";
-import { ProjectWorkspace } from "./project-workspace";
+import { ProjectWorkspace, type ProjectSection } from "./project-workspace";
 import { projectInputFromRecord } from "./project-record-input";
 import { ProjectTaskActions, type TaskMenu } from "./project-task-actions";
 type DetailDialog = "task" | "log" | "attachment" | null;
@@ -42,6 +43,7 @@ export function HandView() {
   const vm = useHandViewModel();
   const library = useProjectLibrary();
   const [viewing, setViewing] = useState(false);
+  const [projectSection, setProjectSection] = useState<ProjectSection>("overview");
   const [dialog, setDialog] = useState<DetailDialog>(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ProjectRecord | null>(null);
@@ -55,6 +57,7 @@ export function HandView() {
   const sortAscending = library.sortDirection === "ascending";
   const openProject = (project: ProjectRecord) => {
     vm.setSelectedId(project.id);
+    setProjectSection("overview");
     setViewing(true);
   };
   const removeProject = (project: ProjectRecord) => {
@@ -168,9 +171,19 @@ export function HandView() {
         <>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <Button variant="ghost" onClick={() => setViewing(false)}>
-              <ArrowLeftIcon className="size-4" />
+              <ArrowUturnLeftIcon className="size-4" />
               {t("hand.backToProjects")}
             </Button>
+            <Tabs
+              value={projectSection}
+              onChange={setProjectSection}
+              items={[
+                { value: "overview", label: t("hand.projectOverview") },
+                { value: "plan", label: t("hand.timeline") },
+                { value: "logs", label: t("hand.logs") },
+                { value: "attachments", label: t("hand.attachments") },
+              ]}
+            />
           </div>
           <ProjectWorkspace
             vm={vm}
@@ -179,6 +192,7 @@ export function HandView() {
             onEditProject={() => {
               if (vm.selected) setEditing(vm.selected);
             }}
+            section={projectSection}
           />
         </>
       ) : null}
@@ -192,7 +206,7 @@ export function HandView() {
       )}
       {editing && (
         <ProjectDialog
-          key={editing.id}
+          key={`edit-project-${editing.id}`}
           open
           edit
           initial={projectInputFromRecord(editing)}
@@ -222,7 +236,7 @@ export function HandView() {
         />
       )}
       <TaskDialog
-        key={vm.selected?.id ?? "task"}
+        key={`new-task-${vm.selected?.id ?? "none"}`}
         open={dialog === "task"}
         defaultImportance={vm.selected?.score ?? 50}
         onClose={() => setDialog(null)}

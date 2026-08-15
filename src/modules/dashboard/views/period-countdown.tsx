@@ -99,9 +99,11 @@ export function PeriodCountdown() {
   return (
     <>
       <SectionHeader title={t("dashboard.countdown")} />
-      <Tabs value={scale} onChange={setScale} items={scales.map((item) => ({
-        value: item, label: t(`dashboard.countdown.${item}`),
-      }))} />
+      <div className="flex justify-center">
+        <Tabs value={scale} onChange={setScale} items={scales.map((item) => ({
+          value: item, label: t(`dashboard.countdown.${item}`),
+        }))} />
+      </div>
       <div className="grid min-h-80 place-items-center">
         <div className="relative size-72">
           <svg className="absolute inset-8 size-56" viewBox="0 0 192 192" aria-hidden="true">
