@@ -12,7 +12,9 @@ import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
 import { dailyTaskStatusAt, isOverdue } from "@/shared/model/task-status";
 import { useStore } from "@/shared/view-models/store-context";
 import { taskCoordinatesFromFormula } from "../model/task-coordinate-formula";
+import { setTaskParents } from "@/shared/model/task-hierarchy";
 import type { DailyTaskInput } from "../model/daily-task-input";
+import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
 export function useDailyTaskCache() {
   const { state, mutate, softDelete } = useStore();
   const [date, setDate] = useState(today());
@@ -184,6 +186,29 @@ export function useDailyTaskCache() {
       dailyTasks: [...current.dailyTasks, dailyTask],
     }));
   };
+  const addSubtask = (parent: TaskRecord, input: TaskInput) => {
+    const stamp = now();
+    const task: TaskRecord = {
+      id: createId("task"),
+      projectId: parent.projectId,
+      parentId: parent.id,
+      ...input,
+      importance: taskImportance(input),
+      priority: priorityFromImportance(taskImportance(input)),
+      status: "todo",
+      actualMinutes: 0,
+      completedAt: undefined,
+      createdAt: stamp,
+      updatedAt: stamp,
+    };
+    mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
+  };
+  const setTaskParent = (ids: string[], parentId: string | null) => {
+    mutate((current) => ({
+      ...current,
+      tasks: setTaskParents(current.tasks, ids, parentId, now()),
+    }));
+  };
   const setCompleted = (item: DailyTask, completed: boolean) => {
     if (item.completed === completed) return;
     const sourceStatus: TaskRecord["status"] = completed
@@ -290,6 +315,8 @@ export function useDailyTaskCache() {
   return {
     ...view,
     addIndependent,
+    addSubtask,
+    setTaskParent,
     retrieve,
     setCompleted,
     toggle: (item: DailyTask) => setCompleted(item, !item.completed),

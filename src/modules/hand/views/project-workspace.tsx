@@ -9,15 +9,20 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { SectionHeader } from "@/shared/components/page-elements";
+import { TaskHierarchyList } from "@/shared/components/task-hierarchy-list";
 import {
   Alert,
   Badge,
   Button,
   Card,
+  Checkbox,
+  Dialog,
   EmptyState,
   ProgressBar,
+  Select,
   Tabs,
 } from "@/shared/components/ui";
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
@@ -34,6 +39,7 @@ import { ProjectLogEditor } from "./project-log-editor";
 import { ProjectLogViewer } from "./project-log-viewer";
 import { isLockedCompletedPastTask } from "./project-task-actions";
 import { ProjectAttachmentTable } from "./project-attachment-table";
+import { ProjectGantt } from "./project-gantt";
 
 type DialogName = "task" | "log" | "attachment" | null;
 type LogMenu = { log: ProjectLog; position: MenuPosition } | null;
@@ -59,7 +65,11 @@ export function ProjectWorkspace({
   const [openedLog, setOpenedLog] = useState<ProjectLog | null>(null);
   const [logMenu, setLogMenu] = useState<LogMenu>(null);
   const [editingLog, setEditingLog] = useState<ProjectLog | null>(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [parentDialog, setParentDialog] = useState(false);
+  const [parentId, setParentId] = useState("");
   if (!vm.selected) return null;
+  const parentCandidates = vm.tasks.filter((task) => !selectedTaskIds.includes(task.id));
   return (
     <>
       {section === "overview" && (
@@ -149,11 +159,27 @@ export function ProjectWorkspace({
                 </Button>
               }
             />
+            <ProjectGantt
+              tasks={vm.tasks}
+              startDate={vm.selected.startDate}
+              endDate={vm.selected.endDate}
+            />
+            {selectedTaskIds.length > 0 && (
+              <SelectionToolbar
+                label={t("hand.selectedTasks").replace("{count}", String(selectedTaskIds.length))}
+                onCancel={() => setSelectedTaskIds([])}
+              >
+                <Button variant="secondary" onClick={() => setParentDialog(true)}>{t("hand.setParent")}</Button>
+                <Button variant="ghost" onClick={() => { vm.setTaskParent(selectedTaskIds, null); setSelectedTaskIds([]); }}>{t("hand.noParent")}</Button>
+              </SelectionToolbar>
+            )}
             {vm.tasks.length ? (
-              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {vm.tasks.map((task) => (
+              <TaskHierarchyList
+                tasks={vm.tasks}
+                selectedTaskIds={selectedTaskIds}
+                onSetParent={vm.setTaskParent}
+                renderTask={(task) => (
                   <TaskRow
-                    key={task.id}
                     title={task.title}
                     description={task.description}
                     status={task.status}
@@ -166,16 +192,14 @@ export function ProjectWorkspace({
                     toggleDisabled={isLockedCompletedPastTask(task)}
                     onToggle={() => vm.advanceTask(task)}
                     deadlineInline
+                    action={<span onClick={(event) => event.stopPropagation()}><Checkbox aria-label={task.title} checked={selectedTaskIds.includes(task.id)} onChange={() => setSelectedTaskIds((current) => current.includes(task.id) ? current.filter((id) => id !== task.id) : [...current, task.id])} /></span>}
                     onContextMenu={(event) => {
                       event.preventDefault();
-                      onOpenTaskMenu(task, {
-                        x: event.clientX,
-                        y: event.clientY,
-                      });
+                      onOpenTaskMenu(task, { x: event.clientX, y: event.clientY });
                     }}
                   />
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <EmptyState title={t("common.noData")} />
             )}
@@ -273,6 +297,15 @@ export function ProjectWorkspace({
           )}
         </Card>
       )}
+      <Dialog open={parentDialog} title={t("hand.setParent")} closeLabel={t("common.close")} onClose={() => setParentDialog(false)}>
+        <div className="grid gap-4">
+          <Select value={parentId} onChange={(event) => setParentId(event.target.value)}>
+            <option value="">{t("hand.chooseParent")}</option>
+            {parentCandidates.map((task) => <option key={task.id} value={task.id}>{task.title}</option>)}
+          </Select>
+          <Button disabled={!parentId} onClick={() => { vm.setTaskParent(selectedTaskIds, parentId); setSelectedTaskIds([]); setParentId(""); setParentDialog(false); }}>{t("hand.setParent")}</Button>
+        </div>
+      </Dialog>
       {openedLog && (
         <ProjectLogViewer log={openedLog} onClose={() => setOpenedLog(null)} />
       )}

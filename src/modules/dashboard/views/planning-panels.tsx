@@ -7,6 +7,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Button, ProgressBar } from "@/shared/components/ui";
+import { TaskHierarchyList } from "@/shared/components/task-hierarchy-list";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
 import type { DailyPlanItem } from "@/shared/model/message";
@@ -74,12 +75,16 @@ export function ProjectTaskPool({
   tasks,
   expanded,
   onExpanded,
+  onContextMenu,
+  onSetParent,
   ...pool
 }: PoolProps & {
   projects: ProjectRecord[];
   tasks: TaskRecord[];
   expanded: string[];
   onExpanded: (ids: string[]) => void;
+  onContextMenu: (task: TaskRecord, x: number, y: number) => void;
+  onSetParent: (ids: string[], parentId: string | null) => void;
 }) {
   const { t } = useI18n();
   return (
@@ -123,26 +128,33 @@ export function ProjectTaskPool({
                 <span className="text-xs text-zinc-500">{progress}%</span>
               </button>
               {open && (
-                <div className="space-y-1 border-t border-zinc-200 p-2 dark:border-zinc-800">
-                  {projectTasks.map((task) => (
-                    <PlanChoice
-                      key={task.id}
-                      item={{
-                        id: task.id,
-                        kind: "task",
-                        title: task.title,
-                        description: task.description,
-                        estimatedMinutes: task.estimatedMinutes,
-                        expectedOutput: task.expectedOutput,
-                        importance: task.importance ?? project.score,
-                        dueAt: task.dueDate,
-                        sourceTaskId: task.id,
-                        projectId: project.id,
-                      }}
-                      disabled={task.status === "done"}
-                      {...pool}
-                    />
-                  ))}
+                <div className="border-t border-zinc-200 p-2 dark:border-zinc-800">
+                  <TaskHierarchyList
+                    tasks={projectTasks}
+                    onSetParent={onSetParent}
+                    renderTask={(task) => (
+                      <PlanChoice
+                        item={{
+                          id: task.id,
+                          kind: "task",
+                          title: task.title,
+                          description: task.description,
+                          estimatedMinutes: task.estimatedMinutes,
+                          expectedOutput: task.expectedOutput,
+                          importance: task.importance ?? project.score,
+                          dueAt: task.dueDate,
+                          sourceTaskId: task.id,
+                          projectId: project.id,
+                        }}
+                        disabled={task.status === "done"}
+                        onContextMenu={(event) => {
+                          event.preventDefault();
+                          onContextMenu(task, event.clientX, event.clientY);
+                        }}
+                        {...pool}
+                      />
+                    )}
+                  />
                 </div>
               )}
             </div>
@@ -157,42 +169,42 @@ export function IndependentTaskPool({
   tasks,
   planDate,
   onContextMenu,
+  onSetParent,
   ...pool
 }: PoolProps & {
   tasks: TaskRecord[];
   planDate: string;
   onContextMenu: (task: TaskRecord, x: number, y: number) => void;
+  onSetParent: (ids: string[], parentId: string | null) => void;
 }) {
   const { t } = useI18n();
   return (
     <section className="min-h-0 overflow-y-auto border-t border-zinc-200 p-5 dark:border-zinc-800">
       <h3 className="mb-3 font-semibold">{t("planning.routineTasks")}</h3>
-      <div className="space-y-1">
-        {tasks.map((task) => (
-          <div
-            key={task.id}
+      <TaskHierarchyList
+        tasks={tasks}
+        onSetParent={onSetParent}
+        renderTask={(task) => (
+          <PlanChoice
+            item={{
+              id: task.id,
+              kind: "task",
+              title: task.title,
+              description: task.description,
+              estimatedMinutes: task.estimatedMinutes,
+              expectedOutput: task.expectedOutput,
+              importance: task.importance,
+              dueAt: `${planDate}T${task.dueDate.split("T")[1] ?? "23:59"}`,
+              sourceTaskId: task.id,
+            }}
             onContextMenu={(event) => {
               event.preventDefault();
               onContextMenu(task, event.clientX, event.clientY);
             }}
-          >
-            <PlanChoice
-              item={{
-                id: task.id,
-                kind: "task",
-                title: task.title,
-                description: task.description,
-                estimatedMinutes: task.estimatedMinutes,
-                expectedOutput: task.expectedOutput,
-                importance: task.importance,
-                dueAt: `${planDate}T${task.dueDate.split("T")[1] ?? "23:59"}`,
-                sourceTaskId: task.id,
-              }}
-              {...pool}
-            />
-          </div>
-        ))}
-      </div>
+            {...pool}
+          />
+        )}
+      />
     </section>
   );
 }
@@ -203,7 +215,8 @@ function PlanChoice({
   totalMinutes,
   onToggle,
   disabled = false,
-}: PoolProps & { item: DailyPlanItem; disabled?: boolean }) {
+  onContextMenu,
+}: PoolProps & { item: DailyPlanItem; disabled?: boolean; onContextMenu?: React.MouseEventHandler<HTMLButtonElement> }) {
   const selected = selectedIds.has(item.id);
   const full = !selected && totalMinutes + item.estimatedMinutes > dayMinutes;
   return (
@@ -211,6 +224,7 @@ function PlanChoice({
       disabled={disabled || full}
       className={`flex min-h-10 w-full min-w-0 items-center gap-3 rounded-lg px-3 text-left text-sm disabled:opacity-40 ${selected ? " bg-zinc-50 text-black dark:text-zinc-50" : "hover:bg-zinc-100 dark:hover:bg-zinc-900"}`}
       onClick={() => onToggle(item)}
+      onContextMenu={onContextMenu}
     >
       <span className="min-w-0 flex-1 py-2">
         <span className="block truncate">{item.title}</span>

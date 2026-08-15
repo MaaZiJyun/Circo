@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import {
-  ArrowLeftIcon,
   ArrowUturnLeftIcon,
   DocumentDuplicateIcon,
   FolderOpenIcon,
@@ -46,6 +45,7 @@ export function HandView() {
   const [projectSection, setProjectSection] =
     useState<ProjectSection>("overview");
   const [dialog, setDialog] = useState<DetailDialog>(null);
+  const [taskParentId, setTaskParentId] = useState<string | undefined>();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ProjectRecord | null>(null);
   const [menu, setMenu] = useState<ProjectMenu>(null);
@@ -64,6 +64,10 @@ export function HandView() {
   const removeProject = (project: ProjectRecord) => {
     setMenu(null);
     if (window.confirm(t("common.confirmDelete"))) vm.deleteProject(project.id);
+  };
+  const openTaskDialog = (parentId?: string) => {
+    setTaskParentId(parentId);
+    setDialog("task");
   };
   return (
     <div className="h-full space-y-6">
@@ -254,10 +258,11 @@ export function HandView() {
         />
       )}
       <TaskDialog
-        key={`new-task-${vm.selected?.id ?? "none"}`}
+        key={`new-task-${vm.selected?.id ?? "none"}-${taskParentId ?? "root"}`}
         open={dialog === "task"}
+        parentId={taskParentId}
         defaultImportance={vm.selected?.score ?? 50}
-        onClose={() => setDialog(null)}
+        onClose={() => { setDialog(null); setTaskParentId(undefined); }}
         onSave={vm.addTask}
       />
       {dialog === "log" && vm.selected && (
@@ -313,6 +318,7 @@ export function HandView() {
         vm={vm}
         menu={taskMenu}
         onClose={() => setTaskMenu(null)}
+        onCreateSubtask={(task) => openTaskDialog(task.id)}
       />
     </div>
   );

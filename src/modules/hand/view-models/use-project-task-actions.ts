@@ -6,6 +6,7 @@ import { today } from "@/shared/model/factories";
 import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance } from "@/shared/model/task-importance";
+import { setTaskParents } from "@/shared/model/task-hierarchy";
 import { useStore } from "@/shared/view-models/store-context";
 
 export type TaskInput = Pick<
@@ -26,6 +27,7 @@ export type TaskInput = Pick<
   | "complexity"
   | "uncertainty"
   | "recurrence"
+  | "parentId"
 >;
 
 const isLockedCompletedPastTask = (task: TaskRecord) =>
@@ -69,6 +71,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       complexity: task.complexity,
       uncertainty: task.uncertainty,
       recurrence: task.recurrence,
+      parentId: task.parentId,
     });
   };
   const advanceTask = (task: TaskRecord) => {
@@ -164,5 +167,12 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       ),
     }));
   };
-  return { addTask, duplicateTask, advanceTask, updateTask, moveTask, deleteTask };
+  const setTaskParent = (ids: string[], parentId: string | null) =>
+    mutate((current) => {
+      return {
+        ...current,
+        tasks: setTaskParents(current.tasks, ids, parentId, now()),
+      };
+    });
+  return { addTask, duplicateTask, advanceTask, updateTask, moveTask, deleteTask, setTaskParent };
 }

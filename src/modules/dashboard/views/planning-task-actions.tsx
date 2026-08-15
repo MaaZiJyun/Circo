@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DocumentDuplicateIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { DocumentDuplicateIcon, PencilSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   ContextMenu,
   ContextMenuItem,
@@ -23,19 +23,31 @@ export function PlanningTaskActions({
   onUpdate,
   onDuplicate,
   onRemove,
+  onCreate,
 }: {
   menu: PlanningTaskMenu;
   onClose: () => void;
   onUpdate: (task: TaskRecord, input: TaskInput) => void;
   onDuplicate: (task: TaskRecord) => void;
   onRemove: (task: TaskRecord) => void;
+  onCreate: (parent: TaskRecord, input: TaskInput) => void;
 }) {
   const { t } = useI18n();
   const [editing, setEditing] = useState<TaskRecord | null>(null);
+  const [creatingFor, setCreatingFor] = useState<TaskRecord | null>(null);
   return (
     <>
       {menu && (
         <ContextMenu position={menu.position} onClose={onClose}>
+          <ContextMenuItem
+            onClick={() => {
+              setCreatingFor(menu.task);
+              onClose();
+            }}
+          >
+            <PlusIcon className="size-4" />
+            {t("hand.createSubtask")}
+          </ContextMenuItem>
           <ContextMenuItem
             onClick={() => {
               setEditing(menu.task);
@@ -77,6 +89,15 @@ export function PlanningTaskActions({
           onSave={(input) => onUpdate(editing, input)}
         />
       )}
+      {creatingFor && (
+        <TaskDialog
+          key={`new-subtask-${creatingFor.id}`}
+          open
+          parentId={creatingFor.id}
+          onClose={() => setCreatingFor(null)}
+          onSave={(input) => onCreate(creatingFor, input)}
+        />
+      )}
     </>
   );
 }
@@ -99,5 +120,6 @@ function taskInput(task: TaskRecord): TaskInput {
     complexity: task.complexity,
     uncertainty: task.uncertainty,
     recurrence: task.recurrence,
+    parentId: task.parentId,
   };
 }

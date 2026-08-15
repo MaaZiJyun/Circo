@@ -51,8 +51,8 @@ export function TaskRow({
 
   return (
     <div
-      draggable={draggable}
-      className={`flex items-start gap-3 py-3 ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
+      draggable={draggable || undefined}
+      className={`select-none flex items-start gap-3 py-3 ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
       onClick={() => setExpandedOverride(!expanded)}
       onContextMenu={onContextMenu}
       onDragStart={onDragStart}

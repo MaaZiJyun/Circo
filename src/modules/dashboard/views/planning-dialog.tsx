@@ -13,6 +13,7 @@ import type { DailyPlanItem, FutureMessage } from "@/shared/model/message";
 import { addDays, createId, now } from "@/shared/model/factories";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance } from "@/shared/model/task-importance";
+import { setTaskParents } from "@/shared/model/task-hierarchy";
 import { useStore } from "@/shared/view-models/store-context";
 import {
   dayMinutes,
@@ -175,6 +176,29 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       ];
     });
   };
+  const createSubtask = (parent: TaskRecord, input: TaskInput) => {
+    const stamp = now();
+    const task: TaskRecord = {
+      id: createId("task"),
+      projectId: parent.projectId,
+      parentId: parent.id,
+      ...input,
+      importance: taskImportance(input),
+      priority: priorityFromImportance(taskImportance(input)),
+      status: "todo",
+      actualMinutes: 0,
+      completedAt: undefined,
+      createdAt: stamp,
+      updatedAt: stamp,
+    };
+    mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
+  };
+  const setTaskParent = (ids: string[], parentId: string | null) => {
+    mutate((current) => ({
+      ...current,
+      tasks: setTaskParents(current.tasks, ids, parentId, now()),
+    }));
+  };
   const confirm = () => {
     const stamp = now();
     const message: FutureMessage = {
@@ -234,6 +258,8 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
               onExpanded={setExpanded}
               selectedIds={selectedIds}
               totalMinutes={totalMinutes}
+              onContextMenu={(task, x, y) => setTaskMenu({ task, position: { x, y } })}
+              onSetParent={setTaskParent}
               onToggle={toggle}
             />
             <IndependentTaskPool
@@ -244,6 +270,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
               onContextMenu={(task, x, y) =>
                 setTaskMenu({ task, position: { x, y } })
               }
+              onSetParent={setTaskParent}
               onToggle={toggle}
             />
           </div>
@@ -270,6 +297,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         onUpdate={updateIndependent}
         onDuplicate={duplicateIndependent}
         onRemove={removeIndependent}
+        onCreate={createSubtask}
       />
     </div>
   );

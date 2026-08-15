@@ -19,6 +19,7 @@ export function TaskDialog({
   initial,
   defaultImportance = 50,
   taskId,
+  parentId,
   onClose,
   onSave,
 }: {
@@ -27,6 +28,7 @@ export function TaskDialog({
   initial?: TaskInput;
   defaultImportance?: number;
   taskId?: string;
+  parentId?: string;
   onClose: () => void;
   onSave: (input: TaskInput) => void;
 }) {
@@ -43,11 +45,12 @@ export function TaskDialog({
       ...defaultTaskUrgency,
       ...defaultTaskEffort,
       recurrence: null,
+      parentId,
     },
   );
   const submit = () => {
     if (!input.title.trim()) return;
-    onSave(input);
+    onSave({ ...input, parentId: input.parentId });
     onClose();
     setInput({ ...input, title: "" });
   };

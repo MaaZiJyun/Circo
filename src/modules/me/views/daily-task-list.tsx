@@ -15,6 +15,7 @@ import {
   type MenuPosition,
 } from "@/modules/find/views/context-menu";
 import { SectionHeader } from "@/shared/components/page-elements";
+import { TaskHierarchyList } from "@/shared/components/task-hierarchy-list";
 import { TaskRow } from "@/shared/components/task-row";
 import {
   Badge,
@@ -23,13 +24,14 @@ import {
   Tabs,
 } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { DailyTask } from "@/shared/model/entities";
+import type { DailyTask, TaskRecord } from "@/shared/model/entities";
 import { useDailyTaskCache } from "../view-models/use-daily-task-cache";
 import {
   CreateDailyTaskDialog,
   RetrieveTaskDialog,
 } from "./daily-task-dialogs";
 import { TaskQuadrant } from "./task-quadrant";
+import { TaskDialog } from "@/modules/hand/views/task-dialog";
 
 export function DailyTaskList() {
   const { t } = useI18n();
@@ -41,7 +43,15 @@ export function DailyTaskList() {
     position: MenuPosition;
   } | null>(null);
   const [editing, setEditing] = useState<DailyTask | null>(null);
+  const [subtaskParent, setSubtaskParent] = useState<TaskRecord | null>(null);
   if (!vm) return null;
+  const openDailyTasks = vm.dailyTasks.filter((item) => !item.completed);
+  const dailyTaskBySourceId = new Map(
+    openDailyTasks.flatMap((item) =>
+      item.sourceTaskId ? [[item.sourceTaskId, item] as const] : [],
+    ),
+  );
+  const openSourceTasks = vm.tasks.filter((task) => dailyTaskBySourceId.has(task.id));
   const completed = vm.dailyTasks.filter((item) => item.completed).length;
   return (
     <>
@@ -83,48 +93,52 @@ export function DailyTaskList() {
       </div>
       {viewMode === "diagram" ? (
         <TaskQuadrant
-          tasks={vm.dailyTasks}
+          tasks={openDailyTasks}
           coordinates={vm.coordinates}
           formulas={vm.profile.matrixFormulas}
         />
-      ) : vm.dailyTasks.length ? (
-        <div className="max-h-96 divide-y divide-zinc-200 overflow-y-auto dark:divide-zinc-800">
-          {vm.dailyTasks.map((item) => (
-            <TaskRow
-              key={item.id}
-              title={item.title}
-              description={item.description}
-              status={vm.statusFor(item)}
-              dueAt={item.dueAt}
-              completedAt={item.completedAt}
-              estimatedMinutes={item.estimatedMinutes}
-              actualMinutes={item.actualMinutes ?? 0}
-              expectedOutput={item.expectedOutput}
-              deadlineInline
-              draggable={!item.completed}
-              onDragStart={(event) => {
-                event.dataTransfer.effectAllowed = "move";
-                event.dataTransfer.setData(
-                  "application/x-circo-daily-task",
-                  item.id,
-                );
-                event.dataTransfer.setData("text/plain", item.id);
-              }}
-              source={
-                item.sourceTaskId && item.projectId
-                  ? `${t("me.fromProject")}: ${vm.projectName(item.projectId)}`
-                  : t("me.independentTask")
-              }
-              onToggle={() => vm.toggle(item)}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                setMenu({
-                  task: item,
-                  position: { x: event.clientX, y: event.clientY },
-                });
-              }}
-            />
-          ))}
+      ) : openSourceTasks.length ? (
+        <div className="max-h-96 overflow-y-auto">
+          <TaskHierarchyList
+            tasks={openSourceTasks}
+            onSetParent={vm.setTaskParent}
+            onDragStart={(task, event) => {
+              const item = dailyTaskBySourceId.get(task.id);
+              if (!item) return;
+              event.dataTransfer.setData("application/x-circo-daily-task", item.id);
+              event.dataTransfer.setData("text/plain", item.id);
+            }}
+            renderTask={(task) => {
+              const item = dailyTaskBySourceId.get(task.id);
+              if (!item) return null;
+              return (
+                <TaskRow
+                  title={item.title}
+                  description={item.description}
+                  status={vm.statusFor(item)}
+                  dueAt={item.dueAt}
+                  completedAt={item.completedAt}
+                  estimatedMinutes={item.estimatedMinutes}
+                  actualMinutes={item.actualMinutes ?? 0}
+                  expectedOutput={item.expectedOutput}
+                  deadlineInline
+                  source={
+                    item.sourceTaskId && item.projectId
+                      ? `${t("me.fromProject")}: ${vm.projectName(item.projectId)}`
+                      : t("me.independentTask")
+                  }
+                  onToggle={() => vm.toggle(item)}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    setMenu({
+                      task: item,
+                      position: { x: event.clientX, y: event.clientY },
+                    });
+                  }}
+                />
+              );
+            }}
+          />
         </div>
       ) : (
         <EmptyState
@@ -170,6 +184,19 @@ export function DailyTaskList() {
             {t("me.markIncomplete")}
           </ContextMenuItem>
           <ContextMenuItem
+            disabled={!menu.task.sourceTaskId}
+            onClick={() => {
+              const parent = menu.task.sourceTaskId
+                ? vm.tasks.find((task) => task.id === menu.task.sourceTaskId)
+                : undefined;
+              if (parent) setSubtaskParent(parent);
+              setMenu(null);
+            }}
+          >
+            <PlusIcon className="size-4" />
+            {t("hand.createSubtask")}
+          </ContextMenuItem>
+          <ContextMenuItem
             onClick={() => {
               setEditing(menu.task);
               setMenu(null);
@@ -201,6 +228,15 @@ export function DailyTaskList() {
           initial={vm.inputFor(editing)}
           onClose={() => setEditing(null)}
           onSave={(input) => vm.updateTask(editing, input)}
+        />
+      )}
+      {subtaskParent && (
+        <TaskDialog
+          key={`daily-subtask-${subtaskParent.id}`}
+          open
+          parentId={subtaskParent.id}
+          onClose={() => setSubtaskParent(null)}
+          onSave={(input) => vm.addSubtask(subtaskParent, input)}
         />
       )}
     </>

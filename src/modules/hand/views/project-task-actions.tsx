@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowsRightLeftIcon, DocumentDuplicateIcon, PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArrowsRightLeftIcon, DocumentDuplicateIcon, PencilSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { ContextMenu, ContextMenuItem, type MenuPosition } from "@/modules/find/views/context-menu";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { TaskRecord } from "@/shared/model/entities";
@@ -23,14 +23,17 @@ const taskInput = (task: TaskRecord): TaskInput => ({
   delayLoss: task.delayLoss, dependencyIds: task.dependencyIds,
   complexity: task.complexity, uncertainty: task.uncertainty,
   recurrence: task.recurrence,
+  parentId: task.parentId,
 });
 
 export function ProjectTaskActions({
   vm, menu, onClose,
+  onCreateSubtask,
 }: {
   vm: ReturnType<typeof useHandViewModel>;
   menu: TaskMenu;
   onClose: () => void;
+  onCreateSubtask: (task: TaskRecord) => void;
 }) {
   const { t } = useI18n();
   const [editing, setEditing] = useState<TaskRecord | null>(null);
@@ -42,6 +45,9 @@ export function ProjectTaskActions({
         <ContextMenu position={menu.position} onClose={onClose}>
           <ContextMenuItem disabled={locked} onClick={() => { setEditing(menu.task); onClose(); }}>
             <PencilSquareIcon className="size-4" />{t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => { onCreateSubtask(menu.task); onClose(); }}>
+            <PlusIcon className="size-4" />{t("hand.createSubtask")}
           </ContextMenuItem>
           <ContextMenuItem disabled={locked || vm.projects.length < 2} onClick={() => { setMoving(menu.task); onClose(); }}>
             <ArrowsRightLeftIcon className="size-4" />{t("hand.moveTask")}
