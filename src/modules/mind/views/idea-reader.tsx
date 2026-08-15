@@ -113,8 +113,8 @@ function IdeaChat({
     await onSend(content);
   };
   return (
-    <Card className="flex min-h-[640px] flex-col overflow-hidden p-0 xl:h-full xl:min-h-0">
-      <header className="border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+    <Card className="flex min-h-[640px] flex-col overflow-hidden !p-0 shadow-sm xl:h-full xl:min-h-0">
+      <header className="border-b border-zinc-200 bg-zinc-50/70 px-5 py-4 dark:border-zinc-800 dark:bg-zinc-900/40">
         <h2 className="font-semibold">{t("mind.ideaChat")}</h2>
       </header>
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">

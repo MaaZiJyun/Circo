@@ -5,12 +5,7 @@ import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { SectionHeader } from "@/shared/components/page-elements";
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
-import {
-  Button,
-  Card,
-  Dialog,
-  EmptyState,
-} from "@/shared/components/ui";
+import { Button, Card, Dialog, EmptyState } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Idea, IdeaList } from "@/shared/model/entities";
 import { sortIdeas, type IdeaSort } from "../model/idea-sorting";
@@ -73,7 +68,7 @@ export function MindView() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="h-full space-y-6">
       {viewing ? (
         <>
           <Button variant="ghost" onClick={() => setViewingId(null)}>
@@ -90,13 +85,15 @@ export function MindView() {
           />
         </>
       ) : (
-        <div className="grid gap-5 xl:grid-cols-[240px_minmax(0,1fr)]">
-          <IdeaSidebar
-            library={library}
-            onCreate={() => setListDialog("create")}
-            onEdit={setEditingList}
-          />
-          <Card>
+        <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 xl:grid-cols-[240px_minmax(0,1fr)] xl:grid-rows-1">
+          <div className="space-y-3">
+            <IdeaSidebar
+              library={library}
+              onCreate={() => setListDialog("create")}
+              onEdit={setEditingList}
+            />
+          </div>
+          <Card className="h-full shadow-sm">
             <SectionHeader
               title={
                 library.selectedList?.system

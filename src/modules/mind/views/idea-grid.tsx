@@ -54,7 +54,7 @@ export function IdeaGrid({
         <article
           key={idea.id}
           draggable
-          className={`${library.selectedIds.includes(idea.id) ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30" : "border-zinc-200 dark:border-zinc-800"} cursor-pointer rounded-xl border p-4`}
+          className={`${library.selectedIds.includes(idea.id) ? "border-blue-500 bg-blue-50 shadow-md dark:bg-blue-950/30" : "border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"} cursor-pointer rounded-2xl border p-5 transition-all hover:-translate-y-0.5 hover:shadow-md`}
           onDragStart={(event) => {
             cancel();
             const ids = library.selectedIds.includes(idea.id)
