@@ -71,7 +71,7 @@ export function MessageList({
   return (
     <>
       {selected.length > 0 && (
-        <div className="flex items-center gap-2 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800">
+        <div className="flex items-center gap-2 border-b border-zinc-200 bg-zinc-50/70 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900/40">
           <span className="mr-auto text-sm text-zinc-500">
             {t("messages.selected").replace("{count}", String(selected.length))}
           </span>
@@ -101,7 +101,7 @@ export function MessageList({
           </IconButton>
         </div>
       )}
-      <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+      <div className="divide-y divide-zinc-200/80 dark:divide-zinc-800">
         {rows.map((message) => {
           const unread = !message.readAt;
           return (
@@ -114,7 +114,7 @@ export function MessageList({
                   position: { x: event.clientX, y: event.clientY },
                 });
               }}
-              className={`flex items-center gap-3 px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-900 ${unread ? "text-zinc-950 dark:text-zinc-50" : "text-zinc-500 dark:text-zinc-400"} ${selected.includes(message.id) ? "bg-zinc-100 dark:bg-zinc-900" : ""}`}
+              className={`flex items-center gap-3 px-4 py-4 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 ${unread ? "text-zinc-950 dark:text-zinc-50" : "text-zinc-500 dark:text-zinc-400"} ${selected.includes(message.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
             >
               <Checkbox
                 checked={selected.includes(message.id)}

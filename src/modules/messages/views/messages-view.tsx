@@ -56,8 +56,8 @@ export function MessagesView() {
     if (opened && ids.includes(opened.id)) setOpenedId(null);
   };
   return (
-    <div className="h-full space-y-8">
-      <Card className="h-[calc(100dvh-6rem)] max-h-screen overflow-hidden p-0 sm:h-[calc(100dvh-7.5rem)] lg:h-[calc(100dvh-9rem)]">
+    <div className="h-full space-y-8 rounded-3xl bg-zinc-50/70 p-1 dark:bg-zinc-950/30">
+      <Card className="h-[calc(100dvh-6rem)] max-h-screen overflow-hidden !p-0 shadow-sm sm:h-[calc(100dvh-7.5rem)] lg:h-[calc(100dvh-9rem)]">
         <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] md:grid-cols-[220px_minmax(0,1fr)] md:grid-rows-1">
           <MessageSidebar
             mailbox={mailbox}
@@ -69,7 +69,7 @@ export function MessagesView() {
             onChange={changeMailbox}
             onCompose={() => openCompose()}
           />
-          <main className="min-h-0 min-w-0 overflow-y-auto overscroll-contain">
+          <main className="min-h-0 min-w-0 p-6 overflow-y-auto overscroll-contain">
             {opened ? (
               <MessageReader
                 message={opened}

@@ -36,7 +36,7 @@ export function MessageReader({
   const { t, formatDate } = useI18n();
   return (
     <article>
-      <div className="flex items-center gap-1 border-b border-zinc-200 p-3 dark:border-zinc-800">
+      <div className="flex items-center gap-1 border-b border-zinc-200 bg-zinc-50/70 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
         <IconButton label={t("messages.back")} onClick={onBack}>
           <ArrowLeftIcon className="size-5" />
         </IconButton>
@@ -57,9 +57,10 @@ export function MessageReader({
           <EnvelopeIcon className="size-5" />
         </IconButton>
       </div>
-      <div className="p-6">
+      <div className="mx-auto max-w-3xl p-6 lg:p-10">
         <h2 className="text-2xl font-semibold">{message.subject}</h2>
-        <div className="mt-6 flex items-start gap-3">
+        <div className="mt-6 rounded-2xl border border-zinc-200 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-900/40">
+          <div className="flex items-start gap-3">
           <ProfileAvatar name={profile.name} src={profile.avatarDataUrl} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap justify-between gap-2">
@@ -76,8 +77,9 @@ export function MessageReader({
               {t("messages.to")}: {t("messages.futureSelf")}
             </p>
           </div>
+          </div>
         </div>
-        <div className="min-h-48 whitespace-pre-wrap py-8 text-sm leading-7">
+        <div className="min-h-48 whitespace-pre-wrap py-10 text-[15px] leading-8">
           {message.body}
         </div>
         {message.dailyPlan && (

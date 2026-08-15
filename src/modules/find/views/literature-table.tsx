@@ -38,9 +38,9 @@ export function LiteratureTable({
     library.sources.length > 0 &&
     library.sources.every((item) => library.selectedIds.includes(item.id));
   return (
-    <div className="h-full min-h-0 flex-1 overflow-auto rounded-2xl border border-zinc-200 dark:border-zinc-800">
+    <div className="h-full min-h-0 flex-1 overflow-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
       <table className="w-full min-w-[1100px] text-left text-sm">
-        <thead className="bg-zinc-50 text-xs text-zinc-500 dark:bg-zinc-900">
+        <thead className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50/95 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95">
           <tr>
             {selectionMode && (
               <th className="w-12 p-3">
@@ -123,7 +123,7 @@ export function LiteratureTable({
                   return;
                 onRead(source);
               }}
-              className={`cursor-grab select-none hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${source.readingStatus === "read" ? "text-zinc-500 dark:text-zinc-400" : ""} ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
+              className={`cursor-grab select-none transition-colors hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${source.readingStatus === "read" ? "text-zinc-500 dark:text-zinc-400" : ""} ${library.selectedIds.includes(source.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
             >
               {selectionMode && (
                 <td className="p-3">

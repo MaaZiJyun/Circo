@@ -84,7 +84,7 @@ export function LibrarySidebar({
         library.setDraggedIds([]);
         setDropTargetId(null);
       }}
-      className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950"
+      className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
       <div className="mb-3 flex items-center justify-between px-2">
         <h2 className="font-semibold">{t("find.lists")}</h2>
@@ -134,7 +134,7 @@ export function LibrarySidebar({
                   cancelPress();
                   openMenu(list, { x: event.clientX, y: event.clientY });
                 }}
-                className={`relative flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl px-3 text-left text-sm ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-200 dark:hover:bg-zinc-900"}`}
+                className={`relative flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl px-3 text-left text-sm transition-colors ${active ? "bg-zinc-950 text-white shadow-sm dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-100 dark:hover:bg-zinc-900"}`}
                 style={{
                   backgroundColor:
                     dropTargetId === list.id ? `${list.color}26` : undefined,
