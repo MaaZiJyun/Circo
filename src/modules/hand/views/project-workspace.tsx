@@ -3,7 +3,6 @@
 import { useState } from "react";
 
 import {
-  ArrowDownTrayIcon,
   DocumentPlusIcon,
   PencilSquareIcon,
   PlusIcon,
@@ -34,97 +33,165 @@ import type { LogInput } from "../view-models/use-hand-view-model";
 import { ProjectLogEditor } from "./project-log-editor";
 import { ProjectLogViewer } from "./project-log-viewer";
 import { isLockedCompletedPastTask } from "./project-task-actions";
+import { ProjectAttachmentTable } from "./project-attachment-table";
 
 type DialogName = "task" | "log" | "attachment" | null;
 type LogMenu = { log: ProjectLog; position: MenuPosition } | null;
+type ProjectSection = "overview" | "plan" | "logs" | "attachments";
 
 export function ProjectWorkspace({
   vm,
   openDialog,
   onOpenTaskMenu,
+  onEditProject,
 }: {
   vm: ReturnType<typeof useHandViewModel>;
   openDialog: (dialog: DialogName) => void;
   onOpenTaskMenu: (task: TaskRecord, position: MenuPosition) => void;
+  onEditProject: () => void;
 }) {
-  const { t, formatDate, formatNumber } = useI18n();
+  const { t, formatDate } = useI18n();
   const [logPeriod, setLogPeriod] = useState<"day" | "week" | "month" | "year">(
     "day",
   );
   const [openedLog, setOpenedLog] = useState<ProjectLog | null>(null);
   const [logMenu, setLogMenu] = useState<LogMenu>(null);
   const [editingLog, setEditingLog] = useState<ProjectLog | null>(null);
+  const [section, setSection] = useState<ProjectSection>("overview");
   if (!vm.selected) return null;
   return (
     <>
-      <Card>
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <Badge
-              tone={vm.selected.status === "completed" ? "success" : "info"}
-            >
-              {t(statusLabels[vm.selected.status])}
-            </Badge>
-            <h2 className="mt-3 text-2xl font-semibold">{vm.selected.name}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-500">
-              {vm.selected.purpose}
-            </p>
-            <p className="mt-3 text-xs text-zinc-500">
-              {formatDate(vm.selected.startDate)} –{" "}
-              {formatDate(vm.selected.endDate)}
-            </p>
-          </div>
-          <div className="min-w-64">
-            <ProgressBar value={vm.progress} label={t("common.progress")} />
-            <p className="mt-3 text-xs text-zinc-500">
-              {t("hand.actualVsPlan")}: {vm.plannedMinutes} / {vm.actualMinutes}{" "}
-              {t("common.minutes")}
-            </p>
-          </div>
-        </div>
-      </Card>
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
+      <Tabs
+        value={section}
+        onChange={setSection}
+        items={[
+          { value: "overview", label: t("hand.projectOverview") },
+          { value: "plan", label: t("hand.timeline") },
+          { value: "logs", label: t("hand.logs") },
+          { value: "attachments", label: t("hand.attachments") },
+        ]}
+      />
+      {section === "overview" && (
         <Card>
           <SectionHeader
-            title={t("hand.timeline")}
+            title={t("hand.projectInformation")}
             action={
-              <Button variant="ghost" onClick={() => openDialog("task")}>
-                <PlusIcon className="size-4" />
-                {t("hand.newTask")}
+              <Button variant="secondary" onClick={onEditProject}>
+                <PencilSquareIcon className="size-4" />
+                {t("common.edit")}
               </Button>
             }
           />
-          {vm.tasks.length ? (
-            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-              {vm.tasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  title={task.title}
-                  description={task.description}
-                  status={task.status}
-                  dueAt={task.dueDate}
-                  completedAt={task.completedAt}
-                  estimatedMinutes={task.estimatedMinutes}
-                  actualMinutes={task.actualMinutes}
-                  expectedOutput={task.expectedOutput}
-                  milestone={task.milestone}
-                  toggleDisabled={isLockedCompletedPastTask(task)}
-                  onToggle={() => vm.advanceTask(task)}
-                  deadlineInline
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    onOpenTaskMenu(task, {
-                      x: event.clientX,
-                      y: event.clientY,
-                    });
-                  }}
-                />
-              ))}
+          <div className="flex flex-col gap-5 pb-5 dark:border-zinc-800 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">{vm.selected.name}</h2>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">
+                {vm.selected.purpose}
+              </p>
+              <p className="mt-3 text-xs text-zinc-500">
+                {formatDate(vm.selected.startDate)} –{" "}
+                {formatDate(vm.selected.endDate)}
+              </p>
             </div>
-          ) : (
-            <EmptyState title={t("common.noData")} />
-          )}
+          </div>
+          <div className="mt-5">
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,0.7fr)]">
+              <div className="grid gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-zinc-500">
+                    {t("common.tags")}
+                  </p>
+                  <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                    {vm.selected.tags.length
+                      ? vm.selected.tags.join(" · ")
+                      : "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-zinc-500">
+                    {t("common.progress")}
+                  </p>
+                  <div className="mt-2 text-xs text-zinc-500">
+                    <ProgressBar value={vm.progress} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-zinc-500">
+                    {t("hand.projectStatus")}
+                  </p>
+                  <div className="mt-2">
+                    <Badge
+                      tone={
+                        vm.selected.status === "completed" ? "success" : "info"
+                      }
+                    >
+                      {t(statusLabels[vm.selected.status])}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-zinc-500">
+                    {t("hand.expected")}
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">
+                    {vm.selected.expected || "—"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </Card>
+      )}
+      {section === "plan" && (
+        <div className="grid gap-5">
+          <Card>
+            <SectionHeader
+              title={t("hand.timeline")}
+              action={
+                <Button variant="ghost" onClick={() => openDialog("task")}>
+                  <PlusIcon className="size-4" />
+                  {t("hand.newTask")}
+                </Button>
+              }
+            />
+            {vm.tasks.length ? (
+              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {vm.tasks.map((task) => (
+                  <TaskRow
+                    key={task.id}
+                    title={task.title}
+                    description={task.description}
+                    status={task.status}
+                    dueAt={task.dueDate}
+                    completedAt={task.completedAt}
+                    estimatedMinutes={task.estimatedMinutes}
+                    actualMinutes={task.actualMinutes}
+                    expectedOutput={task.expectedOutput}
+                    milestone={task.milestone}
+                    toggleDisabled={isLockedCompletedPastTask(task)}
+                    onToggle={() => vm.advanceTask(task)}
+                    deadlineInline
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      onOpenTaskMenu(task, {
+                        x: event.clientX,
+                        y: event.clientY,
+                      });
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <EmptyState title={t("common.noData")} />
+            )}
+          </Card>
+        </div>
+      )}
+      {section === "logs" && (
         <Card>
           <SectionHeader
             title={t("hand.logs")}
@@ -182,48 +249,39 @@ export function ProjectWorkspace({
             </div>
           )}
         </Card>
-      </div>
-      <Card>
-        <SectionHeader
-          title={t("hand.attachments")}
-          action={
-            <Button
-              variant="secondary"
-              onClick={() => openDialog("attachment")}
-            >
-              <PlusIcon className="size-4" />
-              {t("hand.addAttachment")}
-            </Button>
-          }
-        />
-        {vm.uploadError && (
-          <Alert tone="danger">{t("hand.uploadFailed")}</Alert>
-        )}
-        {vm.attachments.length ? (
-          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {vm.attachments.map((item) => (
-              <a
-                key={item.id}
-                href={`/api/attachments/${item.fileToken}`}
-                className="flex items-center gap-3 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800"
+      )}
+      {section === "attachments" && (
+        <Card>
+          <SectionHeader
+            title={t("hand.attachments")}
+            action={
+              <Button
+                variant="secondary"
+                onClick={() => openDialog("attachment")}
               >
-                <ArrowDownTrayIcon className="size-5" />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{item.name}</p>
-                  <p className="text-xs text-zinc-500">
-                    {formatNumber(item.size / 1024, {
-                      maximumFractionDigits: 1,
-                    })}{" "}
-                    KB · {item.description}
-                  </p>
-                </div>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <EmptyState title={t("common.noData")} />
-        )}
-      </Card>
+                <PlusIcon className="size-4" />
+                {t("hand.addAttachment")}
+              </Button>
+            }
+          />
+          {vm.uploadError && (
+            <Alert tone="danger">{t("hand.uploadFailed")}</Alert>
+          )}
+          {vm.attachments.length ? (
+            <div className="mt-3">
+              <ProjectAttachmentTable
+                attachments={vm.attachments}
+                projects={vm.projects}
+                onDuplicate={vm.duplicateAttachments}
+                onMove={vm.moveAttachments}
+                onDelete={vm.deleteAttachments}
+              />
+            </div>
+          ) : (
+            <EmptyState title={t("common.noData")} />
+          )}
+        </Card>
+      )}
       {openedLog && (
         <ProjectLogViewer log={openedLog} onClose={() => setOpenedLog(null)} />
       )}

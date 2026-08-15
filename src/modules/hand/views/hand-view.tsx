@@ -15,8 +15,7 @@ import {
 } from "@/modules/find/views/context-menu";
 import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
-import { Button, EmptyState, Select } from "@/shared/components/ui";
-import { statusLabels } from "@/shared/i18n/domain-labels";
+import { Button, EmptyState } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectList, ProjectRecord } from "@/shared/model/entities";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
@@ -172,35 +171,14 @@ export function HandView() {
               <ArrowLeftIcon className="size-4" />
               {t("hand.backToProjects")}
             </Button>
-            <label className="grid min-w-44 gap-1 text-sm font-medium">
-              <span>{t("hand.projectStatus")}</span>
-              <Select
-                value={vm.selected.status}
-                onChange={(event) =>
-                  vm.updateProject({
-                    status: event.target.value as ProjectRecord["status"],
-                  })
-                }
-              >
-                {[
-                  "concept",
-                  "planning",
-                  "active",
-                  "paused",
-                  "completed",
-                  "archived",
-                ].map((item) => (
-                  <option key={item} value={item}>
-                    {t(statusLabels[item])}
-                  </option>
-                ))}
-              </Select>
-            </label>
           </div>
           <ProjectWorkspace
             vm={vm}
             openDialog={setDialog}
             onOpenTaskMenu={(task, position) => setTaskMenu({ task, position })}
+            onEditProject={() => {
+              if (vm.selected) setEditing(vm.selected);
+            }}
           />
         </>
       ) : null}

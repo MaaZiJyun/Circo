@@ -11,6 +11,8 @@ const scripts = {
     'set selectedPath to choose folder with prompt "选择文件存储目录 / Select file storage directory"\nPOSIX path of selectedPath',
   music:
     'set selectedPath to choose folder with prompt "选择背景音乐目录 / Select background music directory"\nPOSIX path of selectedPath',
+  attachment:
+    'set selectedPath to choose file with prompt "选择项目附件 / Select project attachment"\nPOSIX path of selectedPath',
 };
 
 function runPicker(script: string) {
@@ -39,7 +41,12 @@ export async function POST(request: Request) {
       { status: 501 },
     );
   const kind = requestUrl.searchParams.get("kind");
-  if (kind !== "database" && kind !== "storage" && kind !== "music")
+  if (
+    kind !== "database" &&
+    kind !== "storage" &&
+    kind !== "music" &&
+    kind !== "attachment"
+  )
     return Response.json({ error: "Invalid picker type." }, { status: 422 });
   try {
     const selected = await runPicker(scripts[kind]);

@@ -158,13 +158,13 @@ export function ProgressBar({
   label,
 }: {
   value: number;
-  label: string;
+  label?: string;
 }) {
   return (
     <div className="grid gap-2">
       <div className="flex justify-between text-xs text-zinc-500">
-        <span>{label}</span>
-        <span>{value}%</span>
+        {label && <span>{label}</span>}
+        {label && <span>{value}%</span>}
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
         <div

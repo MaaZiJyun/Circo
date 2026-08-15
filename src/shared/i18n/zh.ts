@@ -8,7 +8,7 @@ import { messageZh } from "./message-labels";
 import { settingsMediaZh } from "./settings-media-labels";
 import { planningZh } from "./planning-labels";
 import { markdownEditorZh } from "./markdown-editor-labels";
-
+import { attachmentZh } from "./attachment-labels";
 export const zh = {
   "app.name": "Circo",
   "app.tagline": "让每一次投入都有来处与去处",
@@ -29,6 +29,7 @@ export const zh = {
   "common.restore": "恢复",
   "common.edit": "编辑",
   "common.duplicate": "复制",
+  ...attachmentZh,
   "common.close": "关闭",
   "common.collapseSidebar": "收起侧边栏",
   "common.expandSidebar": "展开侧边栏",
@@ -170,6 +171,8 @@ export const zh = {
   "hand.ideaSource": "关联灵感",
   "hand.newProject": "新建项目",
   "hand.projects": "项目",
+  "hand.projectOverview": "项目概览",
+  "hand.projectInformation": "项目信息",
   "hand.purpose": "项目目的",
   "hand.expected": "预期成果",
   "hand.projectScore": "项目分数（0–100）",

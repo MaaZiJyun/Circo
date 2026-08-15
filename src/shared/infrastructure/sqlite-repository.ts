@@ -176,8 +176,7 @@ function normalizeState(state: AppState): AppState {
     })),
     sources: state.sources.map((item) => ({
       ...item,
-      fileToken: item.fileToken ?? "",
-      filePath: item.filePath ?? "",
+      fileToken: item.fileToken ?? "", filePath: item.filePath ?? "",
       markdownToken: item.markdownToken ?? "",
       markdownPath: item.markdownPath ?? "",
       tags: item.tags ?? [],
@@ -225,6 +224,7 @@ function normalizeState(state: AppState): AppState {
     attachments: state.attachments.map((item) => ({
       ...item,
       fileToken: item.fileToken ?? "",
+      filePath: item.filePath ?? "",
     })),
     artifacts: state.artifacts.map((item) => ({
       ...item,

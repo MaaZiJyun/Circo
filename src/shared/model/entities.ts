@@ -255,7 +255,8 @@ export interface Attachment extends BaseEntity {
   projectId: string;
   logId?: string;
   name: string;
-  fileToken: string;
+  filePath: string;
+  fileToken?: string;
   mimeType: string;
   size: number;
   description: string;

@@ -3,13 +3,13 @@
 import { useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
 import type {
-  Attachment,
   ProjectLog,
   ProjectRecord,
 } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
 import { useProjectTaskActions } from "./use-project-task-actions";
+import { useAttachmentActions } from "./use-attachment-actions";
 export type { TaskInput } from "./use-project-task-actions";
 
 export type ProjectInput = Pick<
@@ -24,8 +24,6 @@ export type LogInput = Pick<
 export function useHandViewModel() {
   const { state, mutate, softDelete } = useStore();
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState(false);
   const [logError, setLogError] = useState(false);
   const projects = useMemo(
     () =>
@@ -84,6 +82,7 @@ export function useHandViewModel() {
       )
     : 0;
   const taskActions = useProjectTaskActions(selected);
+  const attachmentActions = useAttachmentActions(selected);
 
   const addProject = (input: ProjectInput) => {
     const stamp = now();
@@ -229,43 +228,6 @@ export function useHandViewModel() {
     }));
   };
 
-  const addAttachment = async (file: File, description: string) => {
-    if (!selected) return;
-    setUploading(true);
-    setUploadError(false);
-    try {
-      const form = new FormData();
-      form.set("file", file);
-      const response = await fetch("/api/attachments", {
-        method: "POST",
-        body: form,
-      });
-      const payload = (await response.json()) as { fileToken?: string };
-      if (!response.ok || !payload.fileToken) throw new Error("Upload failed.");
-      const stamp = now();
-      const attachment: Attachment = {
-        id: createId("attachment"),
-        projectId: selected.id,
-        name: file.name,
-        fileToken: payload.fileToken,
-        mimeType: file.type || "application/octet-stream",
-        size: file.size,
-        description,
-        status: "available",
-        createdAt: stamp,
-        updatedAt: stamp,
-      };
-      mutate((current) => ({
-        ...current,
-        attachments: [...current.attachments, attachment],
-      }));
-    } catch {
-      setUploadError(true);
-    } finally {
-      setUploading(false);
-    }
-  };
-
   return {
     projects,
     selected,
@@ -277,8 +239,6 @@ export function useHandViewModel() {
     plannedMinutes,
     actualMinutes,
     progress,
-    uploading,
-    uploadError,
     logError,
     addProject,
     duplicateProject,
@@ -288,7 +248,7 @@ export function useHandViewModel() {
     addLog,
     updateLog,
     deleteLog,
-    addAttachment,
+    ...attachmentActions,
     deleteProject: (id: string) => softDelete("projects", id),
   };
 }

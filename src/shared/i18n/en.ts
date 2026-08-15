@@ -1,12 +1,10 @@
-import { findLibraryEn } from "./find-library-labels";
-import { mindEn } from "./mind-labels";
-import { meHomeEn } from "./me-home-labels";
+import { findLibraryEn } from "./find-library-labels"; import { mindEn } from "./mind-labels"; import { meHomeEn } from "./me-home-labels";
 import { handLibraryEn } from "./hand-library-labels";
 import { dashboardCountdownEn } from "./dashboard-countdown-labels";
 import { dashboardFocusEn } from "./dashboard-focus-labels";
 import { messageEn } from "./message-labels";
 import { settingsMediaEn } from "./settings-media-labels";
-import { planningEn } from "./planning-labels"; import { markdownEditorEn } from "./markdown-editor-labels";
+import { planningEn } from "./planning-labels"; import { markdownEditorEn } from "./markdown-editor-labels"; import { attachmentEn } from "./attachment-labels";
 export const en: Record<import("./zh").MessageKey, string> = {
   "app.name": "Circo",
   "app.tagline": "Give every effort an origin and a destination",
@@ -26,6 +24,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "common.restore": "Restore",
   "common.edit": "Edit",
   "common.duplicate": "Duplicate",
+  ...attachmentEn,
   "common.close": "Close",
   "common.collapseSidebar": "Collapse sidebar",
   "common.expandSidebar": "Expand sidebar",
@@ -171,6 +170,8 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "hand.ideaSource": "Linked ideas",
   "hand.newProject": "New project",
   "hand.projects": "Projects",
+  "hand.projectOverview": "Overview",
+  "hand.projectInformation": "Project information",
   "hand.purpose": "Purpose",
   "hand.expected": "Expected outcome",
   "hand.projectScore": "score",
