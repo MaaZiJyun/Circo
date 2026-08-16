@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 export interface MenuPosition {
   x: number;
   y: number;
 }
+
+const VIEWPORT_MARGIN = 8;
 
 export function ContextMenu({
   position,
@@ -16,6 +18,12 @@ export function ContextMenu({
   onClose: () => void;
   children: React.ReactNode;
 }) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<{ left: number; top: number }>({
+    left: position.x,
+    top: position.y,
+  });
+
   useEffect(() => {
     const close = () => onClose();
     window.addEventListener("blur", close);
@@ -27,6 +35,28 @@ export function ContextMenu({
       window.removeEventListener("scroll", close, true);
     };
   }, [onClose]);
+
+  // 碰撞检测：菜单贴近视口右/下边缘时翻转，保证始终完整可见。
+  useLayoutEffect(() => {
+    const el = menuRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    let left = position.x;
+    let top = position.y;
+
+    if (rect.right + VIEWPORT_MARGIN > viewportWidth) {
+      left = Math.max(VIEWPORT_MARGIN, position.x - rect.width);
+    }
+    if (rect.bottom + VIEWPORT_MARGIN > viewportHeight) {
+      top = Math.max(VIEWPORT_MARGIN, position.y - rect.height);
+    }
+
+    setPlacement({ left, top });
+  }, [position]);
+
   return (
     <>
       <button
@@ -39,9 +69,10 @@ export function ContextMenu({
         }}
       />
       <div
+        ref={menuRef}
         role="menu"
         className="fixed z-50 min-w-48 rounded-xl border border-zinc-200 bg-white p-1.5 shadow-xl dark:border-zinc-800 dark:bg-zinc-950"
-        style={{ left: position.x, top: position.y }}
+        style={placement}
       >
         {children}
       </div>
