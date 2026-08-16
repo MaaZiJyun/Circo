@@ -148,7 +148,7 @@ export function ProjectWorkspace({
         </Card>
       )}
       {section === "plan" && (
-        <div className="grid gap-5">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
           <Card className="shadow-sm">
             <SectionHeader
               title={t("hand.timeline")}
