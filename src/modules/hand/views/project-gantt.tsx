@@ -99,6 +99,9 @@ export function ProjectGantt({
     )
     .join(" ");
 
+  // 月/日视图列数多、列宽窄：只保留一个短标签并压缩内边距，避免日期栏溢出。
+  const compactHeader = scale === "month" || scale === "day";
+
   const visibleRows = plan.rows.filter(
     (row) => row.end > visStart && row.start < visEnd,
   );
@@ -219,7 +222,9 @@ export function ProjectGantt({
                 {cells.map((cell, index) => (
                   <div
                     key={index}
-                    className={`border-r border-zinc-200/60 px-3 py-2 last:border-r-0 dark:border-zinc-800/70 ${
+                    className={`border-r border-zinc-200/60 py-2 last:border-r-0 dark:border-zinc-800/70 ${
+                      compactHeader ? "px-1 text-center" : "px-3"
+                    } ${
                       cell.weekend ? "bg-zinc-100/80 dark:bg-white/[0.04]" : ""
                     }`}
                   >
@@ -849,6 +854,10 @@ function dayNumber(value: number) {
   return String(new Date(value).getDate());
 }
 
+function hourLabel(hour: number) {
+  return String(hour).padStart(2, "0");
+}
+
 function weekdayShort(value: number, locale: string) {
   return new Intl.DateTimeFormat(locale, {
     weekday: "short",
@@ -939,7 +948,14 @@ function buildCells(
         date.getMonth(),
         i + 1,
       ).getTime();
-      pushDayCell(cellStart, cellStart + day);
+      // 月视图列宽不足以放下「星期 + 日期」，只显示日期数字。
+      cells.push({
+        start: cellStart,
+        end: cellStart + day,
+        top: monthBandLabel(cellStart, locale),
+        bottom: dayNumber(cellStart),
+        weekend: isWeekend(cellStart),
+      });
     }
 
     return cells;
@@ -953,13 +969,17 @@ function buildCells(
     return cells;
   }
 
-  cells.push({
-    start,
-    end,
-    top: fullDate(start, locale),
-    bottom: weekdayShort(start, locale),
-    weekend: isWeekend(start),
-  });
+  // day 视图：一天 24 小时，每小时一列，日期在上方作为顶层 band。
+  for (let hour = 0; hour < 24; hour += 1) {
+    const cellStart = start + hour * (day / 24);
+    cells.push({
+      start: cellStart,
+      end: cellStart + day / 24,
+      top: fullDate(start, locale),
+      bottom: hourLabel(hour),
+      weekend: isWeekend(start),
+    });
+  }
 
   return cells;
 }
