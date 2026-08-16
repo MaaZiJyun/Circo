@@ -63,7 +63,7 @@ export const zh = {
   "dashboard.eyebrow": "今日成长总览",
   "dashboard.title": "知行合一",
   "dashboard.subtitle":
-    "伟大的事情，是由一系列小事汇聚而成。",
+    "我不愿浑噩一生，至死都不知自己为何而活。",
   ...dashboardFocusZh,
   "dashboard.addIdea": "记录灵感",
   "dashboard.effectiveRate": "有效投入率",

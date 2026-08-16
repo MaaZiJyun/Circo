@@ -14,6 +14,8 @@ import {
   EnvelopeIcon,
   BookOpenIcon,
   RocketLaunchIcon,
+  ArrowPathIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline";
 import { DashboardView } from "@/modules/dashboard/views/dashboard-view";
 import { FindView } from "@/modules/find/views/find-view";
@@ -275,14 +277,22 @@ export function AppShell() {
               }}
             />
           </div>
-          <span
-            className={`hidden whitespace-nowrap text-xs sm:block ${status === "error" ? "text-red-600" : "text-zinc-500"}`}
-          >
-            {status === "saving"
-              ? t("common.saving")
-              : status === "saved"
-                ? t("common.saved")
-                : (error ?? "")}
+          <span className="hidden items-center sm:flex">
+            {status === "saving" ? (
+              <ArrowPathIcon
+                className="h-4 w-4 animate-spin text-black dark:text-white"
+                aria-label={t("common.saving")}
+              />
+            ) : status === "saved" ? (
+              <CheckIcon
+                className="h-4 w-4 text-zinc-400 dark:text-zinc-500"
+                aria-label={t("common.saved")}
+              />
+            ) : status === "error" ? (
+              <span className="whitespace-nowrap text-xs text-red-600">
+                {error ?? ""}
+              </span>
+            ) : null}
           </span>
         </header>
         <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain">

@@ -58,7 +58,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "dashboard.eyebrow": "Dashboard",
   "dashboard.title": "Turn Knowledge into Action.",
   "dashboard.subtitle":
-    "Great things are done by a series of small things brought together.",
+    "I refuse to drift through life and die without ever knowing what I lived for.",
   ...dashboardFocusEn,
   "dashboard.addIdea": "Capture idea",
   "dashboard.effectiveRate": "Effective rate",

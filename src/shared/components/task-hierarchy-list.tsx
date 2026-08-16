@@ -5,7 +5,7 @@ import type { TaskRecord } from "@/shared/model/entities";
 import { useI18n } from "@/shared/i18n/i18n-context";
 
 export const taskHierarchyDragType = "application/x-circo-task";
-const detachDistance = 72;
+const detachDistance = 18;
 
 export function TaskHierarchyList({
   tasks,
