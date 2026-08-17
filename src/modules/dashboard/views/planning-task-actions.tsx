@@ -106,8 +106,8 @@ function taskInput(task: TaskRecord): TaskInput {
   return {
     title: task.title,
     description: task.description,
+    startDate: task.startDate,
     dueDate: task.dueDate,
-    estimatedMinutes: task.estimatedMinutes,
     expectedOutput: task.expectedOutput,
     milestone: task.milestone,
     importance: task.importance,

@@ -10,7 +10,7 @@ import { useI18n } from "@/shared/i18n/i18n-context";
 import { activeItems } from "@/shared/model/app-state";
 import type { TaskRecord } from "@/shared/model/entities";
 import type { DailyPlanItem, FutureMessage } from "@/shared/model/message";
-import { addDays, createId, now } from "@/shared/model/factories";
+import { addDays, createId, estimateMinutes, now, startDateFromDue } from "@/shared/model/factories";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance } from "@/shared/model/task-importance";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
@@ -67,6 +67,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       id: createId("task"),
       title: input.title.trim(),
       description: input.description,
+      startDate: startDateFromDue(input.dueAt, input.estimatedMinutes),
       dueDate: input.dueAt,
       estimatedMinutes: input.estimatedMinutes,
       expectedOutput: input.expectedOutput,
@@ -138,6 +139,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
   };
   const updateIndependent = (task: TaskRecord, input: TaskInput) => {
     const stamp = now();
+    const estimated = estimateMinutes(input.startDate, input.dueDate);
     mutate((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
@@ -145,6 +147,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
           ? {
               ...item,
               ...input,
+              estimatedMinutes: estimated,
               importance: taskImportance(input),
               priority: priorityFromImportance(taskImportance(input)),
               updatedAt: stamp,
@@ -160,7 +163,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         (sum, item) => sum + item.estimatedMinutes,
         0,
       );
-      if (otherMinutes + input.estimatedMinutes > dayMinutes)
+      if (otherMinutes + estimated > dayMinutes)
         return withoutPrevious;
       return [
         ...withoutPrevious,
@@ -169,7 +172,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
           title: input.title.trim(),
           description: input.description,
           dueAt: input.dueDate,
-          estimatedMinutes: input.estimatedMinutes,
+          estimatedMinutes: estimated,
           expectedOutput: input.expectedOutput,
           importance: taskImportance(input),
         },
@@ -183,6 +186,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       projectId: parent.projectId,
       parentId: parent.id,
       ...input,
+      estimatedMinutes: estimateMinutes(input.startDate, input.dueDate),
       importance: taskImportance(input),
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",

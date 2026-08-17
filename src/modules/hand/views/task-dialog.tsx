@@ -7,7 +7,7 @@ import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
 import { TaskEffortFields } from "@/shared/components/task-effort-fields";
 import { Button, Dialog, Field, Input, Switch, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import { addDays } from "@/shared/model/factories";
+import { addDays, estimateMinutes, startDateFromDue } from "@/shared/model/factories";
 import { normalizeTaskImportance, taskImportance } from "@/shared/model/task-importance";
 import { defaultTaskUrgency } from "@/shared/model/task-urgency";
 import { defaultTaskEffort } from "@/shared/model/task-effort";
@@ -33,12 +33,13 @@ export function TaskDialog({
   onSave: (input: TaskInput) => void;
 }) {
   const { t } = useI18n();
+  const defaultDueDate = `${addDays(new Date(), 7)}T23:59`;
   const [input, setInput] = useState<TaskInput>(
     initial ?? {
       title: "",
       description: "",
-      dueDate: `${addDays(new Date(), 7)}T23:59`,
-      estimatedMinutes: 60,
+      startDate: startDateFromDue(defaultDueDate, 1440),
+      dueDate: defaultDueDate,
       expectedOutput: "",
       milestone: false,
       ...normalizeTaskImportance({}, defaultImportance),
@@ -48,6 +49,7 @@ export function TaskDialog({
       parentId,
     },
   );
+  const derivedEstimate = estimateMinutes(input.startDate, input.dueDate);
   const submit = () => {
     if (!input.title.trim()) return;
     onSave({ ...input, parentId: input.parentId });
@@ -80,25 +82,21 @@ export function TaskDialog({
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
+          <Field label={t("hand.startDate")}>
+            <Input
+              type="datetime-local"
+              value={input.startDate}
+              onChange={(event) =>
+                setInput({ ...input, startDate: event.target.value })
+              }
+            />
+          </Field>
           <Field label={t("me.due")}>
             <Input
               type="datetime-local"
               value={input.dueDate}
               onChange={(event) =>
                 setInput({ ...input, dueDate: event.target.value })
-              }
-            />
-          </Field>
-          <Field label={t("hand.estimate")}>
-            <Input
-              type="number"
-              min="1"
-              value={input.estimatedMinutes}
-              onChange={(event) =>
-                setInput({
-                  ...input,
-                  estimatedMinutes: Number(event.target.value),
-                })
               }
             />
           </Field>
@@ -132,7 +130,7 @@ export function TaskDialog({
         />
         <TaskUrgencyFields taskId={taskId} deadline={input.dueDate} delayLoss={input.delayLoss}
           dependencyIds={input.dependencyIds} onChange={(urgency) => setInput({ ...input, ...urgency })} />
-        <TaskEffortFields estimatedMinutes={input.estimatedMinutes} complexity={input.complexity}
+        <TaskEffortFields estimatedMinutes={derivedEstimate} complexity={input.complexity}
           uncertainty={input.uncertainty} onChange={(effort) => setInput({ ...input, ...effort })} />
         <TaskRecurrenceFields
           value={input.recurrence}

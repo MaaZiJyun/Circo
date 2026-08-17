@@ -564,7 +564,7 @@ export function ProjectGantt({
                           {`${row.task.title} · ${fullDate(
                             row.start,
                             locale,
-                          )} → ${fullDate(row.end - day, locale)}`}
+                          )} → ${fullDate(row.end, locale)}`}
                         </title>
                       </g>
                     );
@@ -662,35 +662,13 @@ function buildGanttPlan(
     safeDate(endDate, Math.max(...dueDates, projectStart)) + day,
   );
 
-  const schedule = new Map<
-    string,
-    {
-      start: number;
-      end: number;
-    }
-  >();
-
   const scheduled = dependencyOrder(tasks).map((task) => {
-    const due = safeDate(task.dueDate, projectStart);
-
-    const duration =
-      Math.max(1, Math.ceil(Math.max(60, task.estimatedMinutes) / 480)) * day;
-
-    const dependencyEnd = Math.max(
-      projectStart,
-      ...(task.dependencyIds ?? []).map(
-        (id) => schedule.get(id)?.end ?? projectStart,
-      ),
-    );
-
-    const start = Math.max(due + day - duration, dependencyEnd);
-
-    const end = Math.max(due + day, start + duration);
-
-    schedule.set(task.id, {
+    // 任务条右端 = Due date，左端 = Start date；estimate 由 due - start 自动推导，不再参与排期。
+    const start = safeDate(taskDateTime(task.startDate, false), projectStart);
+    const end = Math.max(
       start,
-      end,
-    });
+      safeDate(taskDateTime(task.dueDate, true), projectStart + day),
+    );
 
     return {
       task,
@@ -754,6 +732,12 @@ function safeDate(value: string, fallback: number) {
   const parsed = Date.parse(value);
 
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+// 纯日期（YYYY-MM-DD）补上时间，避免 Date.parse 把它当 UTC 午夜导致本地时区偏移。
+function taskDateTime(value: string | undefined, endOfDay: boolean) {
+  if (!value) return "";
+  return value.length === 10 ? `${value}T${endOfDay ? "23:59" : "00:00"}` : value;
 }
 
 function startOfDay(value: number) {

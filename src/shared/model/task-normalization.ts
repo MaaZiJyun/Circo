@@ -1,6 +1,6 @@
 import type { AppState } from "./app-state";
 import type { BaseEntity, TaskRecord } from "./entities";
-import { addDays } from "./factories";
+import { addDays, startDateFromDue } from "./factories";
 import { normalizeTaskImportance } from "./task-importance";
 import { normalizeTaskUrgency } from "./task-urgency";
 import { normalizeTaskEffort } from "./task-effort";
@@ -38,6 +38,9 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
         description: task.description ?? "",
         expectedOutput: task.expectedOutput ?? "",
         actualMinutes: task.actualMinutes ?? 0,
+        startDate:
+          task.startDate ??
+          startDateFromDue(task.dueDate, task.estimatedMinutes ?? 0),
         ...scores,
         ...normalizeTaskUrgency(task),
         ...normalizeTaskEffort(task),
@@ -47,20 +50,24 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
     }),
     ...legacy
       .filter((task) => !existingIds.has(task.id))
-      .map((task): TaskRecord => ({
-        ...task,
-        ...normalizeTaskImportance({}, task.importance),
-        ...normalizeTaskUrgency({}),
-        ...normalizeTaskEffort({}),
-        dueDate: `${addDays(new Date(), 1)}T23:59`,
-        priority: priorityFromImportance(
-          normalizeTaskImportance({}, task.importance).importance,
-        ),
-        status: "todo",
-        actualMinutes: 0,
-        milestone: false,
-        recurrence: null,
-      })),
+      .map((task): TaskRecord => {
+        const dueDate = `${addDays(new Date(), 1)}T23:59`;
+        return {
+          ...task,
+          ...normalizeTaskImportance({}, task.importance),
+          ...normalizeTaskUrgency({}),
+          ...normalizeTaskEffort({}),
+          dueDate,
+          startDate: startDateFromDue(dueDate, task.estimatedMinutes ?? 0),
+          priority: priorityFromImportance(
+            normalizeTaskImportance({}, task.importance).importance,
+          ),
+          status: "todo",
+          actualMinutes: 0,
+          milestone: false,
+          recurrence: null,
+        };
+      }),
   ];
 }
 

@@ -210,6 +210,7 @@ export interface TaskRecord extends BaseEntity, TaskImportanceDimensions, TaskUr
   parentId?: string;
   title: string;
   description: string;
+  startDate: string;
   dueDate: string;
   priority: "low" | "medium" | "high";
   status: "todo" | "doing" | "done" | "overdue";

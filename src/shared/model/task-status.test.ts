@@ -6,6 +6,7 @@ const task = (change: Partial<TaskRecord> = {}): TaskRecord => ({
   id: "task_1",
   title: "Task",
   description: "",
+  startDate: "2026-08-14T11:30",
   dueDate: "2026-08-14T12:00",
   priority: "medium",
   status: "todo",

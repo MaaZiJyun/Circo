@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
-import { createId, now } from "@/shared/model/factories";
+import { createId, estimateMinutes, now } from "@/shared/model/factories";
 import { today } from "@/shared/model/factories";
 import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
@@ -13,8 +13,8 @@ export type TaskInput = Pick<
   TaskRecord,
   | "title"
   | "description"
+  | "startDate"
   | "dueDate"
-  | "estimatedMinutes"
   | "expectedOutput"
   | "milestone"
   | "importance"
@@ -42,6 +42,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       id: createId("task"),
       projectId: selected.id,
       ...input,
+      estimatedMinutes: estimateMinutes(input.startDate, input.dueDate),
       importance: taskImportance(input),
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
@@ -57,8 +58,8 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     addTask({
       title: task.title,
       description: task.description,
+      startDate: task.startDate,
       dueDate: "",
-      estimatedMinutes: task.estimatedMinutes,
       expectedOutput: task.expectedOutput,
       milestone: task.milestone,
       importance: task.importance,
@@ -127,6 +128,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
           ? {
               ...item,
               ...input,
+              estimatedMinutes: estimateMinutes(input.startDate, input.dueDate),
               importance: taskImportance(input),
               priority: priorityFromImportance(taskImportance(input)),
               updatedAt: now(),

@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
 import type { DailyTask, TaskRecord } from "@/shared/model/entities";
-import { createId, now, today } from "@/shared/model/factories";
+import { createId, estimateMinutes, now, startDateFromDue, today } from "@/shared/model/factories";
 import { calculateMetrics } from "@/shared/model/metrics";
 import { isDailyCacheCleared } from "@/shared/model/daily-cache";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
@@ -149,6 +149,7 @@ export function useDailyTaskCache() {
       id: createId("task"),
       title: input.title.trim(),
       description: input.description,
+      startDate: startDateFromDue(input.dueAt, input.estimatedMinutes),
       dueDate: input.dueAt,
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
@@ -193,6 +194,7 @@ export function useDailyTaskCache() {
       projectId: parent.projectId,
       parentId: parent.id,
       ...input,
+      estimatedMinutes: estimateMinutes(input.startDate, input.dueDate),
       importance: taskImportance(input),
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
@@ -262,6 +264,7 @@ export function useDailyTaskCache() {
                   ...task,
                   title: input.title.trim(),
                   description: input.description,
+                  startDate: startDateFromDue(input.dueAt, input.estimatedMinutes),
                   dueDate: input.dueAt,
                   estimatedMinutes: input.estimatedMinutes,
                   expectedOutput: input.expectedOutput,

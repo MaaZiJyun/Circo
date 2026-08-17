@@ -6,6 +6,7 @@ const task: TaskRecord = {
   id: "task_1",
   title: "Prepare report",
   description: "",
+  startDate: "2026-08-14T11:00",
   dueDate: "2026-08-14T12:00",
   priority: "high",
   status: "todo",
