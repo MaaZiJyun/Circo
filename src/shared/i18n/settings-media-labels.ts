@@ -4,8 +4,8 @@ export const settingsMediaZh = {
   "settings.changeAvatar": "更换头像",
   "settings.removeAvatar": "移除头像",
   "settings.avatarHint":
-    "右键头像可更换或移除。支持 PNG、JPEG 或 WebP，最大 2 MB。",
-  "settings.avatarInvalid": "请选择不超过 2 MB 的 PNG、JPEG 或 WebP 图片。",
+    "右键头像可更换或移除。支持 PNG、JPEG、WebP 或 SVG，最大 2 MB。",
+  "settings.avatarInvalid": "请选择不超过 2 MB 的 PNG、JPEG、WebP 或 SVG 图片。",
   "settings.nameRequired": "用户名不能为空。",
   "settings.backgroundMusic": "背景音乐",
   "settings.backgroundMusicPlayback": "开启背景音乐",
@@ -104,8 +104,8 @@ export const settingsMediaEn: Record<keyof typeof settingsMediaZh, string> = {
   "settings.changeAvatar": "Replace avatar",
   "settings.removeAvatar": "Remove avatar",
   "settings.avatarHint":
-    "Right-click the avatar to replace or remove it. PNG, JPEG, or WebP up to 2 MB.",
-  "settings.avatarInvalid": "Choose a PNG, JPEG, or WebP image up to 2 MB.",
+    "Right-click the avatar to replace or remove it. PNG, JPEG, WebP, or SVG up to 2 MB.",
+  "settings.avatarInvalid": "Choose a PNG, JPEG, WebP, or SVG image up to 2 MB.",
   "settings.nameRequired": "Username is required.",
   "settings.backgroundMusic": "Background music",
   "settings.backgroundMusicPlayback": "Enable background music",

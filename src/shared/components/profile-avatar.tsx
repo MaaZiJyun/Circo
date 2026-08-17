@@ -25,6 +25,10 @@ export function ProfileAvatar({
           sizes={large ? "80px" : "36px"}
           unoptimized
           className="object-cover"
+          // `pixelated` upscales small raster images (pixel art) with
+          // nearest-neighbor so they stay crisp, while still downscaling
+          // larger photos smoothly.
+          style={{ imageRendering: "pixelated" }}
         />
       ) : (
         <UserIcon className={large ? "size-9" : "size-5"} aria-hidden="true" />

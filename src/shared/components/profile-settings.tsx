@@ -13,7 +13,12 @@ import { ProfileAvatar } from "./profile-avatar";
 import { SectionHeader } from "./page-elements";
 import { Button, Card, Field, Input } from "./ui";
 
-const acceptedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const acceptedTypes = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/svg+xml",
+]);
 const maxAvatarSize = 2 * 1024 * 1024;
 
 function readDataUrl(file: File) {
@@ -94,7 +99,7 @@ export function ProfileSettings() {
           <input
             ref={fileRef}
             type="file"
-            accept="image/png,image/jpeg,image/webp"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml"
             className="hidden"
             onChange={(event) => {
               void selectAvatar(event.target.files?.[0]);

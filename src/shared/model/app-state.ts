@@ -106,7 +106,8 @@ function isProfile(value: unknown) {
     profile.name.length <= 60 &&
     typeof avatar === "string" &&
     avatar.length <= 3_000_000 &&
-    (avatar === "" || /^data:image\/(jpeg|png|webp);base64,/.test(avatar)) &&
+    (avatar === "" ||
+      /^data:image\/(jpeg|png|webp|svg\+xml);base64,/.test(avatar)) &&
     (profile.backgroundAudioToken === undefined ||
       (typeof profile.backgroundAudioToken === "string" &&
         (profile.backgroundAudioToken === "" ||
