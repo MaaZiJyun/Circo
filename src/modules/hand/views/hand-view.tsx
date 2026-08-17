@@ -35,6 +35,7 @@ import { ProjectTable } from "./project-table";
 import { ProjectWorkspace, type ProjectSection } from "./project-workspace";
 import { projectInputFromRecord } from "./project-record-input";
 import { ProjectTaskActions, type TaskMenu } from "./project-task-actions";
+import { StuffView } from "./stuff-view";
 type DetailDialog = "task" | "log" | "attachment" | null;
 type ProjectMenu = { project: ProjectRecord; position: MenuPosition } | null;
 export function HandView() {
@@ -42,6 +43,7 @@ export function HandView() {
   const vm = useHandViewModel();
   const library = useProjectLibrary();
   const [viewing, setViewing] = useState(false);
+  const [viewMode, setViewMode] = useState<"project" | "stuff">("project");
   const [projectSection, setProjectSection] =
     useState<ProjectSection>("overview");
   const [dialog, setDialog] = useState<DetailDialog>(null);
@@ -72,7 +74,19 @@ export function HandView() {
   return (
     <div className="h-full space-y-6">
       {!viewing ? (
-        <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 xl:grid-cols-[240px_minmax(0,1fr)] xl:grid-rows-1">
+        <div className="flex h-full min-h-0 flex-col gap-5">
+          <Tabs
+            value={viewMode}
+            onChange={setViewMode}
+            items={[
+              { value: "project", label: t("hand.projectsTab") },
+              { value: "stuff", label: t("hand.stuffTab") },
+            ]}
+          />
+          {viewMode === "stuff" ? (
+            <StuffView />
+          ) : (
+        <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-5 xl:grid-cols-[240px_minmax(0,1fr)] xl:grid-rows-1">
           <div className="space-y-3">
             <ProjectSidebar
               library={library}
@@ -173,6 +187,8 @@ export function HandView() {
               />
             )}
           </TableLibraryWorkspace>
+        </div>
+          )}
         </div>
       ) : vm.selected ? (
         <>

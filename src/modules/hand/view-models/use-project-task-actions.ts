@@ -35,13 +35,13 @@ const isLockedCompletedPastTask = (task: TaskRecord) =>
 
 export function useProjectTaskActions(selected?: ProjectRecord) {
   const { mutate } = useStore();
-  const addTask = (input: TaskInput) => {
-    if (!selected) return;
+  const createTask = (input: TaskInput, projectId?: string) => {
     const stamp = now();
     const task: TaskRecord = {
       id: createId("task"),
-      projectId: selected.id,
+      ...(projectId ? { projectId } : {}),
       ...input,
+      listIds: [],
       estimatedMinutes: estimateMinutes(input.startDate, input.dueDate),
       importance: taskImportance(input),
       priority: priorityFromImportance(taskImportance(input)),
@@ -52,6 +52,10 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       updatedAt: stamp,
     };
     mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
+  };
+  const addTask = (input: TaskInput) => {
+    if (!selected) return;
+    createTask(input, selected.id);
   };
   const duplicateTask = (task: TaskRecord) => {
     if (!selected) return;
@@ -136,7 +140,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
           : item,
       ),
     }));
-  const moveTask = (id: string, projectId: string) => {
+  const moveTask = (id: string, projectId?: string) => {
     const stamp = now();
     mutate((current) => ({
       ...current,
@@ -176,5 +180,14 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
         tasks: setTaskParents(current.tasks, ids, parentId, now()),
       };
     });
-  return { addTask, duplicateTask, advanceTask, updateTask, moveTask, deleteTask, setTaskParent };
+  return {
+    createTask,
+    addTask,
+    duplicateTask,
+    advanceTask,
+    updateTask,
+    moveTask,
+    deleteTask,
+    setTaskParent,
+  };
 }

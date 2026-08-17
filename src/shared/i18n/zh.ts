@@ -163,6 +163,21 @@ export const zh = {
   "hand.title": "行动",
   "hand.subtitle": "在项目库中管理由灵感孵化或手动建立的项目。",
   "hand.projectLibrary": "项目库",
+  "hand.projectsTab": "项目",
+  "hand.stuffTab": "杂项",
+  "hand.taskLists": "任务列表",
+  "hand.taskList.default": "全部任务",
+  "hand.taskList.formal": "正式任务",
+  "hand.taskList.casual": "临时任务",
+  "hand.category": "分类",
+  "hand.noProject": "无项目",
+  "hand.assignProject": "指定项目",
+  "hand.selectedTasksCount": "已选择 {count} 个任务",
+  "hand.confirmDeleteTaskList":
+    "确定删除这个任务列表吗？任务不会被删除。",
+  "hand.noCustomTaskLists": "暂无自定义任务列表",
+  "hand.stuffEmptyHint":
+    "新建任务或把任务拖入列表以开始。",
   "hand.projectGateHint":
     "项目库暂无项目，可以从通过评估的灵感孵化或手动添加。",
   "hand.editProject": "编辑项目",

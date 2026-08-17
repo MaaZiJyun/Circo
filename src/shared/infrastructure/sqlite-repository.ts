@@ -53,6 +53,29 @@ const systemProjectLists = [
     system: "recent" as const,
   },
 ];
+const systemTaskLists = [
+  {
+    id: "task_list_default",
+    name: "All Tasks",
+    note: "All tasks",
+    color: "#18181b",
+    system: "default" as const,
+  },
+  {
+    id: "task_list_formal",
+    name: "Formal",
+    note: "Tasks that belong to a project",
+    color: "#2563eb",
+    system: "formal" as const,
+  },
+  {
+    id: "task_list_casual",
+    name: "Casual",
+    note: "Tasks that do not belong to any project",
+    color: "#f59e0b",
+    system: "casual" as const,
+  },
+];
 const systemIdeaLists = [
   {
     id: "idea_list_default",
@@ -100,11 +123,13 @@ function normalizeState(state: AppState): AppState {
   const existingLists = state.libraryLists ?? [];
   const systemListIds = new Set(systemLists.map((item) => item.id));
   const existingProjectLists = state.projectLists ?? [];
+  const existingTaskLists = state.taskLists ?? [];
   const existingIdeaLists = state.ideaLists ?? [];
   const existingPointLists = state.pointLists ?? [];
   const systemProjectListIds = new Set(
     systemProjectLists.map((item) => item.id),
   );
+  const systemTaskListIds = new Set(systemTaskLists.map((item) => item.id));
   const systemIdeaListIds = new Set(systemIdeaLists.map((item) => item.id));
   const systemPointListIds = new Set(systemPointLists.map((item) => item.id));
   return {
@@ -147,6 +172,17 @@ function normalizeState(state: AppState): AppState {
       ...existingProjectLists.filter(
         (item) => !systemProjectListIds.has(item.id),
       ),
+    ],
+    taskLists: [
+      ...systemTaskLists.map(
+        (item) =>
+          existingTaskLists.find((existing) => existing.id === item.id) ?? {
+            ...item,
+            createdAt: stamp,
+            updatedAt: stamp,
+          },
+      ),
+      ...existingTaskLists.filter((item) => !systemTaskListIds.has(item.id)),
     ],
     ideaLists: [
       ...systemIdeaLists.map(

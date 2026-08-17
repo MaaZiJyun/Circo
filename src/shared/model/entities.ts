@@ -119,6 +119,13 @@ export interface ProjectList extends BaseEntity {
   system: "default" | "recent" | null;
 }
 
+export interface TaskList extends BaseEntity {
+  name: string;
+  note: string;
+  color: string;
+  system: "default" | "formal" | "casual" | null;
+}
+
 export interface IdeaList extends BaseEntity {
   name: string;
   note: string;
@@ -207,6 +214,7 @@ export interface ProjectRecord extends BaseEntity {
 }
 export interface TaskRecord extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
   projectId?: string;
+  listIds?: string[];
   parentId?: string;
   title: string;
   description: string;

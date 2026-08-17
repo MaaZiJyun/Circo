@@ -14,7 +14,7 @@ import { today } from "@/shared/model/factories";
 export type TaskMenu = { task: TaskRecord; position: MenuPosition } | null;
 export const isLockedCompletedPastTask = (task: TaskRecord) =>
   task.status === "done" && task.dueDate.slice(0, 10) < today();
-const taskInput = (task: TaskRecord): TaskInput => ({
+export const taskInput = (task: TaskRecord): TaskInput => ({
   title: task.title, description: task.description, startDate: task.startDate, dueDate: task.dueDate,
   expectedOutput: task.expectedOutput, milestone: task.milestone,
   importance: task.importance,

@@ -3,6 +3,7 @@ import type {
   IdeaList,
   PointList,
   ProjectList,
+  TaskList,
 } from "@/shared/model/entities";
 
 export function seedProjects(stamp: string): ProjectList[] {
@@ -22,6 +23,38 @@ export function seedProjects(stamp: string): ProjectList[] {
       note: "Projects added in the last seven days",
       color: "#2563eb",
       system: "recent",
+      createdAt: stamp,
+      updatedAt: stamp,
+    },
+  ];
+}
+
+export function seedTaskLists(stamp: string): TaskList[] {
+  return [
+    {
+      id: "task_list_default",
+      name: "All Tasks",
+      note: "All tasks",
+      color: "#18181b",
+      system: "default",
+      createdAt: stamp,
+      updatedAt: stamp,
+    },
+    {
+      id: "task_list_formal",
+      name: "Formal",
+      note: "Tasks that belong to a project",
+      color: "#2563eb",
+      system: "formal",
+      createdAt: stamp,
+      updatedAt: stamp,
+    },
+    {
+      id: "task_list_casual",
+      name: "Casual",
+      note: "Tasks that do not belong to any project",
+      color: "#f59e0b",
+      system: "casual",
       createdAt: stamp,
       updatedAt: stamp,
     },

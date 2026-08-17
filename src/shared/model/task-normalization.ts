@@ -38,6 +38,7 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
         description: task.description ?? "",
         expectedOutput: task.expectedOutput ?? "",
         actualMinutes: task.actualMinutes ?? 0,
+        listIds: task.listIds ?? [],
         startDate:
           task.startDate ??
           startDateFromDue(task.dueDate, task.estimatedMinutes ?? 0),
@@ -66,6 +67,7 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
           actualMinutes: 0,
           milestone: false,
           recurrence: null,
+          listIds: [],
         };
       }),
   ];

@@ -162,6 +162,21 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "hand.subtitle":
     "Manage projects incubated from ideas or created manually in the project library.",
   "hand.projectLibrary": "Project Library",
+  "hand.projectsTab": "Projects",
+  "hand.stuffTab": "Stuff",
+  "hand.taskLists": "Task Lists",
+  "hand.taskList.default": "All tasks",
+  "hand.taskList.formal": "Formal",
+  "hand.taskList.casual": "Casual",
+  "hand.category": "Category",
+  "hand.noProject": "No project",
+  "hand.assignProject": "Assign project",
+  "hand.selectedTasksCount": "{count} tasks selected",
+  "hand.confirmDeleteTaskList":
+    "Delete this task list? Tasks will not be deleted.",
+  "hand.noCustomTaskLists": "No custom task lists",
+  "hand.stuffEmptyHint":
+    "Create a task or drop tasks into a list to get started.",
   "hand.projectGateHint":
     "No projects yet. Incubate an evaluated idea or add a project manually.",
   "hand.editProject": "Edit project",

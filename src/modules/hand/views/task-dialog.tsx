@@ -5,8 +5,9 @@ import { TaskRecurrenceFields } from "@/shared/components/task-recurrence-fields
 import { TaskImportanceFields } from "@/shared/components/task-importance-fields";
 import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
 import { TaskEffortFields } from "@/shared/components/task-effort-fields";
-import { Button, Dialog, Field, Input, Switch, Textarea } from "@/shared/components/ui";
+import { Button, Dialog, Field, Input, Select, Switch, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
+import type { ProjectRecord } from "@/shared/model/entities";
 import { addDays, estimateMinutes, startDateFromDue } from "@/shared/model/factories";
 import { normalizeTaskImportance, taskImportance } from "@/shared/model/task-importance";
 import { defaultTaskUrgency } from "@/shared/model/task-urgency";
@@ -20,6 +21,8 @@ export function TaskDialog({
   defaultImportance = 50,
   taskId,
   parentId,
+  projects,
+  initialProjectId,
   onClose,
   onSave,
 }: {
@@ -29,11 +32,14 @@ export function TaskDialog({
   defaultImportance?: number;
   taskId?: string;
   parentId?: string;
+  projects?: ProjectRecord[];
+  initialProjectId?: string;
   onClose: () => void;
-  onSave: (input: TaskInput) => void;
+  onSave: (input: TaskInput, projectId?: string) => void;
 }) {
   const { t } = useI18n();
   const defaultDueDate = `${addDays(new Date(), 7)}T23:59`;
+  const [projectId, setProjectId] = useState(initialProjectId ?? "");
   const [input, setInput] = useState<TaskInput>(
     initial ?? {
       title: "",
@@ -52,7 +58,7 @@ export function TaskDialog({
   const derivedEstimate = estimateMinutes(input.startDate, input.dueDate);
   const submit = () => {
     if (!input.title.trim()) return;
-    onSave({ ...input, parentId: input.parentId });
+    onSave({ ...input, parentId: input.parentId }, projectId || undefined);
     onClose();
     setInput({ ...input, title: "" });
   };
@@ -73,6 +79,21 @@ export function TaskDialog({
             }
           />
         </Field>
+        {projects && (
+          <Field label={t("hand.targetProject")}>
+            <Select
+              value={projectId}
+              onChange={(event) => setProjectId(event.target.value)}
+            >
+              <option value="">{t("hand.noProject")}</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
         <Field label={t("hand.taskDescription")}>
           <Textarea
             value={input.description}

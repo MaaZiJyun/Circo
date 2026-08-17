@@ -133,6 +133,7 @@ export function createSeedState(): AppState {
       },
     ],
     projectLists: seeds.seedProjects(stamp),
+    taskLists: seeds.seedTaskLists(stamp),
     ideaLists: seeds.seedIdeas(stamp),
     pointLists: seeds.seedPointLists(stamp),
     points: [],

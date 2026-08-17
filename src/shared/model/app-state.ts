@@ -17,6 +17,7 @@ import type {
   ReferencePoint,
   Relation,
   SourceRecord,
+  TaskList,
   TaskRecord,
   WorkSession,
 } from "./entities";
@@ -34,6 +35,7 @@ export interface AppState {
   sources: SourceRecord[];
   libraryLists: LibraryList[];
   projectLists: ProjectList[];
+  taskLists: TaskList[];
   ideaLists: IdeaList[];
   pointLists: PointList[];
   points: ReferencePoint[];
@@ -171,6 +173,7 @@ export function isAppState(value: unknown): value is AppState {
     Array.isArray(item.sources) &&
     (item.libraryLists === undefined || Array.isArray(item.libraryLists)) &&
     (item.projectLists === undefined || Array.isArray(item.projectLists)) &&
+    (item.taskLists === undefined || Array.isArray(item.taskLists)) &&
     (item.ideaLists === undefined || Array.isArray(item.ideaLists)) &&
     (item.pointLists === undefined || Array.isArray(item.pointLists)) &&
     (item.points === undefined || Array.isArray(item.points)) &&
