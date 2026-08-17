@@ -41,7 +41,7 @@ export function SettingsView() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `circo-backup-${new Date().toISOString().slice(0, 10)}.zip`;
+    anchor.download = `O_O-backup-${new Date().toISOString().slice(0, 10)}.zip`;
     anchor.click();
     URL.revokeObjectURL(url);
   };

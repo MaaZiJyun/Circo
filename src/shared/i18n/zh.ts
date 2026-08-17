@@ -10,7 +10,7 @@ import { planningZh } from "./planning-labels";
 import { markdownEditorZh } from "./markdown-editor-labels";
 import { attachmentZh } from "./attachment-labels";
 export const zh = {
-  "app.name": "Circo",
+  "app.name": "O_O",
   "app.tagline": "让每一次投入都有来处与去处",
   "nav.dashboard": "概览",
   "nav.me": "我",
@@ -59,7 +59,7 @@ export const zh = {
   "common.convert": "转化",
   "common.back": "返回",
   "common.required": "请填写必要信息",
-  "common.localOnly": "本地优先",
+  "common.localOnly": "本地",
   "dashboard.eyebrow": "今日成长总览",
   "dashboard.title": "知行合一",
   "dashboard.subtitle":
@@ -263,7 +263,7 @@ export const zh = {
   "settings.backup": "数据备份",
   "settings.exportBackup": "导出完整备份",
   "settings.restoreBackup": "恢复完整备份",
-  "settings.restoreWarning": "恢复将覆盖当前数据，请确认备份来自 Circo v0.1。",
+  "settings.restoreWarning": "恢复将覆盖当前数据，请确认备份来自 O_O v0.1。",
   "settings.trash": "回收站",
   "settings.trashEmpty": "回收站是空的",
   "status.active": "进行中",

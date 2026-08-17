@@ -4,7 +4,7 @@ import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Circo · Growth to outcomes",
+  title: "O_O · Growth to outcomes",
   description:
     "A local-first platform for personal growth cycles and outcomes.",
 };

@@ -127,7 +127,7 @@ function Sidebar({
         className={`mb-10 flex items-center ${collapsed ? "justify-center" : "justify-between gap-3 px-2"}`}
       >
         {!collapsed && (
-          <div>
+          <div className="flex justify-center items-end gap-1">
             <p className="brand-wordmark text-3xl">{t("app.name")}</p>
             <p className="text-xs text-zinc-500">{t("common.localOnly")}</p>
           </div>

@@ -6,7 +6,7 @@ import { messageEn } from "./message-labels";
 import { settingsMediaEn } from "./settings-media-labels";
 import { planningEn } from "./planning-labels"; import { markdownEditorEn } from "./markdown-editor-labels"; import { attachmentEn } from "./attachment-labels";
 export const en: Record<import("./zh").MessageKey, string> = {
-  "app.name": "Circo",
+  "app.name": "O_O",
   "app.tagline": "Give every effort an origin and a destination",
   "nav.dashboard": "Dashboard",
   "nav.me": "Me",
@@ -54,7 +54,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "common.convert": "Convert",
   "common.back": "Back",
   "common.required": "Complete the required fields",
-  "common.localOnly": "Local Server Only",
+  "common.localOnly": "Local",
   "dashboard.eyebrow": "Dashboard",
   "dashboard.title": "Turn Knowledge into Action.",
   "dashboard.subtitle":
@@ -265,7 +265,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "settings.exportBackup": "Export complete backup",
   "settings.restoreBackup": "Restore complete backup",
   "settings.restoreWarning":
-    "Restore replaces current data. Confirm the backup is from Circo v0.1.",
+    "Restore replaces current data. Confirm the backup is from O_O v0.1.",
   "settings.trash": "Trash",
   "settings.trashEmpty": "Trash is empty",
   "status.active": "Active",

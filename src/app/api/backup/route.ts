@@ -30,7 +30,7 @@ export async function GET() {
     return new Response(new Uint8Array(zip.toBuffer()), {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="circo-backup-${new Date().toISOString().slice(0, 10)}.zip"`,
+        "Content-Disposition": `attachment; filename="O_O-backup-${new Date().toISOString().slice(0, 10)}.zip"`,
       },
     });
   } catch (error) {

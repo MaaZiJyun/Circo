@@ -39,7 +39,7 @@ export const messageZh = {
   "messages.selected": "已选择 {count} 封",
   "messages.emptySent": "还没有发送邮件",
   "messages.emptyBin": "回收站为空",
-  "messages.systemSender": "Circo 系统",
+  "messages.systemSender": "O_O 系统",
   "messages.dailySummary.subject": "{date} 每日总结与 score",
   "messages.dailySummary.intro": "这是 {date} 的每日活动总结。",
   "messages.dailySummary.activities": "今日事项：",
@@ -87,7 +87,7 @@ export const messageEn: Record<keyof typeof messageZh, string> = {
   "messages.selected": "{count} selected",
   "messages.emptySent": "No sent messages",
   "messages.emptyBin": "Bin is empty",
-  "messages.systemSender": "Circo System",
+  "messages.systemSender": "O_O System",
   "messages.dailySummary.subject": "Daily summary and score · {date}",
   "messages.dailySummary.intro":
     "Here is the daily activity summary for {date}.",

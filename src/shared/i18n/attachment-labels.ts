@@ -1,6 +1,6 @@
 export const attachmentZh = {
   "common.browse": "浏览…",
-  "hand.chooseOriginalFile": "选择原文件；Circo 只保存文件地址",
+  "hand.chooseOriginalFile": "选择原文件；O_O 只保存文件地址",
   "hand.fileSize": "大小",
   "hand.openOriginal": "打开原文件",
   "hand.openFileLocation": "打开文件目录",
@@ -11,7 +11,7 @@ export const attachmentZh = {
 
 export const attachmentEn: Record<keyof typeof attachmentZh, string> = {
   "common.browse": "Browse…",
-  "hand.chooseOriginalFile": "Choose a file; Circo stores only its path",
+  "hand.chooseOriginalFile": "Choose a file; O_O stores only its path",
   "hand.fileSize": "Size",
   "hand.openOriginal": "Open original file",
   "hand.openFileLocation": "Show in Finder",
