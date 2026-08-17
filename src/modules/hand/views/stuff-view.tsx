@@ -6,13 +6,12 @@ import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
 import { Button, EmptyState } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskList, TaskRecord } from "@/shared/model/entities";
+import type { TaskRecord } from "@/shared/model/entities";
 import {
   type TaskSort,
   useTaskLibrary,
 } from "../view-models/use-task-library";
-import { ChooseTaskListDialog, TaskListDialog } from "./task-library-dialogs";
-import { TaskLibrarySidebar } from "./task-library-sidebar";
+import { ChooseTaskListDialog } from "./task-library-dialogs";
 import { TaskLibraryTable } from "./task-library-table";
 import {
   TaskLibraryActions,
@@ -21,13 +20,12 @@ import {
 import { taskInput } from "./project-task-actions";
 import { TaskDialog } from "./task-dialog";
 
-export function StuffView() {
+export function StuffView({
+  library,
+}: {
+  library: ReturnType<typeof useTaskLibrary>;
+}) {
   const { t } = useI18n();
-  const library = useTaskLibrary();
-  const [listDialog, setListDialog] = useState<"create" | "choose" | null>(
-    null,
-  );
-  const [editingList, setEditingList] = useState<TaskList | null>(null);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<TaskRecord | null>(null);
   const [menu, setMenu] = useState<TaskLibraryMenu>(null);
@@ -35,14 +33,7 @@ export function StuffView() {
   const selectionMode = library.selectedIds.length > 0;
   const sortAscending = library.sortDirection === "ascending";
   return (
-    <div className="grid min-h-0 flex-1 grid-rows-[auto_minmax(0,1fr)] gap-5 xl:grid-cols-[240px_minmax(0,1fr)] xl:grid-rows-1">
-      <div className="space-y-3">
-        <TaskLibrarySidebar
-          library={library}
-          onCreate={() => setListDialog("create")}
-          onEdit={setEditingList}
-        />
-      </div>
+    <>
       <TableLibraryWorkspace
         title={
           library.selectedList?.system
@@ -152,20 +143,6 @@ export function StuffView() {
           onSave={(input) => library.updateTask(editing.id, input)}
         />
       )}
-      {listDialog === "create" && (
-        <TaskListDialog
-          onClose={() => setListDialog(null)}
-          onSave={library.createList}
-        />
-      )}
-      {editingList && (
-        <TaskListDialog
-          key={editingList.id}
-          list={editingList}
-          onClose={() => setEditingList(null)}
-          onSave={(input) => library.updateList(editingList.id, input)}
-        />
-      )}
       {addingIds.length > 0 && (
         <ChooseTaskListDialog
           lists={library.lists.filter((list) => !list.system)}
@@ -183,6 +160,6 @@ export function StuffView() {
         onEdit={setEditing}
         onAddToList={(task) => setAddingIds([task.id])}
       />
-    </div>
+    </>
   );
 }
