@@ -10,7 +10,7 @@ import { planningZh } from "./planning-labels";
 import { markdownEditorZh } from "./markdown-editor-labels";
 import { attachmentZh } from "./attachment-labels";
 export const zh = {
-  "app.name": "O_O",
+  "app.name": "口_口",
   "app.tagline": "让每一次投入都有来处与去处",
   "nav.dashboard": "概览",
   "nav.me": "我",
@@ -59,7 +59,7 @@ export const zh = {
   "common.convert": "转化",
   "common.back": "返回",
   "common.required": "请填写必要信息",
-  "common.localOnly": "本地",
+  "common.localOnly": "系统",
   "dashboard.eyebrow": "今日成长总览",
   "dashboard.title": "知行合一",
   "dashboard.subtitle":

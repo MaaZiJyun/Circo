@@ -54,7 +54,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "common.convert": "Convert",
   "common.back": "Back",
   "common.required": "Complete the required fields",
-  "common.localOnly": "Local",
+  "common.localOnly": "System",
   "dashboard.eyebrow": "Dashboard",
   "dashboard.title": "Turn Knowledge into Action.",
   "dashboard.subtitle":
