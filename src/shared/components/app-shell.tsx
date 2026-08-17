@@ -9,7 +9,6 @@ import {
   HomeIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
-  TrophyIcon,
   BeakerIcon,
   EnvelopeIcon,
   BookOpenIcon,
