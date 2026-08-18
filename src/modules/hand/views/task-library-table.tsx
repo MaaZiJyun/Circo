@@ -113,7 +113,7 @@ export function TaskLibraryTable({
                 if (selectionMode) {
                   event.preventDefault();
                   library.toggleSelected(task.id);
-                } else onEdit(task);
+                };
               }}
               onContextMenu={(event) => {
                 event.preventDefault();
