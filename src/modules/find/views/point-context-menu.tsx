@@ -13,7 +13,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "./context-menu";
+} from "@/shared/components/context-menu";
 
 export interface PointMenu {
   point: ReferencePoint;

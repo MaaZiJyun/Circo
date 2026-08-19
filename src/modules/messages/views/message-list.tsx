@@ -12,7 +12,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import { Checkbox, EmptyState, IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { FutureMessage } from "@/shared/model/message";

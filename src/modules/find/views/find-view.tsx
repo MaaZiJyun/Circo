@@ -14,11 +14,8 @@ import { startReading } from "../model/reading-record";
 import { useLibraryManagement } from "../view-models/use-library-management";
 import { usePointLibrary } from "../view-models/use-point-library";
 import { ImportDialog } from "./find-dialogs";
-import {
-  ChooseListDialog,
-  EditLiteratureDialog,
-  ListDialog,
-} from "./library-dialogs";
+import { EditLiteratureDialog } from "./library-dialogs";
+import { ChooseListDialog, ListFormDialog } from "@/shared/components/list-dialogs";
 import { LibrarySidebar } from "./library-sidebar";
 import { LibraryWorkspace } from "./library-workspace";
 import { ActiveLiteratureReader } from "./active-literature-reader";
@@ -209,26 +206,58 @@ export function FindView() {
           }
         />
       )}
-      <ListDialog
-        open={dialog === "list"}
-        onClose={() => setDialog(null)}
-        onSave={library.createList}
-      />
-      {editingList && (
-        <ListDialog
-          key={editingList.id}
-          open
-          list={editingList}
-          onClose={() => setEditingList(null)}
-          onSave={(input) => library.updateList(editingList.id, input)}
+      {dialog === "list" && (
+        <ListFormDialog
+          title={t("find.createList")}
+          nameLabel={t("find.listName")}
+          noteLabel={t("find.listNote")}
+          colorLabel={t("find.listColor")}
+          withTags
+          onClose={() => setDialog(null)}
+          onSave={(input) =>
+            library.createList({
+              name: input.name,
+              note: input.note,
+              tags: input.tags,
+              color: input.color,
+            })
+          }
         />
       )}
-      <ChooseListDialog
-        open={addingIds.length > 0}
-        lists={customLists}
-        onClose={() => setAddingIds([])}
-        onChoose={(listId) => library.addToList(addingIds, listId)}
-      />
+      {editingList && (
+        <ListFormDialog
+          key={editingList.id}
+          title={t("find.editList")}
+          nameLabel={t("find.listName")}
+          noteLabel={t("find.listNote")}
+          colorLabel={t("find.listColor")}
+          withTags
+          initial={{
+            name: editingList.name,
+            note: editingList.note,
+            color: editingList.color,
+            tags: editingList.tags,
+          }}
+          onClose={() => setEditingList(null)}
+          onSave={(input) =>
+            library.updateList(editingList.id, {
+              name: input.name,
+              note: input.note,
+              tags: input.tags,
+              color: input.color,
+            })
+          }
+        />
+      )}
+      {addingIds.length > 0 && (
+        <ChooseListDialog
+          title={t("find.addToList")}
+          emptyLabel={t("find.noCustomLists")}
+          lists={customLists}
+          onClose={() => setAddingIds([])}
+          onChoose={(listId) => library.addToList(addingIds, listId)}
+        />
+      )}
       {editing && (
         <EditLiteratureDialog
           key={editing.id}

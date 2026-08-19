@@ -14,7 +14,7 @@ import type {
   ReferencePointInput,
   SourceRecord,
 } from "@/shared/model/entities";
-import { ContextMenu, ContextMenuItem } from "./context-menu";
+import { ContextMenu, ContextMenuItem } from "@/shared/components/context-menu";
 import { PdfPage } from "./pdf-page";
 import { PdfZoomControls } from "./pdf-zoom-controls";
 import { TranslationDialog } from "./translation-dialog";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ArrowsRightLeftIcon, DocumentDuplicateIcon, PencilSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { ContextMenu, ContextMenuItem, type MenuPosition } from "@/modules/find/views/context-menu";
+import { ContextMenu, ContextMenuItem, type MenuPosition } from "@/shared/components/context-menu";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { TaskRecord } from "@/shared/model/entities";
 import type { TaskInput } from "../view-models/use-hand-view-model";

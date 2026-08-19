@@ -6,7 +6,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import {
   Button,
   Dialog,

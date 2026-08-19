@@ -20,7 +20,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "./context-menu";
+} from "@/shared/components/context-menu";
 
 export function PointListSidebar({
   library,

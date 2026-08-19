@@ -31,7 +31,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import type { ProjectLog, TaskRecord } from "@/shared/model/entities";
 import { projectLogTitle } from "../model/project-log";
 import type { LogInput } from "../view-models/use-hand-view-model";

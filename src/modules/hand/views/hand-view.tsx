@@ -12,7 +12,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
 import { Button, EmptyState, Tabs } from "@/shared/components/ui";
@@ -27,10 +27,7 @@ import { useTaskLibrary } from "../view-models/use-task-library";
 import { AttachmentDialog } from "./attachment-dialog";
 import { ProjectDialog, TaskDialog } from "./hand-dialogs";
 import { ProjectLogEditor } from "./project-log-editor";
-import {
-  ChooseProjectListDialog,
-  ProjectListDialog,
-} from "./project-list-dialogs";
+import { ChooseListDialog, ListFormDialog } from "@/shared/components/list-dialogs";
 import { ProjectSidebar } from "./project-sidebar";
 import { ProjectTable } from "./project-table";
 import { ProjectWorkspace, type ProjectSection } from "./project-workspace";
@@ -38,7 +35,6 @@ import { projectInputFromRecord } from "./project-record-input";
 import { ProjectTaskActions, type TaskMenu } from "./project-task-actions";
 import { StuffView } from "./stuff-view";
 import { TaskLibrarySidebar } from "./task-library-sidebar";
-import { TaskListDialog } from "./task-library-dialogs";
 type DetailDialog = "task" | "log" | "attachment" | null;
 type ProjectMenu = { project: ProjectRecord; position: MenuPosition } | null;
 export function HandView() {
@@ -267,37 +263,71 @@ export function HandView() {
         />
       )}
       {listDialog === "create" && (
-        <ProjectListDialog
+        <ListFormDialog
+          title={t("hand.createList")}
+          nameLabel={t("hand.listName")}
+          noteLabel={t("hand.listNote")}
+          colorLabel={t("hand.listColor")}
           onClose={() => setListDialog(null)}
-          onSave={library.createList}
+          onSave={({ name, note, color }) =>
+            library.createList({ name, note, color })
+          }
         />
       )}
       {editingList && (
-        <ProjectListDialog
+        <ListFormDialog
           key={editingList.id}
-          list={editingList}
+          title={t("hand.editList")}
+          nameLabel={t("hand.listName")}
+          noteLabel={t("hand.listNote")}
+          colorLabel={t("hand.listColor")}
+          initial={{
+            name: editingList.name,
+            note: editingList.note,
+            color: editingList.color,
+            tags: [],
+          }}
           onClose={() => setEditingList(null)}
-          onSave={(input) => library.updateList(editingList.id, input)}
+          onSave={({ name, note, color }) =>
+            library.updateList(editingList.id, { name, note, color })
+          }
         />
       )}
       {taskListDialog === "create" && (
-        <TaskListDialog
+        <ListFormDialog
+          title={t("hand.createList")}
+          nameLabel={t("hand.listName")}
+          noteLabel={t("hand.listNote")}
+          colorLabel={t("hand.listColor")}
           onClose={() => setTaskListDialog(null)}
-          onSave={taskLibrary.createList}
+          onSave={({ name, note, color }) =>
+            taskLibrary.createList({ name, note, color })
+          }
         />
       )}
       {editingTaskList && (
-        <TaskListDialog
+        <ListFormDialog
           key={editingTaskList.id}
-          list={editingTaskList}
+          title={t("hand.editList")}
+          nameLabel={t("hand.listName")}
+          noteLabel={t("hand.listNote")}
+          colorLabel={t("hand.listColor")}
+          initial={{
+            name: editingTaskList.name,
+            note: editingTaskList.note,
+            color: editingTaskList.color,
+            tags: [],
+          }}
           onClose={() => setEditingTaskList(null)}
-          onSave={(input) =>
-            taskLibrary.updateList(editingTaskList.id, input)
+          onSave={({ name, note, color }) =>
+            taskLibrary.updateList(editingTaskList.id, { name, note, color })
           }
         />
       )}
       {listDialog === "choose" && (
-        <ChooseProjectListDialog
+        <ChooseListDialog
+          title={t("hand.addToList")}
+          emptyLabel={t("hand.noCustomLists")}
           lists={library.lists.filter((item) => !item.system)}
           onClose={() => setListDialog(null)}
           onChoose={(id) => library.addToList(library.selectedIds, id)}

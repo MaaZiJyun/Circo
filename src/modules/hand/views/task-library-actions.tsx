@@ -11,7 +11,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import { Button, Dialog, Field, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";

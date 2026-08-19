@@ -13,7 +13,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import { SectionHeader } from "@/shared/components/page-elements";
 import { TaskHierarchyList } from "@/shared/components/task-hierarchy-list";
 import { TaskRow } from "@/shared/components/task-row";

@@ -10,7 +10,7 @@ import type {
   LiteratureSort,
   useLibraryManagement,
 } from "../view-models/use-library-management";
-import type { MenuPosition } from "./context-menu";
+import type { MenuPosition } from "@/shared/components/context-menu";
 import { LiteratureTable } from "./literature-table";
 
 export function LibraryWorkspace({

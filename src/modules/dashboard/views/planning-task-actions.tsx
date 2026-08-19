@@ -6,7 +6,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
 import { TaskDialog } from "@/modules/hand/views/task-dialog";
 import { useI18n } from "@/shared/i18n/i18n-context";

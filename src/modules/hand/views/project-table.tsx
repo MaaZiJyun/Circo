@@ -1,12 +1,17 @@
 "use client";
 
-import { useRef } from "react";
-import { Badge, Checkbox } from "@/shared/components/ui";
+import { Badge } from "@/shared/components/ui";
+import { DataTable } from "@/shared/components/data-table";
+import type { MenuPosition } from "@/shared/components/context-menu";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectRecord } from "@/shared/model/entities";
-import type { MenuPosition } from "@/modules/find/views/context-menu";
 import type { useProjectLibrary } from "../view-models/use-project-library";
+
+function truncateIntroduction(value: string) {
+  const text = value.trim();
+  return text.length > 50 ? `${text.slice(0, 50)}...` : text || "—";
+}
 
 export function ProjectTable({
   library,
@@ -22,140 +27,74 @@ export function ProjectTable({
   onOpenMenu: (project: ProjectRecord, position: MenuPosition) => void;
 }) {
   const { t, formatDate } = useI18n();
-  const pressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const longPressedId = useRef<string | null>(null);
-  const cancelPress = () => {
-    if (pressTimer.current) clearTimeout(pressTimer.current);
-    pressTimer.current = null;
-  };
-  const allSelected =
-    library.projects.length > 0 &&
-    library.projects.every((item) => library.selectedIds.includes(item.id));
   return (
-    <div className="overflow-x-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-      <table className="w-full min-w-[960px] text-left text-sm">
-        <thead className="border-b border-zinc-200 bg-zinc-50/80 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900">
-          <tr>
-            {selectionMode && (
-              <th className="h-8 w-12 px-3 py-0">
-                <Checkbox
-                  aria-label={t("hand.selectAll")}
-                  checked={allSelected}
-                  onChange={() =>
-                    library.setSelectedIds(
-                      allSelected
-                        ? []
-                        : library.projects.map((item) => item.id),
-                    )
-                  }
-                />
-              </th>
-            )}
-            <th className="h-8 px-3 py-0">
-              {t("common.title")}
-            </th>
-            <th className="h-8 px-3 py-0">{t("hand.introduction")}</th>
-            <th className="h-8 px-3 py-0">{t("common.status")}</th>
-            <th className="h-8 px-3 py-0">{t("hand.projectScore")}</th>
-            <th className="h-8 px-3 py-0">{t("hand.startDate")}</th>
-            <th className="h-8 px-3 py-0">{t("hand.endDate")}</th>
-            <th className="h-8 px-3 py-0">{t("common.tags")}</th>
-            <th className="h-8 px-3 py-0">{t("hand.ideaSource")}</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {library.projects.map((project) => (
-            <tr
-              key={project.id}
-              draggable
-              className={`${library.selectedIds.includes(project.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""} max-h-[120px] cursor-grab select-none transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/60`}
-              onDragStart={(event) => {
-                cancelPress();
-                const ids = library.selectedIds.includes(project.id)
-                  ? library.selectedIds
-                  : [project.id];
-                library.setDraggedIds(ids);
-                event.dataTransfer.setData("text/plain", project.name);
-              }}
-              onDragEnd={() => library.setDraggedIds([])}
-              onPointerDown={(event) => {
-                if (event.button !== 0 || selectionMode) return;
-                cancelPress();
-                pressTimer.current = setTimeout(() => {
-                  longPressedId.current = project.id;
-                  onEnterSelection(project);
-                }, 550);
-              }}
-              onPointerUp={cancelPress}
-              onPointerCancel={cancelPress}
-              onPointerMove={cancelPress}
-              onClick={(event) => {
-                if (longPressedId.current === project.id) {
-                  event.preventDefault();
-                  longPressedId.current = null;
-                  return;
-                }
-                if (selectionMode) {
-                  event.preventDefault();
-                  library.toggleSelected(project.id);
-                } else onOpen(project);
-              }}
-              onContextMenu={(event) => {
-                event.preventDefault();
-                cancelPress();
-                onOpenMenu(project, { x: event.clientX, y: event.clientY });
-              }}
-            >
-              {selectionMode && (
-                <td className="px-3 py-3 align-top">
-                  <Checkbox
-                    aria-label={project.name}
-                    checked={library.selectedIds.includes(project.id)}
-                    onChange={() => undefined}
-                  />
-                </td>
-              )}
-              <td className="max-w-[30%] min-w-[200px] px-3 py-3 align-top font-semibold">
-                <div className="line-clamp-4 max-h-24 break-words leading-6">
-                  {project.name}
-                </div>
-              </td>
-              <td className="max-w-[30%] min-w-[300px] px-3 py-3 align-top text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                {truncateIntroduction(project.purpose)}
-              </td>
-              <td className="px-3 py-3 align-top">
-                <Badge
-                  tone={project.status === "completed" ? "success" : "info"}
-                >
-                  {t(statusLabels[project.status])}
-                </Badge>
-              </td>
-              <td className="px-3 py-3 align-top">{project.score}</td>
-              <td className="whitespace-nowrap px-3 py-3 align-top">
-                {formatDate(project.startDate)}
-              </td>
-              <td className="whitespace-nowrap px-3 py-3 align-top">
-                {formatDate(project.endDate)}
-              </td>
-              <td className="px-3 py-3 align-top">
-                <div className="flex max-h-24 flex-wrap gap-1 overflow-hidden">
-                  {project.tags.slice(0, 3).map((tag) => (
-                    <Badge key={tag}>{tag}</Badge>
-                  ))}
-                </div>
-              </td>
-              <td className="px-3 py-3 align-top">
-                {project.ideaIds.length || "—"}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <DataTable
+      rows={library.projects}
+      minWidth="min-w-[960px]"
+      selectionMode={selectionMode}
+      selectedIds={library.selectedIds}
+      selectAllLabel={t("hand.selectAll")}
+      getRowLabel={(project) => project.name}
+      onSelectAll={library.setSelectedIds}
+      onToggleSelect={library.toggleSelected}
+      onEnterSelection={onEnterSelection}
+      onClick={onOpen}
+      onOpenMenu={onOpenMenu}
+      onDragStart={(event, project, ids) => {
+        library.setDraggedIds(ids);
+        event.dataTransfer.setData("text/plain", project.name);
+      }}
+      onDragEnd={() => library.setDraggedIds([])}
+      columns={[
+        {
+          header: t("common.title"),
+          className: "max-w-[30%] min-w-[200px] font-semibold",
+          render: (project) => (
+            <div className="line-clamp-4 max-h-24 break-words leading-6">
+              {project.name}
+            </div>
+          ),
+        },
+        {
+          header: t("hand.introduction"),
+          className:
+            "max-w-[30%] min-w-[300px] text-sm leading-6 text-zinc-600 dark:text-zinc-400",
+          render: (project) => truncateIntroduction(project.purpose),
+        },
+        {
+          header: t("common.status"),
+          render: (project) => (
+            <Badge tone={project.status === "completed" ? "success" : "info"}>
+              {t(statusLabels[project.status])}
+            </Badge>
+          ),
+        },
+        { header: t("hand.projectScore"), render: (project) => project.score },
+        {
+          header: t("hand.startDate"),
+          className: "whitespace-nowrap",
+          render: (project) => formatDate(project.startDate),
+        },
+        {
+          header: t("hand.endDate"),
+          className: "whitespace-nowrap",
+          render: (project) => formatDate(project.endDate),
+        },
+        {
+          header: t("common.tags"),
+          render: (project) => (
+            <div className="flex max-h-24 flex-wrap gap-1 overflow-hidden">
+              {project.tags.slice(0, 3).map((tag) => (
+                <Badge key={tag}>{tag}</Badge>
+              ))}
+            </div>
+          ),
+        },
+        {
+          header: t("hand.ideaSource"),
+          render: (project) => project.ideaIds.length || "—",
+        },
+      ]}
+    />
   );
-}
-
-function truncateIntroduction(value: string) {
-  const text = value.trim();
-  return text.length > 50 ? `${text.slice(0, 50)}...` : text || "—";
 }

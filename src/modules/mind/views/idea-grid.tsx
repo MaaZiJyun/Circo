@@ -11,7 +11,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import { Badge } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Idea } from "@/shared/model/entities";

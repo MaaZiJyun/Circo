@@ -6,7 +6,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "@/modules/find/views/context-menu";
+} from "@/shared/components/context-menu";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useStore } from "@/shared/view-models/store-context";
 import { ProfileAvatar } from "./profile-avatar";

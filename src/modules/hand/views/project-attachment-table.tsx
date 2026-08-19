@@ -12,7 +12,7 @@ import { Badge, Button, Dialog } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Attachment, ProjectRecord } from "@/shared/model/entities";
 import { MarkdownPreview } from "@/modules/find/views/markdown-preview";
-import { ContextMenu, ContextMenuItem, type MenuPosition } from "@/modules/find/views/context-menu";
+import { ContextMenu, ContextMenuItem, type MenuPosition } from "@/shared/components/context-menu";
 
 type AttachmentMenu = { attachment: Attachment; position: MenuPosition } | null;
 

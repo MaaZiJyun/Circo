@@ -15,7 +15,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "./context-menu";
+} from "@/shared/components/context-menu";
 import { readDraggedLiterature } from "./library-drag";
 
 export function LibrarySidebar({

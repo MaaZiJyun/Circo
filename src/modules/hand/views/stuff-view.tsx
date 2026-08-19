@@ -11,7 +11,7 @@ import {
   type TaskSort,
   useTaskLibrary,
 } from "../view-models/use-task-library";
-import { ChooseTaskListDialog } from "./task-library-dialogs";
+import { ChooseListDialog } from "@/shared/components/list-dialogs";
 import { TaskLibraryTable } from "./task-library-table";
 import {
   TaskLibraryActions,
@@ -144,7 +144,9 @@ export function StuffView({
         />
       )}
       {addingIds.length > 0 && (
-        <ChooseTaskListDialog
+        <ChooseListDialog
+          title={t("hand.addToList")}
+          emptyLabel={t("hand.noCustomTaskLists")}
           lists={library.lists.filter((list) => !list.system)}
           onClose={() => setAddingIds([])}
           onChoose={(id) => {

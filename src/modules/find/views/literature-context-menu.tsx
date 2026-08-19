@@ -12,7 +12,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
-} from "./context-menu";
+} from "@/shared/components/context-menu";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
 
