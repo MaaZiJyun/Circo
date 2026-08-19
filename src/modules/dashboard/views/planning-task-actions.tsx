@@ -8,6 +8,7 @@ import {
   type MenuPosition,
 } from "@/shared/components/context-menu";
 import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
+import { taskInput } from "@/modules/hand/view-models/use-project-task-actions";
 import { TaskDialog } from "@/modules/hand/views/task-dialog";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { TaskRecord } from "@/shared/model/entities";
@@ -100,26 +101,4 @@ export function PlanningTaskActions({
       )}
     </>
   );
-}
-
-function taskInput(task: TaskRecord): TaskInput {
-  return {
-    title: task.title,
-    description: task.description,
-    startDate: task.startDate,
-    dueDate: task.dueDate,
-    expectedOutput: task.expectedOutput,
-    milestone: task.milestone,
-    importance: task.importance,
-    impact: task.impact,
-    goal: task.goal,
-    risk: task.risk,
-    value: task.value,
-    delayLoss: task.delayLoss,
-    dependencyIds: task.dependencyIds,
-    complexity: task.complexity,
-    uncertainty: task.uncertainty,
-    recurrence: task.recurrence,
-    parentId: task.parentId,
-  };
 }

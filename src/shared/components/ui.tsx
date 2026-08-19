@@ -25,10 +25,21 @@ export {
 export function Badge({
   children,
   tone = "neutral",
+  variant = "outline",
+  color,
 }: {
   children: React.ReactNode;
   tone?: "neutral" | "info" | "success" | "warning" | "danger";
+  variant?: "outline" | "solid";
+  color?: string;
 }) {
+  if (variant === "solid") {
+    return (
+      <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+        {children}
+      </span>
+    );
+  }
   const styles = {
     neutral:
       "border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300",
@@ -42,7 +53,8 @@ export function Badge({
   };
   return (
     <span
-      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium ${styles[tone]}`}
+      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium ${color ? "" : styles[tone]}`}
+      style={color ? { borderColor: color, color } : undefined}
     >
       {children}
     </span>
@@ -88,16 +100,20 @@ export function Dialog({
   open,
   title,
   closeLabel,
+  size = "md",
   onClose,
   children,
 }: {
   open: boolean;
   title: string;
   closeLabel: string;
+  size?: "md" | "lg" | "xl";
   onClose: () => void;
   children: React.ReactNode;
 }) {
   if (!open) return null;
+  const maxWidth =
+    size === "xl" ? "max-w-6xl" : size === "lg" ? "max-w-4xl" : "max-w-xl";
   return (
     <div
       className="fixed inset-0 z-50 grid cursor-pointer place-items-center bg-black/55 p-4"
@@ -108,7 +124,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[90vh] w-full max-w-xl cursor-default overflow-y-auto rounded-2xl bg-white p-6 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50"
+        className={`max-h-[90vh] w-full ${maxWidth} cursor-default overflow-y-auto rounded-2xl bg-white p-6 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50`}
       >
         <header className="mb-5 flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -237,17 +253,46 @@ export function Tabs<T extends string>({
 
 export function DescriptionList({
   items,
+  variant = "row",
+  divided = false,
+  tabular = false,
+  columns = 1,
 }: {
   items: { label: string; value: React.ReactNode }[];
+  variant?: "row" | "stacked";
+  divided?: boolean;
+  tabular?: boolean;
+  columns?: 1 | 2;
 }) {
+  const stacked = variant === "stacked";
+  const containerClass = stacked
+    ? `grid gap-4 ${columns === 2 ? "sm:grid-cols-2" : ""}`
+    : divided
+      ? "divide-y divide-zinc-100 dark:divide-zinc-900"
+      : "grid gap-3";
   return (
-    <dl className="grid gap-3">
+    <dl className={containerClass}>
       {items.map((item) => (
         <Fragment key={item.label}>
-          <div className="flex items-start justify-between gap-4 text-sm">
-            <dt className="text-zinc-500">{item.label}</dt>
-            <dd className="text-right font-medium">{item.value}</dd>
-          </div>
+          {stacked ? (
+            <div>
+              <dt className="text-xs text-zinc-500">{item.label}</dt>
+              <dd className="mt-1 whitespace-pre-wrap text-sm leading-6">
+                {item.value}
+              </dd>
+            </div>
+          ) : (
+            <div
+              className={`flex items-baseline justify-between gap-4 text-sm ${divided ? "py-2.5" : ""}`}
+            >
+              <dt className="shrink-0 text-zinc-500">{item.label}</dt>
+              <dd
+                className={`min-w-0 break-all text-right font-medium ${tabular ? "tabular-nums" : ""}`}
+              >
+                {item.value}
+              </dd>
+            </div>
+          )}
         </Fragment>
       ))}
     </dl>

@@ -1,13 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import {
-  CalendarDaysIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 import type { TaskRecord } from "@/shared/model/entities";
+import { IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 
 const day = 86_400_000;
@@ -153,27 +150,25 @@ export function ProjectGantt({
           </span>
         ) : (
           <div className="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label={t("hand.ganttPrevious")}
+            <IconButton
+              size="sm"
+              label={t("hand.ganttPrevious")}
               onClick={() => navigate(-1)}
-              className="grid h-7 w-7 place-items-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
               <ChevronLeftIcon className="size-4" />
-            </button>
+            </IconButton>
 
             <span className="whitespace-nowrap rounded-full bg-zinc-100 px-3 py-1.5 text-xs font-medium tabular-nums text-zinc-600 dark:bg-zinc-900 dark:text-zinc-400">
               {rangeLabel}
             </span>
 
-            <button
-              type="button"
-              aria-label={t("hand.ganttNext")}
+            <IconButton
+              size="sm"
+              label={t("hand.ganttNext")}
               onClick={() => navigate(1)}
-              className="grid h-7 w-7 place-items-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
             >
               <ChevronRightIcon className="size-4" />
-            </button>
+            </IconButton>
 
             <button
               type="button"

@@ -19,7 +19,7 @@ import { ChooseListDialog, ListFormDialog } from "@/shared/components/list-dialo
 import { LibrarySidebar } from "./library-sidebar";
 import { LibraryWorkspace } from "./library-workspace";
 import { ActiveLiteratureReader } from "./active-literature-reader";
-import type { FindMode } from "./find-mode-switch";
+import type { FindMode } from "./find-mode";
 import { ReferenceWorkspace } from "./reference-workspace";
 import { ReferencePointDialog } from "./reference-point-dialog";
 import {

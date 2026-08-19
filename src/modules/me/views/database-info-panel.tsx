@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { SectionHeader } from "@/shared/components/page-elements";
-import { Card } from "@/shared/components/ui";
+import { Card, DescriptionList } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
 
@@ -109,21 +109,7 @@ export function DatabaseInfoPanel() {
     <div className="space-y-5">
       <Card className="shadow-sm">
         <SectionHeader title={t("me.dbTitle")} />
-        <dl className="divide-y divide-zinc-100 dark:divide-zinc-900">
-          {rows.map((row) => (
-            <div
-              key={row.label}
-              className="flex items-baseline justify-between gap-4 py-2.5"
-            >
-              <dt className="shrink-0 text-sm text-zinc-500 dark:text-zinc-400">
-                {row.label}
-              </dt>
-              <dd className="min-w-0 break-all text-right text-sm font-medium tabular-nums text-zinc-800 dark:text-zinc-200">
-                {row.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
+        <DescriptionList items={rows} variant="row" divided tabular />
       </Card>
 
       <Card className="shadow-sm">

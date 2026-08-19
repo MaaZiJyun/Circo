@@ -8,7 +8,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
-import { Badge, Button, Dialog } from "@/shared/components/ui";
+import { Badge, Button, Dialog, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Attachment, ProjectRecord } from "@/shared/model/entities";
 import { MarkdownPreview } from "@/modules/find/views/markdown-preview";
@@ -136,5 +136,5 @@ function CsvPreview({ content }: { content: string }) {
 function MoveAttachmentDialog({ open, projects, onClose, onChoose }: { open: boolean; projects: ProjectRecord[]; onClose: () => void; onChoose: (id: string) => void }) {
   const { t } = useI18n();
   const [projectId, setProjectId] = useState("");
-  return <Dialog open={open} title={t("hand.moveAttachment")} closeLabel={t("common.close")} onClose={onClose}><div className="grid gap-4"><select className="rounded-xl border border-zinc-300 bg-transparent px-3 py-2" value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">{t("hand.selectProject")}</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</select><Button disabled={!projectId} onClick={() => onChoose(projectId)}>{t("hand.moveAttachment")}</Button></div></Dialog>;
+  return <Dialog open={open} title={t("hand.moveAttachment")} closeLabel={t("common.close")} onClose={onClose}><div className="grid gap-4"><Select value={projectId} onChange={(event) => setProjectId(event.target.value)}><option value="">{t("hand.selectProject")}</option>{projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}</Select><Button disabled={!projectId} onClick={() => onChoose(projectId)}>{t("hand.moveAttachment")}</Button></div></Dialog>;
 }

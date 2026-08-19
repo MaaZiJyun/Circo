@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Dialog } from "@/shared/components/ui";
+import { DescriptionList, Dialog } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { AppState } from "@/shared/model/app-state";
 import { useStore } from "@/shared/view-models/store-context";
@@ -176,16 +176,10 @@ export function MarkdownEntityCard({
           closeLabel={t("common.close")}
           onClose={() => setOpen(false)}
         >
-          <dl className="grid gap-4">
-            {item.details.map(([label, value]) => (
-              <div key={label}>
-                <dt className="text-xs text-zinc-500">{label}</dt>
-                <dd className="mt-1 whitespace-pre-wrap text-sm leading-6">
-                  {value}
-                </dd>
-              </div>
-            ))}
-          </dl>
+          <DescriptionList
+            items={item.details.map(([label, value]) => ({ label, value }))}
+            variant="stacked"
+          />
         </Dialog>
       )}
     </>

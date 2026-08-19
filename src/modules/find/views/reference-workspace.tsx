@@ -9,7 +9,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { Button, Card, EmptyState, IconButton } from "@/shared/components/ui";
+import { Badge, Button, Card, EmptyState, IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type {
   PointList,
@@ -153,16 +153,9 @@ export function ReferenceWorkspace({
                           {point.listIds.map((id) => {
                             const list = lists.find((item) => item.id === id);
                             return list ? (
-                              <span
-                                key={id}
-                                className="rounded-full border px-2 py-0.5"
-                                style={{
-                                  borderColor: list.color,
-                                  color: list.color,
-                                }}
-                              >
+                              <Badge key={id} color={list.color}>
                                 {list.name}
-                              </span>
+                              </Badge>
                             ) : null;
                           })}
                         </div>

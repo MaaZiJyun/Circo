@@ -49,14 +49,30 @@ export function Button({
 
 export function IconButton({
   label,
+  size = "md",
+  tone = "neutral",
   className = "",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  label: string;
+  size?: "xs" | "sm" | "md";
+  tone?: "neutral" | "danger";
+}) {
+  const sizeClass =
+    size === "xs"
+      ? "size-6 rounded-md"
+      : size === "sm"
+        ? "size-7 rounded-full"
+        : "size-10 rounded-lg";
+  const toneClass =
+    tone === "danger"
+      ? "hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+      : "hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50";
   return (
     <button
       aria-label={label}
       title={label}
-      className={`inline-flex size-10 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 ${focusRing} ${className}`}
+      className={`inline-flex items-center justify-center text-zinc-500 transition-colors ${toneClass} ${sizeClass} ${focusRing} ${className}`}
       {...props}
     />
   );

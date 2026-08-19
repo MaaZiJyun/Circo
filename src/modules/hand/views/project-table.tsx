@@ -58,7 +58,7 @@ export function ProjectTable({
         {
           header: t("hand.introduction"),
           className:
-            "max-w-[30%] min-w-[300px] text-sm leading-6 text-zinc-600 dark:text-zinc-400",
+            "max-w-[30%] min-w-[300px] text-zinc-600 dark:text-zinc-400",
           render: (project) => truncateIntroduction(project.purpose),
         },
         {

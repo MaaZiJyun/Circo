@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import { IconButton } from "@/shared/components/ui";
 import { activeItems } from "@/shared/model/app-state";
 import { isDailyCacheCleared } from "@/shared/model/daily-cache";
 import { today } from "@/shared/model/factories";
@@ -252,13 +253,14 @@ export function CountdownTaskSlots() {
             </p>
             {task ? (
               <>
-                <button
-                  className="absolute right-2 top-2 rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-800 dark:hover:text-white"
-                  aria-label={t("dashboard.countdown.ejectTask")}
+                <IconButton
+                  size="xs"
+                  label={t("dashboard.countdown.ejectTask")}
+                  className="absolute right-2 top-2"
                   onClick={() => eject(index)}
                 >
                   <XMarkIcon className="size-4" />
-                </button>
+                </IconButton>
                 <p className="text-center mt-2 line-clamp-2 text-sm font-medium">
                   {task.title.toUpperCase()}
                 </p>

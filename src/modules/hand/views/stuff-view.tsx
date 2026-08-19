@@ -17,7 +17,7 @@ import {
   TaskLibraryActions,
   type TaskLibraryMenu,
 } from "./task-library-actions";
-import { taskInput } from "./project-task-actions";
+import { taskInput } from "../view-models/use-project-task-actions";
 import { TaskDialog } from "./task-dialog";
 
 export function StuffView({

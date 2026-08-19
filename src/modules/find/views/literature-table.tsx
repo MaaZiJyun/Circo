@@ -5,7 +5,7 @@ import {
   FlagIcon as FlagSolidIcon,
   StarIcon as StarSolidIcon,
 } from "@heroicons/react/24/solid";
-import { IconButton } from "@/shared/components/ui";
+import { Badge, IconButton } from "@/shared/components/ui";
 import { DataTable } from "@/shared/components/data-table";
 import type { MenuPosition } from "@/shared/components/context-menu";
 import { useI18n } from "@/shared/i18n/i18n-context";
@@ -90,12 +90,9 @@ export function LiteratureTable({
           render: (source) => (
             <div className="flex flex-wrap gap-1">
               {source.tags.slice(0, 3).map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs dark:bg-zinc-800"
-                >
+                <Badge key={tag} variant="solid">
                   {tag}
-                </span>
+                </Badge>
               ))}
             </div>
           ),

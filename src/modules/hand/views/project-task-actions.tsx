@@ -5,7 +5,7 @@ import { ArrowsRightLeftIcon, DocumentDuplicateIcon, PencilSquareIcon, PlusIcon,
 import { ContextMenu, ContextMenuItem, type MenuPosition } from "@/shared/components/context-menu";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { TaskRecord } from "@/shared/model/entities";
-import type { TaskInput } from "../view-models/use-hand-view-model";
+import { taskInput } from "../view-models/use-project-task-actions";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
 import { TaskDialog } from "./hand-dialogs";
 import { TaskMoveDialog } from "./task-move-dialog";
@@ -14,16 +14,6 @@ import { today } from "@/shared/model/factories";
 export type TaskMenu = { task: TaskRecord; position: MenuPosition } | null;
 export const isLockedCompletedPastTask = (task: TaskRecord) =>
   task.status === "done" && task.dueDate.slice(0, 10) < today();
-export const taskInput = (task: TaskRecord): TaskInput => ({
-  title: task.title, description: task.description, startDate: task.startDate, dueDate: task.dueDate,
-  expectedOutput: task.expectedOutput, milestone: task.milestone,
-  importance: task.importance,
-  impact: task.impact, goal: task.goal, risk: task.risk, value: task.value,
-  delayLoss: task.delayLoss, dependencyIds: task.dependencyIds,
-  complexity: task.complexity, uncertainty: task.uncertainty,
-  recurrence: task.recurrence,
-  parentId: task.parentId,
-});
 
 export function ProjectTaskActions({
   vm, menu, onClose,

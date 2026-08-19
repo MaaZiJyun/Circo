@@ -30,6 +30,28 @@ export type TaskInput = Pick<
   | "parentId"
 >;
 
+export function taskInput(task: TaskRecord): TaskInput {
+  return {
+    title: task.title,
+    description: task.description,
+    startDate: task.startDate,
+    dueDate: task.dueDate,
+    expectedOutput: task.expectedOutput,
+    milestone: task.milestone,
+    importance: task.importance,
+    impact: task.impact,
+    goal: task.goal,
+    risk: task.risk,
+    value: task.value,
+    delayLoss: task.delayLoss,
+    dependencyIds: task.dependencyIds,
+    complexity: task.complexity,
+    uncertainty: task.uncertainty,
+    recurrence: task.recurrence,
+    parentId: task.parentId,
+  };
+}
+
 const isLockedCompletedPastTask = (task: TaskRecord) =>
   task.status === "done" && task.dueDate.slice(0, 10) < today();
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { PaperAirplaneIcon } from "@heroicons/react/20/solid";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { Badge, Button, Card, Textarea } from "@/shared/components/ui";
+import { Badge, Button, Card, IconButton, Textarea } from "@/shared/components/ui";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Idea, IdeaChatMessage } from "@/shared/model/entities";
@@ -132,15 +132,15 @@ function IdeaChat({
                 {item.content}
               </div>
               {index > 0 && (
-                <button
-                  type="button"
-                  className="mt-1 rounded-full p-2 text-zinc-400 opacity-0 transition hover:bg-red-50 hover:text-red-600 focus-visible:opacity-100 group-hover:opacity-100 dark:hover:bg-red-950/40"
-                  aria-label={t("mind.deleteChatMessage")}
-                  title={t("mind.deleteChatMessage")}
+                <IconButton
+                  size="sm"
+                  tone="danger"
+                  label={t("mind.deleteChatMessage")}
+                  className="mt-1 opacity-0 focus-visible:opacity-100 group-hover:opacity-100"
                   onClick={() => onDeleteMessage(item.id)}
                 >
                   <TrashIcon className="size-4" />
-                </button>
+                </IconButton>
               )}
             </div>
           </div>

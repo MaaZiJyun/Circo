@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Button, Dialog } from "@/shared/components/ui";
+import { Badge, Button, DescriptionList, Dialog } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type {
   PointList,
@@ -53,42 +53,33 @@ export function PointPreviewDialog({
       onClose={onClose}
     >
       <div className="grid gap-5">
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-xs text-zinc-500">{t("find.source")}</dt>
-            <dd className="mt-1 font-medium">{source.title}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-zinc-500">{t("find.pointType")}</dt>
-            <dd className="mt-1 font-medium">
-              {t(`find.pointType.${point.type}`)}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-zinc-500">{t("find.authors")}</dt>
-            <dd className="mt-1">{point.author || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-zinc-500">{t("common.date")}</dt>
-            <dd className="mt-1">{point.date}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-zinc-500">{t("find.pointLists")}</dt>
-            <dd className="mt-1 flex flex-wrap gap-1">
-              {pointLists.length
-                ? pointLists.map((list) => (
-                    <span
-                      key={list.id}
-                      className="rounded-full border px-2 py-0.5 text-xs"
-                      style={{ borderColor: list.color, color: list.color }}
-                    >
+        <DescriptionList
+          variant="stacked"
+          columns={2}
+          items={[
+            { label: t("find.source"), value: source.title },
+            {
+              label: t("find.pointType"),
+              value: t(`find.pointType.${point.type}`),
+            },
+            { label: t("find.authors"), value: point.author || "—" },
+            { label: t("common.date"), value: point.date },
+            {
+              label: t("find.pointLists"),
+              value: pointLists.length ? (
+                <div className="flex flex-wrap gap-1">
+                  {pointLists.map((list) => (
+                    <Badge key={list.id} color={list.color}>
                       {list.name}
-                    </span>
-                  ))
-                : "—"}
-            </dd>
-          </div>
-        </dl>
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                "—"
+              ),
+            },
+          ]}
+        />
         <section>
           <h3 className="mb-2 text-xs font-medium text-zinc-500">
             {t("common.content")}
