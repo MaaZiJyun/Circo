@@ -21,14 +21,25 @@ export function useAttachmentActions(selected?: ProjectRecord) {
     setUploading(true);
     setUploadError(false);
     try {
+      const response = await fetch("/api/attachments/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: file.filePath, projectId: selected.id }),
+      });
+      const registered = (await response.json()) as Partial<AttachmentPathInput> & { error?: string };
+      if (!response.ok || !registered.filePath) throw new Error(registered.error || "Register failed");
       const stamp = now();
       const attachment: Attachment = {
-        id: createId("attachment"), projectId: selected.id, name: file.name,
-        filePath: file.filePath, mimeType: file.mimeType, size: file.size,
+        id: createId("attachment"), projectId: selected.id, name: registered.name ?? file.name,
+        filePath: registered.filePath, mimeType: registered.mimeType ?? file.mimeType,
+        size: registered.size ?? file.size,
         description, status: "available", createdAt: stamp, updatedAt: stamp,
       };
       mutate((current) => ({ ...current, attachments: [...current.attachments, attachment] }));
-    } catch { setUploadError(true); }
+    } catch (error) {
+      setUploadError(true);
+      throw error;
+    }
     finally { setUploading(false); }
   };
   const duplicateAttachments = (ids: string[]) => {

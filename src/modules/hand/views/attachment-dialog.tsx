@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Dialog, Field, Input, Textarea } from "@/shared/components/ui";
+import { Alert, Button, Dialog, Field, Input, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 
 import type { AttachmentPathInput } from "../view-models/use-attachment-actions";
@@ -19,6 +19,8 @@ export function AttachmentDialog({
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<AttachmentPathInput | null>(null);
   const [selecting, setSelecting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
 
   const chooseFile = async () => {
     setSelecting(true);
@@ -41,10 +43,18 @@ export function AttachmentDialog({
   };
   const submit = async () => {
     if (!file) return;
-    await onSave(file, description);
-    onClose();
-    setFile(null);
-    setDescription("");
+    setSaving(true);
+    setError(false);
+    try {
+      await onSave(file, description);
+      onClose();
+      setFile(null);
+      setDescription("");
+    } catch {
+      setError(true);
+    } finally {
+      setSaving(false);
+    }
   };
   return (
     <Dialog open={open} title={t("hand.addAttachment")} closeLabel={t("common.close")} onClose={onClose}>
@@ -60,7 +70,8 @@ export function AttachmentDialog({
         <Field label={t("hand.fileDescription")}>
           <Textarea value={description} onChange={(event) => setDescription(event.target.value)} />
         </Field>
-        <Button disabled={!file} onClick={() => void submit()}>{t("common.save")}</Button>
+        {error && <Alert tone="danger">{t("hand.uploadFailed")}</Alert>}
+        <Button disabled={!file || saving} onClick={() => void submit()}>{t("common.save")}</Button>
       </div>
     </Dialog>
   );
