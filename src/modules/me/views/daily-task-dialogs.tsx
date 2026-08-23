@@ -17,8 +17,10 @@ import { TaskEffortFields } from "@/shared/components/task-effort-fields";
 import type { TaskRecord } from "@/shared/model/entities";
 import { addDays, today } from "@/shared/model/factories";
 import { defaultTaskImportance, taskImportance } from "@/shared/model/task-importance";
+import { preprocessTask } from "@/shared/model/task-preprocessor";
 import { defaultTaskUrgency } from "@/shared/model/task-urgency";
 import { defaultTaskEffort } from "@/shared/model/task-effort";
+import { useStore } from "@/shared/view-models/store-context";
 import type { DailyTaskInput } from "../model/daily-task-input";
 
 export function CreateDailyTaskDialog({
@@ -37,6 +39,7 @@ export function CreateDailyTaskDialog({
   initial?: DailyTaskInput;
 }) {
   const { t } = useI18n();
+  const { state } = useStore();
   const [input, setInput] = useState<DailyTaskInput>(
     initial ?? {
       title: "",
@@ -52,6 +55,27 @@ export function CreateDailyTaskDialog({
       recurrence: null,
     },
   );
+  const preprocessTitle = () => {
+    if (initial || !state || !input.title.trim()) return;
+    const values = preprocessTask(
+      input.title,
+      state.profile.taskPreprocessingRules,
+    );
+    setInput((current) => ({
+      ...current,
+      description: values.description,
+      estimatedMinutes: values.estimatedMinutes,
+      expectedOutput: values.expectedOutput,
+      impact: values.impact,
+      goal: values.goal,
+      risk: values.risk,
+      value: values.value,
+      importance: taskImportance(values),
+      delayLoss: values.delayLoss,
+      complexity: values.complexity,
+      uncertainty: values.uncertainty,
+    }));
+  };
   return (
     <Dialog
       open={open}
@@ -67,6 +91,7 @@ export function CreateDailyTaskDialog({
             onChange={(event) =>
               setInput({ ...input, title: event.target.value })
             }
+            onBlur={preprocessTitle}
           />
         </Field>
         <Field label={t("me.taskDescription")}>

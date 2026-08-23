@@ -14,6 +14,7 @@ import { ProfileSettings } from "./profile-settings";
 import { StorageSettings } from "./storage-settings";
 import { BackgroundMusicSettings } from "./background-music-settings";
 import { MatrixFormulaSettings } from "@/modules/me/views/matrix-formula-settings";
+import { TaskPreprocessingSettings } from "./task-preprocessing-settings";
 import { Alert, Button, Card, EmptyState, Field, Select } from "./ui";
 
 export function SettingsView() {
@@ -87,6 +88,7 @@ export function SettingsView() {
         </Card>
       </div>
       <MatrixFormulaSettings />
+      <TaskPreprocessingSettings />
       <BackgroundMusicSettings />
       <StorageSettings />
       <Card>

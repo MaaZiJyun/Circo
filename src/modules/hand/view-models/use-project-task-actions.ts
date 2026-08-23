@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
-import { createId, estimateMinutes, now } from "@/shared/model/factories";
+import { createId, now } from "@/shared/model/factories";
 import { today } from "@/shared/model/factories";
 import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
@@ -15,6 +15,7 @@ export type TaskInput = Pick<
   | "description"
   | "startDate"
   | "dueDate"
+  | "estimatedMinutes"
   | "expectedOutput"
   | "milestone"
   | "importance"
@@ -36,6 +37,7 @@ export function taskInput(task: TaskRecord): TaskInput {
     description: task.description,
     startDate: task.startDate,
     dueDate: task.dueDate,
+    estimatedMinutes: task.estimatedMinutes,
     expectedOutput: task.expectedOutput,
     milestone: task.milestone,
     importance: task.importance,
@@ -64,7 +66,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       ...(projectId ? { projectId } : {}),
       ...input,
       listIds: [],
-      estimatedMinutes: estimateMinutes(input.startDate, input.dueDate),
+      estimatedMinutes: input.estimatedMinutes,
       importance: taskImportance(input),
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
@@ -86,6 +88,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       description: task.description,
       startDate: task.startDate,
       dueDate: "",
+      estimatedMinutes: task.estimatedMinutes,
       expectedOutput: task.expectedOutput,
       milestone: task.milestone,
       importance: task.importance,
@@ -154,7 +157,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
           ? {
               ...item,
               ...input,
-              estimatedMinutes: estimateMinutes(input.startDate, input.dueDate),
+              estimatedMinutes: input.estimatedMinutes,
               importance: taskImportance(input),
               priority: priorityFromImportance(taskImportance(input)),
               updatedAt: now(),

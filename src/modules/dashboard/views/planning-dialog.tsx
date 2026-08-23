@@ -10,7 +10,7 @@ import { useI18n } from "@/shared/i18n/i18n-context";
 import { activeItems } from "@/shared/model/app-state";
 import type { TaskRecord } from "@/shared/model/entities";
 import type { DailyPlanItem, FutureMessage } from "@/shared/model/message";
-import { addDays, createId, estimateMinutes, now, startDateFromDue } from "@/shared/model/factories";
+import { addDays, createId, now, startDateFromDue } from "@/shared/model/factories";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance } from "@/shared/model/task-importance";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
@@ -139,7 +139,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
   };
   const updateIndependent = (task: TaskRecord, input: TaskInput) => {
     const stamp = now();
-    const estimated = estimateMinutes(input.startDate, input.dueDate);
+    const estimated = input.estimatedMinutes;
     mutate((current) => ({
       ...current,
       tasks: current.tasks.map((item) =>
@@ -186,7 +186,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       projectId: parent.projectId,
       parentId: parent.id,
       ...input,
-      estimatedMinutes: estimateMinutes(input.startDate, input.dueDate),
+      estimatedMinutes: input.estimatedMinutes,
       importance: taskImportance(input),
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",

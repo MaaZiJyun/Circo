@@ -22,6 +22,7 @@ import type {
   WorkSession,
 } from "./entities";
 import type { FutureMessage } from "./message";
+import type { TaskPreprocessingRule } from "./task-preprocessor";
 
 export interface AppState {
   schemaVersion: 1;
@@ -72,6 +73,7 @@ export interface UserProfile {
   backgroundAudioTracks?: BackgroundAudioTrack[];
   countdownTaskSlots?: Array<string | null>;
   matrixFormulas?: MatrixFormulaSettings;
+  taskPreprocessingRules?: TaskPreprocessingRule[];
 }
 
 export interface MatrixFormulaSettings {
@@ -156,6 +158,49 @@ function isProfile(value: unknown) {
           (typeof profile.matrixFormulas.dispersion === "number" &&
             profile.matrixFormulas.dispersion >= 0.1 &&
             profile.matrixFormulas.dispersion <= 10)))) &&
+    (profile.taskPreprocessingRules === undefined ||
+      (Array.isArray(profile.taskPreprocessingRules) &&
+        profile.taskPreprocessingRules.length > 0 &&
+        profile.taskPreprocessingRules.length <= 50 &&
+        profile.taskPreprocessingRules.every(
+          (rule) =>
+            rule &&
+            typeof rule === "object" &&
+            typeof rule.id === "string" &&
+            rule.id.length <= 100 &&
+            typeof rule.name === "string" &&
+            rule.name.trim().length > 0 &&
+            rule.name.length <= 100 &&
+            Array.isArray(rule.keywords) &&
+            rule.keywords.length <= 50 &&
+            rule.keywords.every(
+              (keyword) =>
+                typeof keyword === "string" && keyword.length <= 80,
+            ) &&
+            typeof rule.description === "string" &&
+            rule.description.length <= 1000 &&
+            typeof rule.estimatedMinutes === "number" &&
+            Number.isFinite(rule.estimatedMinutes) &&
+            rule.estimatedMinutes >= 5 &&
+            rule.estimatedMinutes <= 10_080 &&
+            typeof rule.expectedOutput === "string" &&
+            rule.expectedOutput.length <= 1000 &&
+            [
+              rule.impact,
+              rule.goal,
+              rule.risk,
+              rule.value,
+              rule.delayLoss,
+              rule.complexity,
+              rule.uncertainty,
+            ].every(
+              (score) =>
+                typeof score === "number" &&
+                Number.isFinite(score) &&
+                score >= 1 &&
+                score <= 5,
+            ),
+        ))) &&
     (profile.birthDate === undefined ||
       /^\d{4}-\d{2}-\d{2}$/.test(profile.birthDate))
   );
