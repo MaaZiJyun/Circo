@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   FolderOpenIcon,
   MusicalNoteIcon,
-  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { BackgroundAudioTrack } from "@/shared/model/app-state";
@@ -91,23 +90,6 @@ export function BackgroundMusicSettings() {
     } finally {
       setBusy(false);
       if (inputRef.current) inputRef.current.value = "";
-    }
-  };
-  const remove = async (track: BackgroundAudioTrack) => {
-    setBusy(true);
-    setError("");
-    try {
-      const response = await fetch(`/api/background-audio/${track.token}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error(t("settings.musicRemoveFailed"));
-      updateTracks((current) =>
-        current.filter((item) => item.token !== track.token),
-      );
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t("common.error"));
-    } finally {
-      setBusy(false);
     }
   };
   const pickPath = async () => {

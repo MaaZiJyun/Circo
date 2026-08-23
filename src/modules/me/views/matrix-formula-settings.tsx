@@ -1,25 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import type { MatrixFormulaSettings as MatrixFormulaConfig } from "@/shared/model/app-state";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useStore } from "@/shared/view-models/store-context";
 import { SectionHeader } from "@/shared/components/page-elements";
-import { Alert, Button, Card, Field, Input } from "@/shared/components/ui";
+import { Button, Card, Field, Input } from "@/shared/components/ui";
 import {
   defaultMatrixFormulas,
   resolveMatrixFormulas,
 } from "../model/matrix-formula";
-import {
-  taskFormulaVariables,
-  validateTaskCoordinateFormulas,
-} from "../model/task-coordinate-formula";
-
-const taskVariableHelp = taskFormulaVariables.map((name) => ({
-  name,
-  label: `settings.taskVariable.${name}` as const,
-}));
+import { validateTaskCoordinateFormulas } from "../model/task-coordinate-formula";
 
 export function MatrixFormulaSettings() {
   const { t } = useI18n();
@@ -28,7 +19,6 @@ export function MatrixFormulaSettings() {
     resolveMatrixFormulas(state?.profile.matrixFormulas),
   );
   const [error, setError] = useState("");
-  const [showHelp, setShowHelp] = useState(false);
   if (!state) return null;
   const persist = (formulas: MatrixFormulaConfig) =>
     mutate((current) => ({

@@ -160,9 +160,9 @@ export function EmptyState({
   );
 }
 
-export function LoadingState({ label }: { label: string }) {
+export function LoadingState({ label, className = "" }: { label: string; className?: string }) {
   return (
-    <div className="flex h-dvh items-center justify-center gap-3 overflow-y-auto text-sm text-zinc-500">
+    <div className={`flex h-dvh items-center justify-center gap-3 overflow-y-auto text-sm text-zinc-500 ${className}`}>
       <span className="size-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-950 dark:border-zinc-700 dark:border-t-zinc-50" />
       {label}
     </div>

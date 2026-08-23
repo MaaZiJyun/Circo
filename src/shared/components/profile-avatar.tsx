@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { UserIcon } from "@heroicons/react/24/outline";
 
 export function ProfileAvatar({
@@ -18,6 +17,9 @@ export function ProfileAvatar({
       className={`relative grid shrink-0 place-items-center overflow-hidden rounded-full bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950 ${size} ${className}`}
     >
       {src ? (
+        // Avatar sources may be local file/data URLs; keep the native image
+        // adapter so the user-selected source is not restricted by config.
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={src}
           alt={name}

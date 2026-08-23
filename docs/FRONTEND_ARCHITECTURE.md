@@ -3,6 +3,9 @@
 > 范围：分层与组件清单、API 分组、所有 Table 及其数据结构。
 > 分层约定：`page(页面) → view(子页面) → section(区块) → widget(组件) → component(控件) → button/text(原子)`。
 
+> 维护入口：组件的当前完整盘点、复用边界和迁移记录见
+> [FRONTEND_COMPONENT_CATALOG.md](./FRONTEND_COMPONENT_CATALOG.md)。本文保留稳定的架构基线和实体/Table 说明；新增组件应先登记到维护入口。
+
 ---
 
 ## 一、分层架构
@@ -286,4 +289,3 @@ size: number, description, status: "available"|"missing"
 ## 七、维护待办
 
 重构与规范化待办清单见独立文档：[`docs/FRONTEND_REFACTOR_TODO.md`](./FRONTEND_REFACTOR_TODO.md)（按优先级排序、带状态勾选、逐条进度记录）。
-

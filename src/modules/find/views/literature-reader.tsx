@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
-  ArrowLeftIcon,
   ArrowUturnLeftIcon,
   CheckIcon,
   ChevronDownIcon,

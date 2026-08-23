@@ -1,42 +1,22 @@
 "use client";
+
 import { useState } from "react";
-import {
-  ArrowUturnLeftIcon,
-  DocumentDuplicateIcon,
-  FolderOpenIcon,
-  PencilSquareIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import {
-  ContextMenu,
-  ContextMenuItem,
-  type MenuPosition,
-} from "@/shared/components/context-menu";
-import { LibrarySortControls } from "@/shared/components/library-sort-controls";
-import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
-import { Button, EmptyState, Tabs } from "@/shared/components/ui";
+import { ArrowUturnLeftIcon } from "@heroicons/react/24/outline";
+import { Button, Tabs } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectList, ProjectRecord, TaskList } from "@/shared/model/entities";
+import { HandDialogSection } from "../sections/hand-dialog-section";
+import { HandProjectLibrarySection } from "../sections/hand-library-section";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
-import {
-  type ProjectSort,
-  useProjectLibrary,
-} from "../view-models/use-project-library";
+import { useProjectLibrary } from "../view-models/use-project-library";
 import { useTaskLibrary } from "../view-models/use-task-library";
-import { AttachmentDialog } from "./attachment-dialog";
-import { ProjectDialog, TaskDialog } from "./hand-dialogs";
-import { ProjectLogEditor } from "./project-log-editor";
-import { ChooseListDialog, ListFormDialog } from "@/shared/components/list-dialogs";
-import { ProjectSidebar } from "./project-sidebar";
-import { ProjectTable } from "./project-table";
+import { ProjectSidebar, StuffView, TaskLibrarySidebar } from "../widgets";
 import { ProjectWorkspace, type ProjectSection } from "./project-workspace";
-import { projectInputFromRecord } from "./project-record-input";
-import { ProjectTaskActions, type TaskMenu } from "./project-task-actions";
-import { StuffView } from "./stuff-view";
-import { TaskLibrarySidebar } from "./task-library-sidebar";
+
 type DetailDialog = "task" | "log" | "attachment" | null;
-type ProjectMenu = { project: ProjectRecord; position: MenuPosition } | null;
+type ProjectMenu = Parameters<typeof HandDialogSection>[0]["menu"];
+type TaskMenu = Parameters<typeof HandDialogSection>[0]["taskMenu"];
+
 export function HandView() {
   const { t } = useI18n();
   const vm = useHandViewModel();
@@ -44,22 +24,18 @@ export function HandView() {
   const taskLibrary = useTaskLibrary();
   const [viewing, setViewing] = useState(false);
   const [viewMode, setViewMode] = useState<"project" | "stuff">("project");
-  const [projectSection, setProjectSection] =
-    useState<ProjectSection>("overview");
+  const [projectSection, setProjectSection] = useState<ProjectSection>("overview");
   const [dialog, setDialog] = useState<DetailDialog>(null);
   const [taskParentId, setTaskParentId] = useState<string | undefined>();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ProjectRecord | null>(null);
   const [menu, setMenu] = useState<ProjectMenu>(null);
   const [taskMenu, setTaskMenu] = useState<TaskMenu>(null);
-  const [listDialog, setListDialog] = useState<"create" | "choose" | null>(
-    null,
-  );
+  const [listDialog, setListDialog] = useState<"create" | "choose" | null>(null);
   const [editingList, setEditingList] = useState<ProjectList | null>(null);
   const [taskListDialog, setTaskListDialog] = useState<"create" | null>(null);
   const [editingTaskList, setEditingTaskList] = useState<TaskList | null>(null);
-  const selectionMode = library.selectedIds.length > 0;
-  const sortAscending = library.sortDirection === "ascending";
+
   const openProject = (project: ProjectRecord) => {
     vm.setSelectedId(project.id);
     setProjectSection("overview");
@@ -69,10 +45,20 @@ export function HandView() {
     setMenu(null);
     if (window.confirm(t("common.confirmDelete"))) vm.deleteProject(project.id);
   };
+  const closeProjectDialog = () => {
+    setCreating(false);
+    setEditing(null);
+    setMenu(null);
+  };
+  const closeTaskDialog = () => {
+    setDialog(null);
+    setTaskParentId(undefined);
+  };
   const openTaskDialog = (parentId?: string) => {
     setTaskParentId(parentId);
     setDialog("task");
   };
+
   return (
     <div className="h-full space-y-6">
       {!viewing ? (
@@ -101,101 +87,16 @@ export function HandView() {
             )}
           </div>
           {viewMode === "project" ? (
-            <TableLibraryWorkspace
-                title={
-                  library.selectedList?.system
-                    ? t(`hand.list.${library.selectedList.system}`)
-                    : library.selectedList?.name || t("hand.projectLibrary")
-                }
-                controls={
-                  <LibrarySortControls
-                    label={t("hand.sortBy")}
-                    value={library.sortBy}
-                    options={[
-                      { value: "startDate", label: t("hand.startDate") },
-                      { value: "endDate", label: t("hand.endDate") },
-                      { value: "score", label: t("hand.projectScore") },
-                    ]}
-                    ascending={sortAscending}
-                    directionLabel={t(
-                      sortAscending ? "hand.ascending" : "hand.descending",
-                    )}
-                    onChange={(value) =>
-                      library.setSortBy(value as ProjectSort)
-                    }
-                    onToggleDirection={() =>
-                      library.setSortDirection(
-                        sortAscending ? "descending" : "ascending",
-                      )
-                    }
-                  />
-                }
-                action={
-                  <Button
-                    className="whitespace-nowrap"
-                    onClick={() => setCreating(true)}
-                  >
-                    <PlusIcon className="size-4" />
-                    {t("hand.newProject")}
-                  </Button>
-                }
-                selectionLabel={
-                  selectionMode
-                    ? t("hand.selectedCount").replace(
-                        "{count}",
-                        String(library.selectedIds.length),
-                      )
-                    : undefined
-                }
-                onCancelSelection={
-                  selectionMode ? () => library.setSelectedIds([]) : undefined
-                }
-                selectionActions={
-                  <>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setListDialog("choose")}
-                    >
-                      {t("hand.addToList")}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      disabled={library.selectedList?.system !== null}
-                      onClick={library.removeFromCurrentList}
-                    >
-                      {t("hand.removeFromList")}
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={() =>
-                        window.confirm(t("common.confirmDelete")) &&
-                        library.deleteSelected()
-                      }
-                    >
-                      {t("common.delete")}
-                    </Button>
-                  </>
-                }
-              >
-                {library.projects.length ? (
-                  <ProjectTable
-                    library={library}
-                    selectionMode={selectionMode}
-                    onEnterSelection={(project) =>
-                      library.setSelectedIds([project.id])
-                    }
-                    onOpen={openProject}
-                    onOpenMenu={(project, position) =>
-                      setMenu({ project, position })
-                    }
-                  />
-                ) : (
-                  <EmptyState
-                    title={t("common.noData")}
-                    description={t("hand.projectGateHint")}
-                  />
-                )}
-              </TableLibraryWorkspace>
+            <HandProjectLibrarySection
+              library={library}
+              onCreate={() => setCreating(true)}
+              onChooseList={() => setListDialog("choose")}
+              onDeleteSelected={() => {
+                if (window.confirm(t("common.confirmDelete"))) library.deleteSelected();
+              }}
+              onOpen={openProject}
+              onOpenMenu={(project, position) => setMenu({ project, position })}
+            />
           ) : (
             <StuffView library={taskLibrary} />
           )}
@@ -204,22 +105,13 @@ export function HandView() {
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 p-2">
             <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                className="rounded-xl"
-                onClick={() => setViewing(false)}
-              >
+              <Button variant="ghost" className="rounded-xl" onClick={() => setViewing(false)}>
                 <ArrowUturnLeftIcon className="size-4" />
                 {t("hand.back")}
               </Button>
-
               <div className="min-w-0">
-                <h1 className="truncate text-xl font-semibold">
-                  {vm.selected.name}
-                </h1>
-                <p className="mt-1 text-xs text-zinc-500">
-                  {vm.selected.status.toUpperCase()}
-                </p>
+                <h1 className="truncate text-xl font-semibold">{vm.selected.name}</h1>
+                <p className="mt-1 text-xs text-zinc-500">{vm.selected.status.toUpperCase()}</p>
               </div>
             </div>
             <Tabs
@@ -244,160 +136,39 @@ export function HandView() {
           />
         </>
       ) : null}
-      {creating && (
-        <ProjectDialog
-          key="create-project"
-          open
-          onClose={() => setCreating(false)}
-          onSave={vm.addProject}
-        />
-      )}
-      {editing && (
-        <ProjectDialog
-          key={`edit-project-${editing.id}`}
-          open
-          edit
-          initial={projectInputFromRecord(editing)}
-          onClose={() => setEditing(null)}
-          onSave={(input) => vm.updateProjectById(editing.id, input)}
-        />
-      )}
-      {listDialog === "create" && (
-        <ListFormDialog
-          title={t("hand.createList")}
-          nameLabel={t("hand.listName")}
-          noteLabel={t("hand.listNote")}
-          colorLabel={t("hand.listColor")}
-          onClose={() => setListDialog(null)}
-          onSave={({ name, note, color }) =>
-            library.createList({ name, note, color })
-          }
-        />
-      )}
-      {editingList && (
-        <ListFormDialog
-          key={editingList.id}
-          title={t("hand.editList")}
-          nameLabel={t("hand.listName")}
-          noteLabel={t("hand.listNote")}
-          colorLabel={t("hand.listColor")}
-          initial={{
-            name: editingList.name,
-            note: editingList.note,
-            color: editingList.color,
-            tags: [],
-          }}
-          onClose={() => setEditingList(null)}
-          onSave={({ name, note, color }) =>
-            library.updateList(editingList.id, { name, note, color })
-          }
-        />
-      )}
-      {taskListDialog === "create" && (
-        <ListFormDialog
-          title={t("hand.createList")}
-          nameLabel={t("hand.listName")}
-          noteLabel={t("hand.listNote")}
-          colorLabel={t("hand.listColor")}
-          onClose={() => setTaskListDialog(null)}
-          onSave={({ name, note, color }) =>
-            taskLibrary.createList({ name, note, color })
-          }
-        />
-      )}
-      {editingTaskList && (
-        <ListFormDialog
-          key={editingTaskList.id}
-          title={t("hand.editList")}
-          nameLabel={t("hand.listName")}
-          noteLabel={t("hand.listNote")}
-          colorLabel={t("hand.listColor")}
-          initial={{
-            name: editingTaskList.name,
-            note: editingTaskList.note,
-            color: editingTaskList.color,
-            tags: [],
-          }}
-          onClose={() => setEditingTaskList(null)}
-          onSave={({ name, note, color }) =>
-            taskLibrary.updateList(editingTaskList.id, { name, note, color })
-          }
-        />
-      )}
-      {listDialog === "choose" && (
-        <ChooseListDialog
-          title={t("hand.addToList")}
-          emptyLabel={t("hand.noCustomLists")}
-          lists={library.lists.filter((item) => !item.system)}
-          onClose={() => setListDialog(null)}
-          onChoose={(id) => library.addToList(library.selectedIds, id)}
-        />
-      )}
-      <TaskDialog
-        key={`new-task-${vm.selected?.id ?? "none"}-${taskParentId ?? "root"}`}
-        open={dialog === "task"}
-        parentId={taskParentId}
-        defaultImportance={vm.selected?.score ?? 50}
-        onClose={() => {
-          setDialog(null);
-          setTaskParentId(undefined);
-        }}
-        onSave={vm.addTask}
-      />
-      {dialog === "log" && vm.selected && (
-        <ProjectLogEditor
-          key={`new-log-${vm.selected.id}`}
-          open
-          projectId={vm.selected.id}
-          onClose={() => setDialog(null)}
-          onSave={vm.addLog}
-        />
-      )}
-      <AttachmentDialog
-        open={dialog === "attachment"}
-        onClose={() => setDialog(null)}
-        onSave={vm.addAttachment}
-      />
-      {menu && (
-        <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
-          <ContextMenuItem
-            onClick={() => {
-              openProject(menu.project);
-              setMenu(null);
-            }}
-          >
-            <FolderOpenIcon className="size-4" />
-            {t("hand.openProject")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              setEditing(menu.project);
-              setMenu(null);
-            }}
-          >
-            <PencilSquareIcon className="size-4" />
-            {t("common.edit")}
-          </ContextMenuItem>
-          <ContextMenuItem
-            onClick={() => {
-              vm.duplicateProject(menu.project);
-              setMenu(null);
-            }}
-          >
-            <DocumentDuplicateIcon className="size-4" />
-            {t("common.duplicate")}
-          </ContextMenuItem>
-          <ContextMenuItem danger onClick={() => removeProject(menu.project)}>
-            <TrashIcon className="size-4" />
-            {t("common.delete")}
-          </ContextMenuItem>
-        </ContextMenu>
-      )}
-      <ProjectTaskActions
+
+      <HandDialogSection
         vm={vm}
-        menu={taskMenu}
-        onClose={() => setTaskMenu(null)}
-        onCreateSubtask={(task) => openTaskDialog(task.id)}
+        library={library}
+        taskLibrary={taskLibrary}
+        creating={creating}
+        editing={editing}
+        listDialog={listDialog}
+        editingList={editingList}
+        taskListDialog={taskListDialog}
+        editingTaskList={editingTaskList}
+        dialog={dialog}
+        taskParentId={taskParentId}
+        menu={menu}
+        taskMenu={taskMenu}
+        onCloseDialog={closeProjectDialog}
+        onCloseTaskDialog={closeTaskDialog}
+        onCloseLog={() => setDialog(null)}
+        onCloseAttachment={() => setDialog(null)}
+        onCloseList={() => {
+          setListDialog(null);
+          setEditingList(null);
+        }}
+        onCloseTaskList={() => {
+          setTaskListDialog(null);
+          setEditingTaskList(null);
+        }}
+        onOpenProject={openProject}
+        onEditProject={setEditing}
+        onRemoveProject={removeProject}
+        onChooseList={(id) => library.addToList(library.selectedIds, id)}
+        onCreateTask={openTaskDialog}
+        onCloseTaskMenu={() => setTaskMenu(null)}
       />
     </div>
   );
