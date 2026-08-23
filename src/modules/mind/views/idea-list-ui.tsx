@@ -5,6 +5,7 @@ import { ClockIcon, FolderIcon, PlusIcon } from "@heroicons/react/24/outline";
 import {
   ContextMenu,
   ContextMenuItem,
+  MoveToTrashContextMenuItem,
   type MenuPosition,
 } from "@/shared/components/context-menu";
 import {
@@ -144,17 +145,15 @@ export function IdeaSidebar({
           >
             {t("common.edit")}
           </ContextMenuItem>
-          <ContextMenuItem
-            danger
+          <MoveToTrashContextMenuItem
+            label={t("mind.deleteList")}
             disabled={Boolean(menu.list.system)}
-            onClick={() => {
+            onMoveToTrash={() => {
               if (window.confirm(t("mind.confirmDeleteList")))
                 library.deleteList(menu.list.id);
               setMenu(null);
             }}
-          >
-            {t("mind.deleteList")}
-          </ContextMenuItem>
+          />
         </ContextMenu>
       )}
     </aside>

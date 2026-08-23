@@ -14,6 +14,7 @@ import type { useLibraryManagement } from "../view-models/use-library-management
 import {
   ContextMenu,
   ContextMenuItem,
+  MoveToTrashContextMenuItem,
   type MenuPosition,
 } from "@/shared/components/context-menu";
 import { readDraggedLiterature } from "./library-drag";
@@ -181,17 +182,15 @@ export function LibrarySidebar({
           >
             {t("common.edit")}
           </ContextMenuItem>
-          <ContextMenuItem
-            danger
+          <MoveToTrashContextMenuItem
+            label={t("find.deleteList")}
             disabled={Boolean(menu.list.system)}
-            onClick={() => {
+            onMoveToTrash={() => {
               if (window.confirm(t("find.confirmDeleteList")))
                 library.deleteList(menu.list.id);
               setMenu(null);
             }}
-          >
-            {t("find.deleteList")}
-          </ContextMenuItem>
+          />
         </ContextMenu>
       )}
     </aside>

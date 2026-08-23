@@ -8,7 +8,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
+import {
+  EllipsisHorizontalIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 
 export interface MenuPosition {
   x: number;
@@ -119,5 +122,26 @@ export function ContextMenuItem({
       </span>
       <span className="min-w-0 truncate">{label}</span>
     </button>
+  );
+}
+
+export function MoveToTrashContextMenuItem({
+  label,
+  onMoveToTrash,
+  disabled = false,
+}: {
+  label: string;
+  onMoveToTrash: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <ContextMenuItem
+      danger
+      disabled={disabled}
+      icon={<TrashIcon aria-hidden="true" />}
+      onClick={onMoveToTrash}
+    >
+      {label}
+    </ContextMenuItem>
   );
 }

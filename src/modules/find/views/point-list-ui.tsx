@@ -19,6 +19,7 @@ import type {
 import {
   ContextMenu,
   ContextMenuItem,
+  MoveToTrashContextMenuItem,
   type MenuPosition,
 } from "@/shared/components/context-menu";
 
@@ -137,17 +138,15 @@ export function PointListSidebar({
           >
             {t("common.edit")}
           </ContextMenuItem>
-          <ContextMenuItem
-            danger
+          <MoveToTrashContextMenuItem
+            label={t("find.deleteList")}
             disabled={Boolean(menu.list.system)}
-            onClick={() => {
+            onMoveToTrash={() => {
               if (window.confirm(t("find.confirmDeletePointList")))
                 library.deleteList(menu.list.id);
               setMenu(null);
             }}
-          >
-            {t("find.deleteList")}
-          </ContextMenuItem>
+          />
         </ContextMenu>
       )}
     </aside>

@@ -6,11 +6,11 @@ import {
   FolderMinusIcon,
   FolderPlusIcon,
   PencilSquareIcon,
-  TrashIcon,
 } from "@heroicons/react/24/outline";
 import {
   ContextMenu,
   ContextMenuItem,
+  MoveToTrashContextMenuItem,
   type MenuPosition,
 } from "@/shared/components/context-menu";
 import { useI18n } from "@/shared/i18n/i18n-context";
@@ -82,10 +82,10 @@ export function LiteratureContextMenu({
         <FolderMinusIcon className="size-4" />
         {t("find.removeFromList")}
       </ContextMenuItem>
-      <ContextMenuItem danger onClick={onDelete}>
-        <TrashIcon className="size-4" />
-        {t("find.deleteOriginal")}
-      </ContextMenuItem>
+      <MoveToTrashContextMenuItem
+        label={t("common.delete")}
+        onMoveToTrash={onDelete}
+      />
     </ContextMenu>
   );
 }

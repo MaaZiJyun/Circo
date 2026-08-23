@@ -1,7 +1,11 @@
 /** Shared business-neutral composite widgets. */
 export { AppSearchResults } from "../app-search-results";
 export { ColorPalette } from "../color-palette";
-export { ContextMenu, ContextMenuItem } from "../context-menu";
+export {
+  ContextMenu,
+  ContextMenuItem,
+  MoveToTrashContextMenuItem,
+} from "../context-menu";
 export { DataTable } from "../data-table";
 export { LibrarySortControls } from "../library-sort-controls";
 export { ChooseListDialog, ListFormDialog } from "../list-dialogs";

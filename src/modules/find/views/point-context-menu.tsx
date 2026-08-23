@@ -5,13 +5,13 @@ import {
   FolderPlusIcon,
   LightBulbIcon,
   PencilSquareIcon,
-  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ReferencePoint } from "@/shared/model/entities";
 import {
   ContextMenu,
   ContextMenuItem,
+  MoveToTrashContextMenuItem,
   type MenuPosition,
 } from "@/shared/components/context-menu";
 
@@ -54,10 +54,10 @@ export function PointContextMenu({
         <FolderMinusIcon className="size-4" />
         {t("find.removeFromList")}
       </ContextMenuItem>
-      <ContextMenuItem danger onClick={onDelete}>
-        <TrashIcon className="size-4" />
-        {t("common.delete")}
-      </ContextMenuItem>
+      <MoveToTrashContextMenuItem
+        label={t("common.delete")}
+        onMoveToTrash={onDelete}
+      />
       <ContextMenuItem onClick={onConvertToIdea}>
         <LightBulbIcon className="size-4" />
         {t("find.pointToIdea")}

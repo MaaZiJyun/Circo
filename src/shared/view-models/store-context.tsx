@@ -28,6 +28,7 @@ interface StoreValue {
   mutate: (updater: (current: AppState) => AppState) => void;
   softDelete: (collection: CollectionName, id: string) => void;
   restoreItem: (collection: CollectionName, id: string) => void;
+  purgeItem: (collection: CollectionName, id: string) => void;
   restoreBackup: (value: unknown) => Promise<boolean>;
   createArchive: () => Promise<Blob>;
   restoreArchive: (file: File) => Promise<boolean>;
@@ -151,6 +152,17 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     [mutate],
   );
+  const purgeItem = useCallback(
+    (collection: CollectionName, id: string) => {
+      mutate((current) => ({
+        ...current,
+        [collection]: (current[collection] as AppEntity[]).filter(
+          (item) => item.id !== id,
+        ),
+      }));
+    },
+    [mutate],
+  );
 
   const restoreBackup = useCallback(async (value: unknown) => {
     if (!isAppState(value)) return false;
@@ -212,6 +224,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       mutate,
       softDelete,
       restoreItem,
+      purgeItem,
       restoreBackup,
       createArchive,
       restoreArchive,
@@ -224,6 +237,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       mutate,
       softDelete,
       restoreItem,
+      purgeItem,
       restoreBackup,
       createArchive,
       restoreArchive,

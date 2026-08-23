@@ -17,24 +17,56 @@ import { StorageSettings } from "./storage-settings";
 import { TaskPreprocessingSettings } from "./task-preprocessing-settings";
 import { Alert, Button, Card, EmptyState, Field, Select, Tabs } from "./ui";
 
-type SettingsTab = "general" | "tasks" | "media" | "data";
+type SettingsTab = "general" | "tasks" | "media" | "data" | "trash";
+
+const trashCollections: CollectionName[] = [
+  "cycles",
+  "goals",
+  "sessions",
+  "events",
+  "sources",
+  "libraryLists",
+  "projectLists",
+  "taskLists",
+  "ideaLists",
+  "pointLists",
+  "points",
+  "annotations",
+  "ideas",
+  "projects",
+  "tasks",
+  "dailyTasks",
+  "logs",
+  "attachments",
+  "artifacts",
+  "relations",
+  "aiJobs",
+  "messages",
+];
 
 export function SettingsView() {
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
-  const { state, restoreItem, createArchive, restoreArchive } = useStore();
+  const {
+    state,
+    restoreItem,
+    purgeItem,
+    createArchive,
+    restoreArchive,
+  } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<SettingsTab>("general");
   if (!state) return null;
 
   const trash = (
-    ["goals", "sources", "ideas", "projects", "artifacts"] as CollectionName[]
+    trashCollections
   ).flatMap((collection) =>
     (
       state[collection] as {
         id: string;
         title?: string;
         name?: string;
+        label?: string;
         deletedAt?: string;
       }[]
     )
@@ -57,7 +89,6 @@ export function SettingsView() {
 
   return (
     <div className="space-y-8">
-      
       <Tabs
         value={tab}
         onChange={setTab}
@@ -66,6 +97,7 @@ export function SettingsView() {
           { value: "tasks", label: t("settings.tabTasks") },
           { value: "media", label: t("settings.tabMedia") },
           { value: "data", label: t("settings.tabData") },
+          { value: "trash", label: t("settings.tabTrash") },
         ]}
       />
 
@@ -142,30 +174,52 @@ export function SettingsView() {
               />
             </div>
           </Card>
-          <Card>
-            <SectionHeader title={t("settings.trash")} />
-            {trash.length ? (
-              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-                {trash.map((item) => (
-                  <div
-                    key={`${item.collection}-${item.id}`}
-                    className="flex items-center justify-between gap-3 py-3"
-                  >
-                    <span className="text-sm">{item.title ?? item.name}</span>
+        </div>
+      )}
+
+      {tab === "trash" && (
+        <Card>
+          <SectionHeader title={t("settings.trash")} />
+          {trash.length ? (
+            <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+              {trash.map((item) => (
+                <div
+                  key={`${item.collection}-${item.id}`}
+                  className="flex items-center justify-between gap-3 py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm">
+                      {item.title ?? item.name ?? item.label ?? item.id}
+                    </p>
+                    <p className="mt-1 text-xs text-zinc-500">
+                      {item.collection}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
                     <Button
                       variant="ghost"
                       onClick={() => restoreItem(item.collection, item.id)}
                     >
                       {t("common.restore")}
                     </Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => {
+                        if (window.confirm(t("settings.confirmDeleteForever"))) {
+                          purgeItem(item.collection, item.id);
+                        }
+                      }}
+                    >
+                      {t("settings.deleteForever")}
+                    </Button>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyState title={t("settings.trashEmpty")} />
-            )}
-          </Card>
-        </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState title={t("settings.trashEmpty")} />
+          )}
+        </Card>
       )}
     </div>
   );

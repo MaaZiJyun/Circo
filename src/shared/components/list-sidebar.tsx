@@ -4,6 +4,7 @@ import { useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import {
   ContextMenu,
+  MoveToTrashContextMenuItem,
   ContextMenuItem,
   type MenuPosition,
 } from "./context-menu";
@@ -130,16 +131,14 @@ export function ListSidebar<T extends ListSidebarItem>({
           >
             {editLabel}
           </ContextMenuItem>
-          <ContextMenuItem
-            danger
+          <MoveToTrashContextMenuItem
+            label={deleteLabel}
             disabled={Boolean(menu.list.system)}
-            onClick={() => {
+            onMoveToTrash={() => {
               if (window.confirm(confirmDeleteLabel)) onDelete(menu.list.id);
               setMenu(null);
             }}
-          >
-            {deleteLabel}
-          </ContextMenuItem>
+          />
         </ContextMenu>
       )}
     </aside>
