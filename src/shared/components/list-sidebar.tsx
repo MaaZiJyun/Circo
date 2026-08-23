@@ -61,7 +61,7 @@ export function ListSidebar<T extends ListSidebarItem>({
   );
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const press = useLongPress<T>((list, position) => {
-    if (!list.system) setMenu({ list, position });
+    setMenu({ list, position });
   });
   return (
     <aside className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
@@ -78,7 +78,6 @@ export function ListSidebar<T extends ListSidebarItem>({
             className={`flex min-h-10 items-center gap-2 rounded-xl px-3 text-left text-sm transition-colors ${activeId === list.id ? "bg-zinc-950 text-white shadow-sm dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-100 dark:hover:bg-zinc-900"}`}
             onClick={() => onSelect(list.id)}
             onPointerDown={(event) => {
-              if (list.system) return;
               press.onPointerDown(event, list);
             }}
             onPointerUp={press.onPointerUp}
@@ -87,11 +86,10 @@ export function ListSidebar<T extends ListSidebarItem>({
             onContextMenu={(event) => {
               event.preventDefault();
               press.cancel();
-              if (!list.system)
-                setMenu({
-                  list,
-                  position: { x: event.clientX, y: event.clientY },
-                });
+              setMenu({
+                list,
+                position: { x: event.clientX, y: event.clientY },
+              });
             }}
             onDragOver={(event) => {
               if (list.system) return;
@@ -124,6 +122,7 @@ export function ListSidebar<T extends ListSidebarItem>({
       {menu && (
         <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
           <ContextMenuItem
+            disabled={Boolean(menu.list.system)}
             onClick={() => {
               onEdit(menu.list);
               setMenu(null);
@@ -133,6 +132,7 @@ export function ListSidebar<T extends ListSidebarItem>({
           </ContextMenuItem>
           <ContextMenuItem
             danger
+            disabled={Boolean(menu.list.system)}
             onClick={() => {
               if (window.confirm(confirmDeleteLabel)) onDelete(menu.list.id);
               setMenu(null);

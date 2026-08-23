@@ -39,7 +39,7 @@ export function LibrarySidebar({
     pressTimer.current = null;
   };
   const openMenu = (list: LibraryList, position: MenuPosition) => {
-    if (!list.system) setMenu({ list, position });
+    setMenu({ list, position });
   };
   const resolveDropTarget = (event: React.DragEvent) =>
     document
@@ -115,7 +115,7 @@ export function LibrarySidebar({
               <button
                 onClick={() => library.setActiveListId(list.id)}
                 onPointerDown={(event) => {
-                  if (event.button !== 0 || list.system) return;
+                  if (event.button !== 0) return;
                   cancelPress();
                   pressTimer.current = setTimeout(
                     () =>
@@ -173,6 +173,7 @@ export function LibrarySidebar({
       {menu && (
         <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
           <ContextMenuItem
+            disabled={Boolean(menu.list.system)}
             onClick={() => {
               onEdit(menu.list);
               setMenu(null);
@@ -182,6 +183,7 @@ export function LibrarySidebar({
           </ContextMenuItem>
           <ContextMenuItem
             danger
+            disabled={Boolean(menu.list.system)}
             onClick={() => {
               if (window.confirm(t("find.confirmDeleteList")))
                 library.deleteList(menu.list.id);

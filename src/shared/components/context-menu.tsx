@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  Children,
+  isValidElement,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 
 export interface MenuPosition {
   x: number;
@@ -60,6 +68,7 @@ export function ContextMenu({
   return (
     <>
       <button
+        type="button"
         aria-label="Close menu"
         className="fixed inset-0 z-40 cursor-default"
         onClick={onClose}
@@ -82,13 +91,33 @@ export function ContextMenu({
 
 export function ContextMenuItem({
   danger = false,
+  icon,
+  children,
   ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & { danger?: boolean }) {
+}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
+  danger?: boolean;
+  icon?: React.ReactNode;
+}) {
+  const childItems = Children.toArray(children);
+  const legacyIcon =
+    !icon && childItems.length > 0 && isValidElement(childItems[0])
+      ? childItems[0]
+      : null;
+  const itemIcon =
+    icon ?? legacyIcon ?? <EllipsisHorizontalIcon aria-hidden="true" />;
+  const label = legacyIcon ? childItems.slice(1) : children;
+
   return (
     <button
+      type="button"
       role="menuitem"
       className={`flex min-h-10 w-full items-center gap-2 rounded-lg px-3 text-left text-sm disabled:opacity-40 ${danger ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-950" : "hover:bg-zinc-100 dark:hover:bg-zinc-900"}`}
       {...props}
-    />
+    >
+      <span className="grid size-4 shrink-0 place-items-center [&>svg]:size-4">
+        {itemIcon}
+      </span>
+      <span className="min-w-0 truncate">{label}</span>
+    </button>
   );
 }

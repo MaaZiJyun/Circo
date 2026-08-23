@@ -71,7 +71,7 @@ export function PointListSidebar({
               }}
               onClick={() => library.setActiveListId(list.id)}
               onPointerDown={(event) => {
-                if (event.button || list.system) return;
+                if (event.button) return;
                 cancel();
                 timer.current = setTimeout(
                   () =>
@@ -88,11 +88,10 @@ export function PointListSidebar({
               onContextMenu={(event) => {
                 event.preventDefault();
                 cancel();
-                if (!list.system)
-                  setMenu({
-                    list,
-                    position: { x: event.clientX, y: event.clientY },
-                  });
+                setMenu({
+                  list,
+                  position: { x: event.clientX, y: event.clientY },
+                });
               }}
               onDragOver={(event) => {
                 if (!list.system) {
@@ -130,6 +129,7 @@ export function PointListSidebar({
       {menu && (
         <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
           <ContextMenuItem
+            disabled={Boolean(menu.list.system)}
             onClick={() => {
               onEdit(menu.list);
               setMenu(null);
@@ -139,6 +139,7 @@ export function PointListSidebar({
           </ContextMenuItem>
           <ContextMenuItem
             danger
+            disabled={Boolean(menu.list.system)}
             onClick={() => {
               if (window.confirm(t("find.confirmDeletePointList")))
                 library.deleteList(menu.list.id);
