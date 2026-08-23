@@ -1,16 +1,14 @@
 "use client";
 
 import { forwardRef } from "react";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
-  SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
-
-export const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 dark:focus-visible:ring-zinc-50 dark:focus-visible:ring-offset-zinc-950";
+import { focusRing } from "./focus-ring";
+export { focusRing } from "./focus-ring";
+export { Select } from "./select";
 
 const textInputTypes = new Set([
   "email",
@@ -160,24 +158,6 @@ export function Textarea({
       className={`textfield-cursor min-h-28 w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm leading-6 text-zinc-950 placeholder:text-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 ${focusRing} ${className}`}
       {...props}
     />
-  );
-}
-
-export function Select({
-  className = "",
-  ...props
-}: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <span className="relative block w-full">
-      <select
-        className={`peer min-h-11 w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-10 text-sm text-zinc-950 transition-colors hover:border-zinc-300 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:border-zinc-700 ${focusRing} ${className}`}
-        {...props}
-      />
-      <ChevronDownIcon
-        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400 peer-disabled:opacity-40"
-        aria-hidden="true"
-      />
-    </span>
   );
 }
 
