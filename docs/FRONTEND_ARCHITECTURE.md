@@ -112,6 +112,8 @@
 | `/api/db-info` | GET | 数据库信息 |
 | `/api/path-picker` | POST | 调用原生 Finder 路径选择器 |
 
+`/api/backup` 导出的 ZIP 包含 `circo.json` 应用快照、`manifest.json` 版本清单，以及应用管理的 `files`、`attachments`、`library`、`notes`、`project`、`reference` 和 `background-audio` 文件目录。恢复时会校验目录路径，清理并替换备份中声明的文件目录；附件路径会重新映射到当前存储目录。
+
 ### 4.2 文件与附件
 
 | 端点 | 方法 | 说明 |

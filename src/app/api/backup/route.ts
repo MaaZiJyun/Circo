@@ -4,12 +4,92 @@ import { randomUUID } from "node:crypto";
 import AdmZip from "adm-zip";
 import { SqliteAppRepository } from "@/shared/infrastructure/sqlite-repository";
 import { getStorageConfig } from "@/shared/infrastructure/storage-config";
+import type { AppState } from "@/shared/model/app-state";
 import { isAppState } from "@/shared/model/app-state";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const repository = new SqliteAppRepository();
+
+const storageFolders = [
+  "files",
+  "attachments",
+  "library",
+  "notes",
+  "project",
+  "reference",
+] as const;
+const archiveFolders = [...storageFolders, "background-audio"] as const;
+const backupManifestVersion = 2;
+
+function isSafeArchiveEntry(entryName: string) {
+  const raw = entryName.replaceAll("\\", "/");
+  const normalized = raw.replace(/\/+$/, "");
+  const parts = normalized.split("/");
+  return (
+    normalized.length > 0 &&
+    !normalized.startsWith("/") &&
+    !normalized.includes("\0") &&
+    !parts.some((part) => part === "." || part === "..") &&
+    parts.every((part) => /^[a-zA-Z0-9._-]+$/.test(part)) &&
+    parts.length >= (raw.endsWith("/") ? 1 : 2) &&
+    archiveFolders.includes(parts[0] as (typeof archiveFolders)[number])
+  );
+}
+
+function remapAttachmentPath(filePath: string, dataDirectory: string) {
+  const normalized = filePath.replaceAll("\\", "/");
+  for (const folder of archiveFolders) {
+    if (normalized === folder || normalized.startsWith(`${folder}/`)) {
+      const suffix = normalized.slice(folder.length + 1);
+      return suffix
+        ? path.join(dataDirectory, folder, ...suffix.split("/"))
+        : path.join(dataDirectory, folder);
+    }
+  }
+  const relative = path.relative(dataDirectory, filePath);
+  if (
+    relative &&
+    !relative.startsWith(`..${path.sep}`) &&
+    relative !== ".." &&
+    !path.isAbsolute(relative)
+  )
+    return path.join(dataDirectory, relative);
+
+  for (const folder of archiveFolders) {
+    const marker = `/${folder}/`;
+    const markerIndex = normalized.indexOf(marker);
+    if (markerIndex >= 0) {
+      const suffix = normalized.slice(markerIndex + marker.length);
+      return path.join(dataDirectory, folder, ...suffix.split("/"));
+    }
+  }
+  return path.join(dataDirectory, "attachments", path.basename(filePath));
+}
+
+function remapRestoredState(state: AppState, dataDirectory: string): AppState {
+  return {
+    ...state,
+    attachments: state.attachments.map((attachment) => ({
+      ...attachment,
+      filePath: attachment.filePath
+        ? remapAttachmentPath(attachment.filePath, dataDirectory)
+        : "",
+    })),
+  };
+}
+
+function storageDestination(
+  dataDirectory: string,
+  backgroundMusicDirectory: string,
+  folder: (typeof archiveFolders)[number],
+) {
+  return folder === "background-audio"
+    ? backgroundMusicDirectory
+    : path.join(dataDirectory, folder);
+}
+
 export async function GET() {
   try {
     const config = getStorageConfig();
@@ -17,16 +97,30 @@ export async function GET() {
     const state = await repository.load();
     const zip = new AdmZip();
     zip.addFile("circo.json", Buffer.from(JSON.stringify(state, null, 2)));
-    for (const folder of ["files", "attachments"]) {
-      const localPath = path.join(
-        /* turbopackIgnore: true */ dataDirectory,
+    zip.addFile(
+      "manifest.json",
+      Buffer.from(
+        JSON.stringify(
+          {
+            version: backupManifestVersion,
+            state: "circo.json",
+            folders: archiveFolders,
+            createdAt: new Date().toISOString(),
+          },
+          null,
+          2,
+        ),
+      ),
+    );
+    for (const folder of archiveFolders) {
+      const localPath = storageDestination(
+        dataDirectory,
+        config.backgroundMusicDirectory,
         folder,
       );
       if (fs.existsSync(/* turbopackIgnore: true */ localPath))
         zip.addLocalFolder(localPath, folder);
     }
-    if (fs.existsSync(config.backgroundMusicDirectory))
-      zip.addLocalFolder(config.backgroundMusicDirectory, "background-audio");
     return new Response(new Uint8Array(zip.toBuffer()), {
       headers: {
         "Content-Type": "application/zip",
@@ -66,39 +160,63 @@ export async function POST(request: Request) {
         { error: "Backup is incompatible." },
         { status: 422 },
       );
-    fs.mkdirSync(temporary, { recursive: true });
-    for (const entry of zip.getEntries()) {
-      if (entry.isDirectory || entry.entryName === "circo.json") continue;
+    const manifestEntry = zip.getEntry("manifest.json");
+    let foldersToReplace = new Set<string>();
+    if (manifestEntry) {
+      const manifest: unknown = JSON.parse(
+        manifestEntry.getData().toString("utf8"),
+      );
+      const manifestFolders =
+        manifest && typeof manifest === "object"
+          ? (manifest as { folders?: unknown }).folders
+          : undefined;
       if (
-        !/^(files|attachments|background-audio)\/[a-z0-9-]+\.[a-z0-9]{1,10}$/i.test(
-          entry.entryName,
+        !manifest ||
+        typeof manifest !== "object" ||
+        (manifest as { version?: unknown }).version !== backupManifestVersion ||
+        !Array.isArray(manifestFolders) ||
+        !manifestFolders.every(
+          (folder) =>
+            typeof folder === "string" &&
+            archiveFolders.includes(folder as (typeof archiveFolders)[number]),
         )
       ) {
+        return Response.json(
+          { error: "Backup manifest is invalid." },
+          { status: 422 },
+        );
+      }
+      foldersToReplace = new Set(manifestFolders as string[]);
+    }
+    fs.mkdirSync(temporary, { recursive: true });
+    for (const entry of zip.getEntries()) {
+      if (entry.entryName === "circo.json" || entry.entryName === "manifest.json")
+        continue;
+      if (!isSafeArchiveEntry(entry.entryName)) {
         return Response.json(
           { error: "Backup contains an unsafe path." },
           { status: 422 },
         );
       }
+      foldersToReplace.add(entry.entryName.split("/")[0]);
+      if (entry.isDirectory) continue;
       const destination = path.join(temporary, entry.entryName);
       fs.mkdirSync(path.dirname(destination), { recursive: true });
       fs.writeFileSync(destination, entry.getData());
     }
-    await repository.restore(parsed);
-    for (const folder of ["files", "attachments"]) {
+    await repository.restore(remapRestoredState(parsed, dataDirectory));
+    for (const folder of foldersToReplace) {
       const source = path.join(temporary, folder);
-      const destination = path.join(
-        /* turbopackIgnore: true */ dataDirectory,
-        folder,
+      const destination = storageDestination(
+        dataDirectory,
+        config.backgroundMusicDirectory,
+        folder as (typeof archiveFolders)[number],
       );
+      fs.rmSync(destination, { recursive: true, force: true });
+      fs.mkdirSync(destination, { recursive: true });
       if (fs.existsSync(source))
         fs.cpSync(source, destination, { recursive: true, force: true });
     }
-    const musicSource = path.join(temporary, "background-audio");
-    if (fs.existsSync(musicSource))
-      fs.cpSync(musicSource, config.backgroundMusicDirectory, {
-        recursive: true,
-        force: true,
-      });
     return Response.json(await repository.load());
   } catch (error) {
     const message = error instanceof Error ? error.message : "Restore failed.";

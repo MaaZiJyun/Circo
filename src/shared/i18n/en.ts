@@ -280,7 +280,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "settings.exportBackup": "Export complete backup",
   "settings.restoreBackup": "Restore complete backup",
   "settings.restoreWarning":
-    "Restore replaces current data. Confirm the backup is from Circo v0.1.",
+    "Restore replaces current data. Confirm the backup is from a compatible Circo version.",
   "settings.trash": "Trash",
   "settings.trashEmpty": "Trash is empty",
   "status.active": "Active",

@@ -278,7 +278,8 @@ export const zh = {
   "settings.backup": "数据备份",
   "settings.exportBackup": "导出完整备份",
   "settings.restoreBackup": "恢复完整备份",
-  "settings.restoreWarning": "恢复将覆盖当前数据，请确认备份来自 Circo v0.1。",
+  "settings.restoreWarning":
+    "恢复将覆盖当前数据，请确认备份来自兼容版本的 Circo。",
   "settings.trash": "回收站",
   "settings.trashEmpty": "回收站是空的",
   "status.active": "进行中",
