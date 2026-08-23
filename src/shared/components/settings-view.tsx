@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
@@ -9,20 +9,24 @@ import { useI18n } from "@/shared/i18n/i18n-context";
 import type { CollectionName } from "@/shared/model/app-state";
 import { useTheme } from "@/shared/theme/theme-context";
 import { useStore } from "@/shared/view-models/store-context";
+import { MatrixFormulaSettings } from "@/modules/me/views/matrix-formula-settings";
+import { BackgroundMusicSettings } from "./background-music-settings";
 import { PageHeader, SectionHeader } from "./page-elements";
 import { ProfileSettings } from "./profile-settings";
 import { StorageSettings } from "./storage-settings";
-import { BackgroundMusicSettings } from "./background-music-settings";
-import { MatrixFormulaSettings } from "@/modules/me/views/matrix-formula-settings";
 import { TaskPreprocessingSettings } from "./task-preprocessing-settings";
-import { Alert, Button, Card, EmptyState, Field, Select } from "./ui";
+import { Alert, Button, Card, EmptyState, Field, Select, Tabs } from "./ui";
+
+type SettingsTab = "general" | "tasks" | "media" | "data";
 
 export function SettingsView() {
   const { t, locale, setLocale } = useI18n();
   const { theme, setTheme } = useTheme();
   const { state, restoreItem, createArchive, restoreArchive } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState<SettingsTab>("general");
   if (!state) return null;
+
   const trash = (
     ["goals", "sources", "ideas", "projects", "artifacts"] as CollectionName[]
   ).flatMap((collection) =>
@@ -50,91 +54,119 @@ export function SettingsView() {
     if (!file || !window.confirm(t("settings.restoreWarning"))) return;
     await restoreArchive(file);
   };
+
   return (
     <div className="space-y-8">
-      <PageHeader
-        eyebrow={t("settings.eyebrow")}
-        title={t("settings.title")}
-        subtitle={t("app.tagline")}
+      
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        items={[
+          { value: "general", label: t("settings.tabGeneral") },
+          { value: "tasks", label: t("settings.tabTasks") },
+          { value: "media", label: t("settings.tabMedia") },
+          { value: "data", label: t("settings.tabData") },
+        ]}
       />
-      <ProfileSettings />
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card>
-          <SectionHeader title={t("settings.theme")} />
-          <Field label={t("settings.theme")}>
-            <Select
-              value={theme}
-              onChange={(event) => setTheme(event.target.value as typeof theme)}
-            >
-              <option value="system">{t("settings.system")}</option>
-              <option value="light">{t("settings.light")}</option>
-              <option value="dark">{t("settings.dark")}</option>
-            </Select>
-          </Field>
-        </Card>
-        <Card>
-          <SectionHeader title={t("settings.language")} />
-          <Field label={t("settings.language")}>
-            <Select
-              value={locale}
-              onChange={(event) =>
-                setLocale(event.target.value as typeof locale)
-              }
-            >
-              <option value="zh-CN">简体中文</option>
-              <option value="en">English</option>
-            </Select>
-          </Field>
-        </Card>
-      </div>
-      <MatrixFormulaSettings />
-      <TaskPreprocessingSettings />
-      <BackgroundMusicSettings />
-      <StorageSettings />
-      <Card>
-        <SectionHeader title={t("settings.backup")} />
-        <Alert tone="warning">{t("settings.restoreWarning")}</Alert>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={() => void exportBackup()}>
-            <ArrowDownTrayIcon className="size-4" />
-            {t("settings.exportBackup")}
-          </Button>
-          <Button variant="secondary" onClick={() => fileRef.current?.click()}>
-            <ArrowUpTrayIcon className="size-4" />
-            {t("settings.restoreBackup")}
-          </Button>
-          <input
-            ref={fileRef}
-            className="hidden"
-            type="file"
-            accept="application/zip,.zip"
-            onChange={(event) => void importBackup(event.target.files?.[0])}
-          />
-        </div>
-      </Card>
-      <Card>
-        <SectionHeader title={t("settings.trash")} />
-        {trash.length ? (
-          <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
-            {trash.map((item) => (
-              <div
-                key={`${item.collection}-${item.id}`}
-                className="flex items-center justify-between gap-3 py-3"
-              >
-                <span className="text-sm">{item.title ?? item.name}</span>
-                <Button
-                  variant="ghost"
-                  onClick={() => restoreItem(item.collection, item.id)}
+
+      {tab === "general" && (
+        <div className="space-y-8">
+          <ProfileSettings />
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Card>
+              <SectionHeader title={t("settings.theme")} />
+              <Field label={t("settings.theme")}>
+                <Select
+                  value={theme}
+                  onChange={(event) =>
+                    setTheme(event.target.value as typeof theme)
+                  }
                 >
-                  {t("common.restore")}
-                </Button>
-              </div>
-            ))}
+                  <option value="system">{t("settings.system")}</option>
+                  <option value="light">{t("settings.light")}</option>
+                  <option value="dark">{t("settings.dark")}</option>
+                </Select>
+              </Field>
+            </Card>
+            <Card>
+              <SectionHeader title={t("settings.language")} />
+              <Field label={t("settings.language")}>
+                <Select
+                  value={locale}
+                  onChange={(event) =>
+                    setLocale(event.target.value as typeof locale)
+                  }
+                >
+                  <option value="zh-CN">简体中文</option>
+                  <option value="en">English</option>
+                </Select>
+              </Field>
+            </Card>
           </div>
-        ) : (
-          <EmptyState title={t("settings.trashEmpty")} />
-        )}
-      </Card>
+        </div>
+      )}
+
+      {tab === "tasks" && (
+        <div className="space-y-8">
+          <MatrixFormulaSettings />
+          <TaskPreprocessingSettings />
+        </div>
+      )}
+
+      {tab === "media" && <BackgroundMusicSettings />}
+
+      {tab === "data" && (
+        <div className="space-y-8">
+          <StorageSettings />
+          <Card>
+            <SectionHeader title={t("settings.backup")} />
+            <Alert tone="warning">{t("settings.restoreWarning")}</Alert>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button onClick={() => void exportBackup()}>
+                <ArrowDownTrayIcon className="size-4" />
+                {t("settings.exportBackup")}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => fileRef.current?.click()}
+              >
+                <ArrowUpTrayIcon className="size-4" />
+                {t("settings.restoreBackup")}
+              </Button>
+              <input
+                ref={fileRef}
+                className="hidden"
+                type="file"
+                accept="application/zip,.zip"
+                onChange={(event) => void importBackup(event.target.files?.[0])}
+              />
+            </div>
+          </Card>
+          <Card>
+            <SectionHeader title={t("settings.trash")} />
+            {trash.length ? (
+              <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                {trash.map((item) => (
+                  <div
+                    key={`${item.collection}-${item.id}`}
+                    className="flex items-center justify-between gap-3 py-3"
+                  >
+                    <span className="text-sm">{item.title ?? item.name}</span>
+                    <Button
+                      variant="ghost"
+                      onClick={() => restoreItem(item.collection, item.id)}
+                    >
+                      {t("common.restore")}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState title={t("settings.trashEmpty")} />
+            )}
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

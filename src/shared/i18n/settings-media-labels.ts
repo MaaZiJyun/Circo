@@ -20,6 +20,10 @@ export const settingsMediaZh = {
   "settings.musicUploadFailed": "无法上传 MP3 文件。",
   "settings.musicRemoveFailed": "无法删除音乐。",
   "settings.matrixFormulas": "紧急–重要矩阵公式",
+  "settings.tabGeneral": "常规",
+  "settings.tabTasks": "任务",
+  "settings.tabMedia": "媒体",
+  "settings.tabData": "数据",
   "settings.taskPreprocessing": "任务预处理规则",
   "settings.taskPreprocessingHint":
     "根据任务名称中的关键词自动填充描述、预计用时、预期产出和评分；填充后仍可继续修改。",
@@ -139,6 +143,10 @@ export const settingsMediaEn: Record<keyof typeof settingsMediaZh, string> = {
   "settings.musicUploadFailed": "Unable to upload the MP3 file.",
   "settings.musicRemoveFailed": "Unable to delete the music.",
   "settings.matrixFormulas": "Urgent–Important Matrix formulas",
+  "settings.tabGeneral": "General",
+  "settings.tabTasks": "Tasks",
+  "settings.tabMedia": "Media",
+  "settings.tabData": "Data",
   "settings.taskPreprocessing": "Task preprocessing rules",
   "settings.taskPreprocessingHint":
     "Keywords in the task name fill the description, duration, expected output, and scores. You can still edit them afterward.",
