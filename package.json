@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev -p 1204",
     "dev:all": "./scripts/dev.sh",
+    "app:macos": "./scripts/build-macos-app.sh",
     "build": "next build",
     "start": "next start -p 1204",
     "lint": "eslint",

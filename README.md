@@ -92,6 +92,14 @@ npm run dev:all
 
 浏览器打开 [http://localhost:1204](http://localhost:1204)。应用为单用户、无账号、本地运行模式。
 
+macOS 也可以构建无地址栏的 WebView 桌面套壳。它会在后台启动同一个 `dev:all`，并直接在 `Circo.app` 内显示应用：
+
+```bash
+npm run app:macos
+```
+
+生成文件为 `dist/Circo.app`。日常使用只需在 Finder 双击，说明见 [macOS 桌面套壳](docs/MACOS_APP.md)。
+
 也可以分步启动：
 
 ```bash
