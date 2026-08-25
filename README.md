@@ -92,13 +92,13 @@ npm run dev:all
 
 浏览器打开 [http://localhost:1204](http://localhost:1204)。应用为单用户、无账号、本地运行模式。
 
-macOS 也可以构建无地址栏的 WebView 桌面套壳。它会在后台启动同一个 `dev:all`，并直接在 `Circo.app` 内显示应用：
+macOS 也可以构建无地址栏、自带 Node.js 与 production server 的独立 WebView 应用：
 
 ```bash
 npm run app:macos
 ```
 
-生成文件为 `dist/Circo.app`。日常使用只需在 Finder 双击，说明见 [macOS 桌面套壳](docs/MACOS_APP.md)。
+生成文件为 `dist/Circo.app`，分享文件为 `dist/Circo-macOS-arm64.zip`。接收方不需要工程文件、Node.js 或 npm，说明见 [macOS 桌面应用](docs/MACOS_APP.md)。
 
 也可以分步启动：
 
@@ -149,7 +149,7 @@ npm run start
 
 - 扫描 PDF OCR、复杂公式、无边框表格、多栏顺序和版面坐标的高保真恢复不在 v0.1 范围。
 - 提取的图片和表格按来源页写入 Markdown，但无法保证恢复到原页面中的精确位置。
-- 可导入文献文件最大 200 MB，普通项目附件最大 50 MB，完整备份最大 200 MB。
+- 可导入文献文件最大 200 MB，普通项目附件最大 50 MB，完整备份最大 1 GB。
 - 音视频作为附件保存，不执行自动转写或语义分析。
 - Markdown 预览使用安全的纯文本呈现，不执行导入内容中的 HTML 或脚本。
 - PPT 在 MVP 中输出结构化大纲，不生成专业排版的 PPTX 文件。

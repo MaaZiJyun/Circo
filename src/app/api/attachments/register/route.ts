@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     const projectId = typeof body.projectId === "string" ? body.projectId : "";
     if (!sourcePath || !identifier.test(projectId))
       return Response.json({ error: "Invalid attachment." }, { status: 422 });
-    const stat = await fs.stat(sourcePath);
+    const stat = await fs.stat(/* turbopackIgnore: true */ sourcePath);
     if (!stat.isFile())
       return Response.json(
         { error: "The selected path is not a file." },

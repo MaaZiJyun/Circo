@@ -182,10 +182,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const form = new FormData();
     form.set("file", file);
     const response = await fetch("/api/backup", { method: "POST", body: form });
-    if (!response.ok) return false;
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: unknown;
+      } | null;
+      setError(
+        typeof payload?.error === "string"
+          ? payload.error
+          : "Unable to restore backup.",
+      );
+      setStatus("error");
+      return false;
+    }
     const restored: unknown = await response.json();
     if (!isAppState(restored)) return false;
     setState(restored);
+    setError(null);
     setStatus("saved");
     return true;
   }, []);

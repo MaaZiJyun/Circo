@@ -22,6 +22,7 @@ const storageFolders = [
 ] as const;
 const archiveFolders = [...storageFolders, "background-audio"] as const;
 const backupManifestVersion = 2;
+const maxBackupSize = 1024 * 1024 * 1024;
 
 function isSafeArchiveEntry(entryName: string) {
   const raw = entryName.replaceAll("\\", "/");
@@ -31,8 +32,7 @@ function isSafeArchiveEntry(entryName: string) {
     normalized.length > 0 &&
     !normalized.startsWith("/") &&
     !normalized.includes("\0") &&
-    !parts.some((part) => part === "." || part === "..") &&
-    parts.every((part) => /^[a-zA-Z0-9._-]+$/.test(part)) &&
+    parts.every((part) => part.length > 0 && part !== "." && part !== "..") &&
     parts.length >= (raw.endsWith("/") ? 1 : 2) &&
     archiveFolders.includes(parts[0] as (typeof archiveFolders)[number])
   );
@@ -142,9 +142,9 @@ export async function POST(request: Request) {
     const file = form.get("file");
     if (!(file instanceof File))
       return Response.json({ error: "Missing backup." }, { status: 422 });
-    if (file.size > 200 * 1024 * 1024)
+    if (file.size > maxBackupSize)
       return Response.json(
-        { error: "Backup exceeds 200 MB." },
+        { error: "Backup exceeds 1 GB." },
         { status: 413 },
       );
     const zip = new AdmZip(Buffer.from(await file.arrayBuffer()));

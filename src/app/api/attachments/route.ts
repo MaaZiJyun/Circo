@@ -32,7 +32,7 @@ export async function GET(request: Request) {
   if (!filePath)
     return Response.json({ error: "Invalid file path." }, { status: 422 });
   try {
-    const file = await fs.readFile(filePath);
+    const file = await fs.readFile(/* turbopackIgnore: true */ filePath);
     return new Response(new Uint8Array(file), {
       headers: {
         "Content-Type": contentTypes[path.extname(filePath).toLowerCase()] ?? "application/octet-stream",
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     const filePath = localPath(body.path);
     if (!filePath)
       return Response.json({ error: "Invalid file path." }, { status: 422 });
-    const stat = await fs.stat(filePath);
+    const stat = await fs.stat(/* turbopackIgnore: true */ filePath);
     if (!stat.isFile())
       return Response.json({ error: "The selected path is not a file." }, { status: 422 });
     return Response.json({

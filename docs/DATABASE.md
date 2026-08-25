@@ -216,7 +216,7 @@ Circo-backup-YYYY-MM-DD.zip
 
 - `circo.json` 是 AppState，不是 SQLite 数据库文件的直接副本。
 - `manifest.json` 记录 version、状态文件名、目录列表和创建时间。
-- 恢复文件最大 200 MiB。
+- 恢复文件最大 1 GiB。
 - 恢复前检查 AppState 兼容性、manifest version 和 ZIP 路径安全性。
 - 附件绝对路径会重新映射到当前 `storageDirectory`。
 - 恢复会替换当前数据库状态，并替换备份声明的文件目录。

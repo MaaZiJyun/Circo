@@ -4,7 +4,10 @@ import Database from "better-sqlite3";
 import type { StorageConfig } from "@/shared/model/storage-config";
 import { isStorageConfig } from "@/shared/model/storage-config";
 
-const defaultDirectory = path.join(process.cwd(), "data");
+const configuredDataDirectory = process.env.CIRCO_DATA_DIR?.trim();
+const defaultDirectory = configuredDataDirectory
+  ? path.resolve(configuredDataDirectory)
+  : path.join(process.cwd(), "data");
 const configPath = path.join(defaultDirectory, "storage-config.json");
 
 export const defaultStorageConfig: StorageConfig = {

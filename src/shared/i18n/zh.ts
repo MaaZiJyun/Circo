@@ -291,6 +291,9 @@ export const zh = {
   "settings.restoreBackup": "恢复完整备份",
   "settings.restoreWarning":
     "恢复将覆盖当前数据，请确认备份来自兼容版本的 Circo。",
+  "settings.restoreInProgress": "正在恢复完整备份，请不要关闭应用……",
+  "settings.restoreSuccess": "完整备份恢复成功。",
+  "settings.restoreFailed": "完整备份恢复失败，请检查文件格式。",
   "settings.trash": "回收站",
   "settings.trashEmpty": "回收站是空的",
   "status.active": "进行中",

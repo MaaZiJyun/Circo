@@ -227,6 +227,26 @@ final class CircoWindowController: NSWindowController,
     return nil
   }
 
+  func webView(
+    _ webView: WKWebView,
+    runOpenPanelWith parameters: WKOpenPanelParameters,
+    initiatedByFrame frame: WKFrameInfo,
+    completionHandler: @escaping ([URL]?) -> Void
+  ) {
+    guard let window else {
+      completionHandler(nil)
+      return
+    }
+    let panel = NSOpenPanel()
+    panel.allowsMultipleSelection = parameters.allowsMultipleSelection
+    panel.canChooseDirectories = parameters.allowsDirectories
+    panel.canChooseFiles = !parameters.allowsDirectories
+    panel.canCreateDirectories = false
+    panel.beginSheetModal(for: window) { result in
+      completionHandler(result == .OK ? panel.urls : nil)
+    }
+  }
+
   func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
     download.delegate = self
   }

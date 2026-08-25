@@ -292,6 +292,9 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "settings.restoreBackup": "Restore complete backup",
   "settings.restoreWarning":
     "Restore replaces current data. Confirm the backup is from a compatible Circo version.",
+  "settings.restoreInProgress": "Restoring the complete backup. Keep Circo open…",
+  "settings.restoreSuccess": "The complete backup was restored.",
+  "settings.restoreFailed": "Unable to restore the complete backup. Check the file format.",
   "settings.trash": "Trash",
   "settings.trashEmpty": "Trash is empty",
   "status.active": "Active",

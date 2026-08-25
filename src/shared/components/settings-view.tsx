@@ -53,9 +53,13 @@ export function SettingsView() {
     purgeItem,
     createArchive,
     restoreArchive,
+    error: storeError,
   } = useStore();
   const fileRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState<SettingsTab>("general");
+  const [backupStatus, setBackupStatus] = useState<
+    "idle" | "restoring" | "success" | "error"
+  >("idle");
   if (!state) return null;
 
   const trash = (
@@ -84,7 +88,12 @@ export function SettingsView() {
   };
   const importBackup = async (file?: File) => {
     if (!file || !window.confirm(t("settings.restoreWarning"))) return;
-    await restoreArchive(file);
+    setBackupStatus("restoring");
+    try {
+      setBackupStatus((await restoreArchive(file)) ? "success" : "error");
+    } catch {
+      setBackupStatus("error");
+    }
   };
 
   return (
@@ -170,9 +179,30 @@ export function SettingsView() {
                 className="hidden"
                 type="file"
                 accept="application/zip,.zip"
-                onChange={(event) => void importBackup(event.target.files?.[0])}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.currentTarget.value = "";
+                  void importBackup(file);
+                }}
               />
             </div>
+            {backupStatus === "restoring" && (
+              <div className="mt-4">
+                <Alert>{t("settings.restoreInProgress")}</Alert>
+              </div>
+            )}
+            {backupStatus === "success" && (
+              <div className="mt-4">
+                <Alert tone="success">{t("settings.restoreSuccess")}</Alert>
+              </div>
+            )}
+            {backupStatus === "error" && (
+              <div className="mt-4">
+                <Alert tone="danger">
+                  {storeError || t("settings.restoreFailed")}
+                </Alert>
+              </div>
+            )}
           </Card>
         </div>
       )}

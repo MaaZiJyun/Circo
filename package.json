@@ -16,6 +16,7 @@
     "check": "npm run check:lines && npm run check:i18n && npm run lint && npm run typecheck && npm run test",
     "db:init": "./scripts/db-init.sh",
     "db:shell": "sqlite3 data/circo.db",
+    "data:export": "node scripts/export-circo-data.mjs",
     "models:download": "node scripts/download-translation-models.mjs"
   },
   "dependencies": {

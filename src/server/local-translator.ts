@@ -17,7 +17,9 @@ async function loadPipeline(target: TranslationTarget) {
 
   const loading = (async () => {
     const { env, pipeline } = await import("@huggingface/transformers");
-    env.cacheDir = path.join(process.cwd(), "data", "models");
+    env.cacheDir = process.env.CIRCO_MODELS_DIR?.trim()
+      ? path.resolve(process.env.CIRCO_MODELS_DIR)
+      : path.join(process.cwd(), "data", "models");
     env.allowRemoteModels = process.env.NODE_ENV !== "production";
 
     return pipeline("translation", MODEL_BY_TARGET[target], {

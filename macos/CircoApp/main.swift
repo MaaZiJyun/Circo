@@ -11,8 +11,21 @@ final class CircoAppDelegate: NSObject, NSApplicationDelegate {
   private var isTerminating = false
   private var terminationSources: [DispatchSourceSignal] = []
 
-  private var projectPath: String {
-    Bundle.main.object(forInfoDictionaryKey: "CircoProjectPath") as? String ?? ""
+  private var resourcesURL: URL {
+    Bundle.main.resourceURL!
+  }
+
+  private var serverURL: URL {
+    resourcesURL.appendingPathComponent("server", isDirectory: true)
+  }
+
+  private var nodeURL: URL {
+    resourcesURL.appendingPathComponent("runtime/node")
+  }
+
+  private var applicationSupportURL: URL {
+    FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent("Circo", isDirectory: true)
   }
 
   private var logURL: URL {
@@ -99,21 +112,38 @@ final class CircoAppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func launchServer() {
-    guard FileManager.default.fileExists(atPath: "\(projectPath)/package.json") else {
-      windowController.showLaunchError("找不到项目目录。请重新生成 Circo.app。")
+    let entryURL = serverURL.appendingPathComponent("server.js")
+    guard
+      FileManager.default.isExecutableFile(atPath: nodeURL.path),
+      FileManager.default.fileExists(atPath: entryURL.path)
+    else {
+      windowController.showLaunchError("应用运行资源不完整，请重新安装 Circo。")
       return
     }
-    appendLog("Project: \(projectPath)\nCommand: npm run dev:all\n")
-    let command = """
-      export PATH=/opt/homebrew/opt/node@20/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-      cd \(shellQuote(projectPath))
-      exec npm run dev:all
-      """
+    do {
+      try FileManager.default.createDirectory(
+        at: applicationSupportURL,
+        withIntermediateDirectories: true
+      )
+    } catch {
+      windowController.showLaunchError("无法创建用户数据目录：\(error.localizedDescription)")
+      return
+    }
+    let dataURL = applicationSupportURL.appendingPathComponent("data", isDirectory: true)
+    let modelsURL = resourcesURL.appendingPathComponent("models", isDirectory: true)
+    appendLog("Server: \(entryURL.path)\nData: \(dataURL.path)\n")
     let process = Process()
     let pipe = Pipe()
-    process.executableURL = URL(fileURLWithPath: "/bin/zsh")
-    process.arguments = ["-lc", command]
-    process.currentDirectoryURL = URL(fileURLWithPath: projectPath)
+    process.executableURL = nodeURL
+    process.arguments = [entryURL.path]
+    process.currentDirectoryURL = serverURL
+    var environment = ProcessInfo.processInfo.environment
+    environment["NODE_ENV"] = "production"
+    environment["HOSTNAME"] = "localhost"
+    environment["PORT"] = "1204"
+    environment["CIRCO_DATA_DIR"] = dataURL.path
+    environment["CIRCO_MODELS_DIR"] = modelsURL.path
+    process.environment = environment
     process.standardOutput = pipe
     process.standardError = pipe
     pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
@@ -162,10 +192,6 @@ final class CircoAppDelegate: NSObject, NSApplicationDelegate {
   @objc private func reloadWebApp() {
     windowController.reloadApplication()
   }
-}
-
-private func shellQuote(_ value: String) -> String {
-  "'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
 }
 
 let application = NSApplication.shared
