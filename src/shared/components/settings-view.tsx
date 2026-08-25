@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import {
   ArrowDownTrayIcon,
   ArrowUpTrayIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { CollectionName } from "@/shared/model/app-state";
@@ -51,6 +52,7 @@ export function SettingsView() {
     state,
     restoreItem,
     purgeItem,
+    purgeDeletedItems,
     createArchive,
     restoreArchive,
     error: storeError,
@@ -209,7 +211,23 @@ export function SettingsView() {
 
       {tab === "trash" && (
         <Card>
-          <SectionHeader title={t("settings.trash")} />
+          <SectionHeader
+            title={t("settings.trash")}
+            action={
+              <Button
+                variant="danger"
+                disabled={!trash.length}
+                onClick={() => {
+                  if (window.confirm(t("settings.confirmEmptyTrash"))) {
+                    purgeDeletedItems(trashCollections);
+                  }
+                }}
+              >
+                <TrashIcon className="size-4" />
+                {t("settings.emptyTrash")}
+              </Button>
+            }
+          />
           {trash.length ? (
             <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
               {trash.map((item) => (

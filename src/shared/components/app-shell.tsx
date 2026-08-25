@@ -3,16 +3,8 @@
 import { useEffect, useState } from "react";
 import {
   Bars3Icon,
-  LightBulbIcon,
-  ChevronDoubleLeftIcon,
-  ChevronDoubleRightIcon,
-  HomeIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
-  BeakerIcon,
-  EnvelopeIcon,
-  BookOpenIcon,
-  RocketLaunchIcon,
   ArrowPathIcon,
   CheckIcon,
 } from "@heroicons/react/24/outline";
@@ -23,141 +15,16 @@ import { LandView } from "@/modules/land/views/land-view";
 import { MeView } from "@/modules/me/views/me-view";
 import { MindView } from "@/modules/mind/views/mind-view";
 import { MessagesView } from "@/modules/messages/views/messages-view";
+import { StatisticsView } from "@/modules/statistics/views/statistics-view";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { MessageKey } from "@/shared/i18n/zh";
 import { activeItems } from "@/shared/model/app-state";
 import type { AppSection } from "@/shared/model/app-section";
 import { useStore } from "@/shared/view-models/store-context";
 import { AppSearchResults } from "./app-search-results";
+import { AppNavigation, AppSidebar } from "./app-sidebar";
 import { SettingsView } from "./settings-view";
 import { SidebarProfile } from "./sidebar-profile";
 import { IconButton, Input, LoadingState } from "./ui";
-
-const navigation: {
-  id: AppSection;
-  label: MessageKey;
-  icon: typeof HomeIcon;
-}[] = [
-  { id: "dashboard", label: "nav.dashboard", icon: HomeIcon },
-  { id: "messages", label: "nav.messages", icon: EnvelopeIcon },
-  { id: "find", label: "nav.find", icon: BookOpenIcon },
-  { id: "mind", label: "nav.mind", icon: LightBulbIcon },
-  { id: "hand", label: "nav.hand", icon: BeakerIcon },
-  { id: "land", label: "nav.land", icon: RocketLaunchIcon },
-];
-
-function Navigation({
-  section,
-  setSection,
-  close,
-  collapsed = false,
-  hasUnreadMessages = false,
-  hasUnreadLiterature = false,
-}: {
-  section: AppSection;
-  setSection: (section: AppSection) => void;
-  close?: () => void;
-  collapsed?: boolean;
-  hasUnreadMessages?: boolean;
-  hasUnreadLiterature?: boolean;
-}) {
-  const { t } = useI18n();
-  return (
-    <nav className="grid gap-1">
-      {navigation.map((item) => {
-        const Icon = item.icon;
-        const active = item.id === section;
-        const showUnread =
-          (item.id === "messages" && hasUnreadMessages) ||
-          (item.id === "find" && hasUnreadLiterature);
-        return (
-          <button
-            key={item.id}
-            aria-label={collapsed ? t(item.label) : undefined}
-            title={collapsed ? t(item.label) : undefined}
-            onClick={() => {
-              setSection(item.id);
-              close?.();
-            }}
-            className={`flex min-h-11 items-center rounded-xl text-sm font-medium transition-colors ${collapsed ? "justify-center px-0" : "gap-3 px-3"} ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "text-zinc-500 hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50"}`}
-          >
-            <span className="relative shrink-0">
-              <Icon className="size-5" aria-hidden="true" />
-              {showUnread && (
-                <span
-                  className="absolute -left-1 -top-1 size-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-950"
-                  aria-hidden="true"
-                />
-              )}
-            </span>
-            {showUnread && (
-              <span className="sr-only">
-                {t(item.id === "find" ? "find.unread" : "messages.unread")}
-              </span>
-            )}
-            {!collapsed && t(item.label)}
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-function Sidebar({
-  section,
-  setSection,
-  hasUnreadMessages,
-  hasUnreadLiterature,
-}: {
-  section: AppSection;
-  setSection: (section: AppSection) => void;
-  hasUnreadMessages: boolean;
-  hasUnreadLiterature: boolean;
-}) {
-  const { t } = useI18n();
-  const [collapsed, setCollapsed] = useState(false);
-  const toggleLabel = collapsed
-    ? t("common.expandSidebar")
-    : t("common.collapseSidebar");
-  return (
-    <aside
-      className={`hidden shrink-0 border-r border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-black lg:flex lg:flex-col ${collapsed ? "w-20 p-3" : "w-64 p-5"}`}
-    >
-      <div
-        className={`mb-10 flex items-center ${collapsed ? "justify-center" : "justify-between gap-3 px-2"}`}
-      >
-        {!collapsed && (
-          <div className="flex justify-center items-end gap-1">
-            <p className="brand-wordmark text-3xl">{t("app.name")}</p>
-            <p className="text-xs text-zinc-500">{t("common.localOnly")}</p>
-          </div>
-        )}
-        <IconButton
-          label={toggleLabel}
-          onClick={() => setCollapsed((value) => !value)}
-        >
-          {collapsed ? (
-            <ChevronDoubleRightIcon className="size-5" />
-          ) : (
-            <ChevronDoubleLeftIcon className="size-5" />
-          )}
-        </IconButton>
-      </div>
-      <Navigation
-        section={section}
-        setSection={setSection}
-        collapsed={collapsed}
-        hasUnreadMessages={hasUnreadMessages}
-        hasUnreadLiterature={hasUnreadLiterature}
-      />
-      <SidebarProfile
-        active={section === "me" || section === "settings" ? section : null}
-        onNavigate={setSection}
-        collapsed={collapsed}
-      />
-    </aside>
-  );
-}
 
 export function AppShell() {
   const { t } = useI18n();
@@ -204,11 +71,12 @@ export function AppShell() {
     hand: <HandView />,
     land: <LandView />,
     messages: <MessagesView />,
+    statistics: <StatisticsView />,
     settings: <SettingsView />,
   };
   return (
     <div className="flex h-dvh overflow-hidden bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
-      <Sidebar
+      <AppSidebar
         section={section}
         setSection={setSection}
         hasUnreadMessages={hasUnreadMessages}
@@ -232,21 +100,19 @@ export function AppShell() {
                 <XMarkIcon className="size-5" />
               </IconButton>
             </div>
-            <Navigation
+            <AppNavigation
               section={section}
               setSection={setSection}
               close={() => setMenuOpen(false)}
-              hasUnreadMessages={hasUnreadMessages}
               hasUnreadLiterature={hasUnreadLiterature}
             />
             <SidebarProfile
-              active={
-                section === "me" || section === "settings" ? section : null
-              }
+              active={section}
               onNavigate={(next) => {
                 setSection(next);
                 setMenuOpen(false);
               }}
+              hasUnreadMessages={hasUnreadMessages}
             />
           </aside>
         </div>

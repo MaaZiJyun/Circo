@@ -60,7 +60,7 @@ export function LabNavigationWidgetsSection() {
           </Card>
           <Card>
             <h3 className="mb-4 font-semibold">ProfileAvatar / SidebarProfile</h3>
-            <div className="flex items-center gap-4"><ProfileAvatar name="Demo user" src="" large /><ProfileAvatar name="Demo user" src="" /><SidebarProfile active={null} onNavigate={() => undefined} /></div>
+            <div className="flex items-center gap-4"><ProfileAvatar name="Demo user" src="" large /><ProfileAvatar name="Demo user" src="" /><SidebarProfile active="dashboard" onNavigate={() => undefined} /></div>
           </Card>
           <Card className="md:col-span-2">
             <h3 className="mb-4 font-semibold">AppSearchResults</h3>

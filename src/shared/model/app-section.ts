@@ -6,4 +6,5 @@ export type AppSection =
   | "hand"
   | "land"
   | "messages"
+  | "statistics"
   | "settings";
