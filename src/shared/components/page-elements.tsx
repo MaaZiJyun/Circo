@@ -40,7 +40,7 @@ export function SectionHeader({
 }) {
   return (
     <div className="mb-4 flex min-w-0 items-center gap-4">
-      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto">
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-visible">
         <h2 className="shrink-0 whitespace-nowrap text-base font-semibold">
           {title}
         </h2>

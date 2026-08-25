@@ -27,6 +27,8 @@ export const findLibraryZh = {
   "find.replaceFile": "补传或替换文件",
   "find.replaceFileHint": "可选；用于恢复上传失败的文献，或替换当前原文件。",
   "find.sortBy": "排序方式",
+  "find.sortCreatedAscending": "创建日期正序",
+  "find.sortCreatedDescending": "创建日期倒序",
   "find.sortDirection": "排序方向",
   "find.ascending": "正向",
   "find.descending": "反向",
@@ -175,6 +177,8 @@ export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
   "find.replaceFileHint":
     "Optional. Recover a failed upload or replace the current source file.",
   "find.sortBy": "Sort by",
+  "find.sortCreatedAscending": "Sort by created date · ascending",
+  "find.sortCreatedDescending": "Sort by created date · descending",
   "find.sortDirection": "Sort direction",
   "find.ascending": "Ascending",
   "find.descending": "Descending",
