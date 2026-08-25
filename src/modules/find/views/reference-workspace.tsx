@@ -9,6 +9,7 @@ import {
   TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
+import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { Badge, Button, Card, EmptyState, IconButton } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type {
@@ -30,6 +31,8 @@ export function ReferenceWorkspace({
   onDragStart,
   onConvertToIdea,
   canRemoveFromList,
+  sortDirection,
+  onSortDirectionChange,
 }: {
   points: ReferencePoint[];
   lists: PointList[];
@@ -42,6 +45,8 @@ export function ReferenceWorkspace({
   onDragStart: (point: ReferencePoint) => void;
   onConvertToIdea: (point: ReferencePoint) => void;
   canRemoveFromList: boolean;
+  sortDirection: "ascending" | "descending";
+  onSortDirectionChange: (value: "ascending" | "descending") => void;
 }) {
   const { t } = useI18n();
   const [menu, setMenu] = useState<PointMenu | null>(null);
@@ -51,10 +56,31 @@ export function ReferenceWorkspace({
     <section className="space-y-3">
       <div className="flex min-h-11 items-center justify-between gap-3">
         <h2 className="font-semibold">{t("find.points")}</h2>
-        <Button disabled={!sources.length} onClick={onAdd}>
-          <PlusIcon className="size-4" />
-          {t("find.addPoint")}
-        </Button>
+        <div className="flex items-center gap-2">
+          <LibrarySortControls
+            label={t("find.sortBy")}
+            value={`createdAt:${sortDirection}`}
+            options={[
+              {
+                value: "createdAt:ascending",
+                label: t("find.sortCreatedAscending"),
+              },
+              {
+                value: "createdAt:descending",
+                label: t("find.sortCreatedDescending"),
+              },
+            ]}
+            onChange={(value) =>
+              onSortDirectionChange(
+                value === "createdAt:ascending" ? "ascending" : "descending",
+              )
+            }
+          />
+          <Button disabled={!sources.length} onClick={onAdd}>
+            <PlusIcon className="size-4" />
+            {t("find.addPoint")}
+          </Button>
+        </div>
       </div>
       {!points.length ? (
         <Card>
@@ -62,10 +88,7 @@ export function ReferenceWorkspace({
         </Card>
       ) : (
         <div className="columns-1 gap-4 md:columns-2 2xl:columns-3">
-          {points
-            .slice()
-            .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-            .map((point) => {
+          {points.map((point) => {
               const token = point.contentPath.split(/[\\/]/).pop();
               return (
                 <div

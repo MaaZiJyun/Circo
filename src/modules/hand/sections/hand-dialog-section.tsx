@@ -151,7 +151,7 @@ export function HandDialogSection({
         />
       )}
       <TaskDialog
-        key={`new-task-${vm.selected?.id ?? "none"}-${taskParentId ?? "root"}`}
+        key={`new-task-${vm.selected?.id ?? "none"}-${taskParentId ?? "root"}-${dialog === "task" ? "open" : "closed"}`}
         open={dialog === "task"}
         parentId={taskParentId}
         defaultImportance={vm.selected?.score ?? 50}

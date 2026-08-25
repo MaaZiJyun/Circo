@@ -158,6 +158,8 @@ export function FindView() {
                 (list) => list.id === pointLibrary.activeListId,
               )?.system === null
             }
+            sortDirection={pointLibrary.sortDirection}
+            onSortDirectionChange={pointLibrary.setSortDirection}
           />
         )}
       </div>

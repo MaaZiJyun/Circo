@@ -5,7 +5,7 @@ import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { SectionHeader } from "@/shared/components/page-elements";
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
-import { Button, Card, Dialog, EmptyState } from "@/shared/components/ui";
+import { Button, Dialog, EmptyState } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Idea, IdeaList } from "@/shared/model/entities";
 import { sortIdeas, type IdeaSort } from "../model/idea-sorting";
@@ -21,6 +21,7 @@ import {
   IdeaListDialog,
   IdeaSidebar,
 } from "./idea-list-ui";
+import { Panel } from "@/shared/components/controls";
 
 const inputFromIdea = (idea: Idea): IdeaInput => ({
   title: idea.title,
@@ -39,10 +40,8 @@ export function MindView() {
   const [evaluating, setEvaluating] = useState<Idea | null>(null);
   const [editing, setEditing] = useState<Idea | null>(null);
   const [editInput, setEditInput] = useState<IdeaInput | null>(null);
-  const [sortType, setSortType] = useState<"date" | "score">("date");
   const [sortAscending, setSortAscending] = useState(false);
-  const sort: IdeaSort =
-    `${sortType}${sortAscending ? "Asc" : "Desc"}` as IdeaSort;
+  const sort: IdeaSort = sortAscending ? "dateAsc" : "dateDesc";
   const [listDialog, setListDialog] = useState<"create" | "choose" | null>(
     null,
   );
@@ -93,7 +92,7 @@ export function MindView() {
               onEdit={setEditingList}
             />
           </div>
-          <Card className="h-full shadow-sm">
+          <Panel className="h-full">
             <SectionHeader
               title={
                 library.selectedList?.system
@@ -104,19 +103,19 @@ export function MindView() {
                 !selectionMode ? (
                   <LibrarySortControls
                     label={t("mind.sort")}
-                    value={sortType}
+                    value={sortAscending ? "createdAt:ascending" : "createdAt:descending"}
                     options={[
-                      { value: "date", label: t("mind.sortDate") },
-                      { value: "score", label: t("mind.sortScore") },
+                      {
+                        value: "createdAt:ascending",
+                        label: t("mind.sortCreatedAscending"),
+                      },
+                      {
+                        value: "createdAt:descending",
+                        label: t("mind.sortCreatedDescending"),
+                      },
                     ]}
-                    ascending={sortAscending}
-                    directionLabel={t(
-                      sortAscending ? "find.ascending" : "find.descending",
-                    )}
-                    selectClassName="w-28"
-                    onChange={(value) => setSortType(value as "date" | "score")}
-                    onToggleDirection={() =>
-                      setSortAscending((value) => !value)
+                    onChange={(value) =>
+                      setSortAscending(value === "createdAt:ascending")
                     }
                   />
                 ) : undefined
@@ -179,7 +178,7 @@ export function MindView() {
             ) : (
               <EmptyState title={t("common.noData")} />
             )}
-          </Card>
+          </Panel>
         </div>
       )}
       <Dialog

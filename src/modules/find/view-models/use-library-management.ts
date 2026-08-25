@@ -21,7 +21,7 @@ export type LibraryListInput = Pick<
   LibraryList,
   "name" | "note" | "tags" | "color"
 >;
-export type LiteratureSort = "addedAt" | "publicationDate" | "rating";
+export type LiteratureSort = "addedAt" | "publicationDate" | "title";
 export type SortDirection = "ascending" | "descending";
 
 export function useLibraryManagement() {
@@ -58,10 +58,10 @@ export function useLibraryManagement() {
     const direction = sortDirection === "ascending" ? 1 : -1;
     return filtered.slice().sort((a, b) => {
       const comparison =
-        sortBy === "rating"
-          ? a.rating - b.rating
-          : sortBy === "publicationDate"
-            ? a.publicationDate.localeCompare(b.publicationDate)
+        sortBy === "publicationDate"
+          ? a.publicationDate.localeCompare(b.publicationDate)
+          : sortBy === "title"
+            ? a.title.localeCompare(b.title)
             : a.createdAt.localeCompare(b.createdAt);
       return comparison * direction;
     });

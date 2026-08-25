@@ -16,12 +16,15 @@ import { isRecentlyAdded } from "./use-library-management";
 export const DEFAULT_POINT_LIST_ID = "point_list_default";
 export const RECENT_POINT_LIST_ID = "point_list_recent";
 export type PointListInput = Pick<PointList, "name" | "note" | "color">;
+export type PointSortDirection = "ascending" | "descending";
 
 export function usePointLibrary() {
   const { state, mutate } = useStore();
   const { locale } = useI18n();
   const [activeListId, setActiveListId] = useState(DEFAULT_POINT_LIST_ID);
   const [draggedIds, setDraggedIds] = useState<string[]>([]);
+  const [sortDirection, setSortDirection] =
+    useState<PointSortDirection>("descending");
   const points = useMemo(
     () => (state ? activeItems(state.points) : []),
     [state],
@@ -34,15 +37,18 @@ export function usePointLibrary() {
     () => points.filter((point) => isRecentlyAdded(point.createdAt)),
     [points],
   );
-  const filteredPoints = useMemo(
-    () =>
+  const filteredPoints = useMemo(() => {
+    const filtered =
       activeListId === DEFAULT_POINT_LIST_ID
         ? points
         : activeListId === RECENT_POINT_LIST_ID
           ? recentPoints
-          : points.filter((point) => point.listIds.includes(activeListId)),
-    [activeListId, points, recentPoints],
-  );
+          : points.filter((point) => point.listIds.includes(activeListId));
+    const direction = sortDirection === "ascending" ? 1 : -1;
+    return filtered
+      .slice()
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt) * direction);
+  }, [activeListId, points, recentPoints, sortDirection]);
   const createPoint = (
     point: Omit<ReferencePoint, "id" | "createdAt" | "updatedAt">,
   ) => {
@@ -201,6 +207,8 @@ export function usePointLibrary() {
     lists,
     recentPoints,
     filteredPoints,
+    sortDirection,
+    setSortDirection,
     activeListId,
     setActiveListId,
     draggedIds,

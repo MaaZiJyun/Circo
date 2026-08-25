@@ -8,7 +8,11 @@ import { TaskEffortFields } from "@/shared/components/task-effort-fields";
 import { Button, Dialog, Field, Input, Select, Switch, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectRecord } from "@/shared/model/entities";
-import { addDays, estimateMinutes, startDateFromDue } from "@/shared/model/factories";
+import {
+  estimateMinutes,
+  formatLocalDateTime,
+  parseLocalDateTime,
+} from "@/shared/model/factories";
 import { normalizeTaskImportance, taskImportance } from "@/shared/model/task-importance";
 import { preprocessTask } from "@/shared/model/task-preprocessor";
 import { defaultTaskUrgency } from "@/shared/model/task-urgency";
@@ -41,15 +45,16 @@ export function TaskDialog({
 }) {
   const { t } = useI18n();
   const { state } = useStore();
-  const defaultDueDate = `${addDays(new Date(), 7)}T23:59`;
-  const [projectId, setProjectId] = useState(initialProjectId ?? "");
-  const [input, setInput] = useState<TaskInput>(
-    initial ?? {
+  const createDefaultInput = () => {
+    const current = Date.now();
+    const defaultStartDate = formatLocalDateTime(current);
+    const defaultDueDate = formatLocalDateTime(current + 60 * 60 * 1000);
+    return {
       title: "",
       description: "",
-      startDate: startDateFromDue(defaultDueDate, 1440),
+      startDate: defaultStartDate,
       dueDate: defaultDueDate,
-      estimatedMinutes: 1440,
+      estimatedMinutes: 60,
       expectedOutput: "",
       milestone: false,
       ...normalizeTaskImportance({}, defaultImportance),
@@ -57,14 +62,48 @@ export function TaskDialog({
       ...defaultTaskEffort,
       recurrence: null,
       parentId,
-    },
+    } satisfies TaskInput;
+  };
+  const [projectId, setProjectId] = useState(initialProjectId ?? "");
+  const [input, setInput] = useState<TaskInput>(
+    () => initial ?? createDefaultInput(),
   );
   const updateSchedule = (field: "startDate" | "dueDate", value: string) => {
     setInput((current) => {
-      const next = { ...current, [field]: value };
+      if (field === "startDate") {
+        const start = parseLocalDateTime(value);
+        if (!Number.isFinite(start)) return { ...current, startDate: value };
+        return {
+          ...current,
+          startDate: value,
+          dueDate: formatLocalDateTime(
+            start + current.estimatedMinutes * 60 * 1000,
+          ),
+        };
+      }
+      const start = parseLocalDateTime(current.startDate);
+      const due = parseLocalDateTime(value);
       return {
-        ...next,
-        estimatedMinutes: estimateMinutes(next.startDate, next.dueDate),
+        ...current,
+        dueDate: value,
+        estimatedMinutes:
+          Number.isFinite(start) && Number.isFinite(due)
+            ? estimateMinutes(current.startDate, value)
+            : current.estimatedMinutes,
+      };
+    });
+  };
+  const updateDuration = (value: string) => {
+    setInput((current) => {
+      const hours = Math.max(0, Number(value) || 0);
+      const estimatedMinutes = Math.round(hours * 60);
+      const start = parseLocalDateTime(current.startDate);
+      return {
+        ...current,
+        estimatedMinutes,
+        dueDate: Number.isFinite(start)
+          ? formatLocalDateTime(start + estimatedMinutes * 60 * 1000)
+          : current.dueDate,
       };
     });
   };
@@ -74,26 +113,34 @@ export function TaskDialog({
       input.title,
       state.profile.taskPreprocessingRules,
     );
-    setInput((current) => ({
-      ...current,
-      description: values.description,
-      estimatedMinutes: values.estimatedMinutes,
-      expectedOutput: values.expectedOutput,
-      impact: values.impact,
-      goal: values.goal,
-      risk: values.risk,
-      value: values.value,
-      importance: taskImportance(values),
-      delayLoss: values.delayLoss,
-      complexity: values.complexity,
-      uncertainty: values.uncertainty,
-    }));
+    setInput((current) => {
+      const start = parseLocalDateTime(current.startDate);
+      return {
+        ...current,
+        description: values.description,
+        estimatedMinutes: values.estimatedMinutes,
+        dueDate: Number.isFinite(start)
+          ? formatLocalDateTime(
+              start + values.estimatedMinutes * 60 * 1000,
+            )
+          : current.dueDate,
+        expectedOutput: values.expectedOutput,
+        impact: values.impact,
+        goal: values.goal,
+        risk: values.risk,
+        value: values.value,
+        importance: taskImportance(values),
+        delayLoss: values.delayLoss,
+        complexity: values.complexity,
+        uncertainty: values.uncertainty,
+      };
+    });
   };
   const submit = () => {
     if (!input.title.trim()) return;
     onSave({ ...input, parentId: input.parentId }, projectId || undefined);
     onClose();
-    setInput({ ...input, title: "" });
+    setInput(createDefaultInput());
   };
   return (
     <Dialog
@@ -152,18 +199,13 @@ export function TaskDialog({
             />
           </Field>
         </div>
-        <Field label={t("me.taskEstimate")}>
+        <Field label={t("me.taskEstimateHours")}>
           <Input
             type="number"
-            min="5"
-            step="5"
-            value={input.estimatedMinutes}
-            onChange={(event) =>
-              setInput({
-                ...input,
-                estimatedMinutes: Math.max(5, Number(event.target.value) || 5),
-              })
-            }
+            min="0"
+            step="0.25"
+            value={input.estimatedMinutes / 60}
+            onChange={(event) => updateDuration(event.target.value)}
           />
         </Field>
         <Field label={t("hand.expectedOutput")}>

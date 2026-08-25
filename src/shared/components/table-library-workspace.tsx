@@ -1,8 +1,8 @@
 "use client";
 
+import { Panel } from "./controls";
 import { SectionHeader } from "./page-elements";
 import { SelectionToolbar } from "./selection-toolbar";
-import { Card } from "./ui";
 
 export function TableLibraryWorkspace({
   title,
@@ -23,7 +23,7 @@ export function TableLibraryWorkspace({
 }) {
   const selecting = Boolean(selectionLabel && onCancelSelection);
   return (
-    <Card className="flex h-full min-h-0 min-w-0 flex-col">
+    <Panel className="flex h-full min-h-0 min-w-0 flex-col">
       <SectionHeader
         title={title}
         controls={!selecting ? controls : undefined}
@@ -35,6 +35,6 @@ export function TableLibraryWorkspace({
         </SelectionToolbar>
       )}
       <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-    </Card>
+    </Panel>
   );
 }

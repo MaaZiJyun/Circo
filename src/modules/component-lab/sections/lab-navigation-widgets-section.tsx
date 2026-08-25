@@ -26,8 +26,7 @@ export function LabNavigationWidgetsSection() {
   const [activeList, setActiveList] = useState("all");
   const [draggedIds, setDraggedIds] = useState<string[]>([]);
   const [color, setColor] = useState("#60a5fa");
-  const [sort, setSort] = useState("name");
-  const [ascending, setAscending] = useState(true);
+  const [sort, setSort] = useState("name:ascending");
   const [query, setQuery] = useState("");
   const [dialog, setDialog] = useState<"form" | "choose" | null>(null);
   return (
@@ -56,7 +55,7 @@ export function LabNavigationWidgetsSection() {
         <div className="grid gap-5 md:grid-cols-2">
           <Card>
             <h3 className="mb-4 font-semibold">LibrarySortControls</h3>
-            <LibrarySortControls label="Sort" value={sort} options={[{ value: "name", label: "Name" }, { value: "date", label: "Date" }]} ascending={ascending} directionLabel="Toggle direction" onChange={setSort} onToggleDirection={() => setAscending((value) => !value)} />
+            <LibrarySortControls label="Sort" value={sort} options={[{ value: "name:ascending", label: "Sort by name · ascending" }, { value: "name:descending", label: "Sort by name · descending" }, { value: "date:ascending", label: "Sort by date · ascending" }, { value: "date:descending", label: "Sort by date · descending" }]} onChange={setSort} />
             <div className="mt-5 flex items-center gap-3"><ColorPalette value={color} onChange={setColor} /><span className="text-xs text-zinc-500">{color}</span></div>
           </Card>
           <Card>
@@ -78,4 +77,3 @@ export function LabNavigationWidgetsSection() {
     </section>
   );
 }
-

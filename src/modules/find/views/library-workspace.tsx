@@ -1,11 +1,16 @@
 "use client";
 
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { Button, Select } from "@/shared/components/ui";
+import { LibrarySortControls } from "@/shared/components/library-sort-controls";
+import { Button } from "@/shared/components/ui";
 import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
-import type { useLibraryManagement } from "../view-models/use-library-management";
+import type {
+  LiteratureSort,
+  SortDirection,
+  useLibraryManagement,
+} from "../view-models/use-library-management";
 import type { MenuPosition } from "@/shared/components/context-menu";
 import { LiteratureTable } from "./literature-table";
 
@@ -38,38 +43,51 @@ export function LibraryWorkspace({
       ? t(`find.list.${library.selectedList.system}`)
       : library.selectedList?.name
   } · ${library.sources.length}`;
-  const ascending = library.sortDirection === "ascending";
   return (
     <TableLibraryWorkspace
       title={title}
-
+      controls={
+        <LibrarySortControls
+          label={t("find.sortBy")}
+          value={`${library.sortBy}:${library.sortDirection}`}
+          options={[
+            {
+              value: "addedAt:ascending",
+              label: t("find.sortCreatedAscending"),
+            },
+            {
+              value: "addedAt:descending",
+              label: t("find.sortCreatedDescending"),
+            },
+            {
+              value: "publicationDate:ascending",
+              label: t("find.sortPublishedAscending"),
+            },
+            {
+              value: "publicationDate:descending",
+              label: t("find.sortPublishedDescending"),
+            },
+            { value: "title:ascending", label: t("find.sortTitleAscending") },
+            {
+              value: "title:descending",
+              label: t("find.sortTitleDescending"),
+            },
+          ]}
+          onChange={(value) => {
+            const [sortBy, sortDirection] = value.split(":") as [
+              LiteratureSort,
+              SortDirection,
+            ];
+            library.setSortBy(sortBy);
+            library.setSortDirection(sortDirection);
+          }}
+        />
+      }
       action={
-        <div className="flex items-center gap-2">
-          <Select
-            aria-label={t("find.sortBy")}
-            value={ascending ? "createdAscending" : "createdDescending"}
-            className="w-56 shrink-0"
-            onChange={(event) => {
-              library.setSortBy("addedAt");
-              library.setSortDirection(
-                event.target.value === "createdAscending"
-                  ? "ascending"
-                  : "descending",
-              );
-            }}
-          >
-            <option value="createdAscending">
-              {t("find.sortCreatedAscending")}
-            </option>
-            <option value="createdDescending">
-              {t("find.sortCreatedDescending")}
-            </option>
-          </Select>
-          <Button className="whitespace-nowrap" onClick={onImport}>
-            <PlusIcon className="size-4" />
-            {t("find.import")}
-          </Button>
-        </div>
+        <Button className="whitespace-nowrap" onClick={onImport}>
+          <PlusIcon className="size-4" />
+          {t("find.import")}
+        </Button>
       }
       selectionLabel={
         selectionMode

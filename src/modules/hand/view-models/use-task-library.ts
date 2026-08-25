@@ -12,7 +12,7 @@ export const TASK_FORMAL_LIST = "task_list_formal";
 export const TASK_CASUAL_LIST = "task_list_casual";
 
 export type TaskListInput = Pick<TaskList, "name" | "note" | "color">;
-export type TaskSort = "dueDate" | "importance" | "title" | "startDate";
+export type TaskSort = "createdAt" | "dueDate" | "importance" | "title" | "startDate";
 export type TaskSortDirection = "ascending" | "descending";
 
 export function useTaskLibrary() {

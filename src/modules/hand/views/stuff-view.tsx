@@ -31,7 +31,6 @@ export function StuffView({
   const [menu, setMenu] = useState<TaskLibraryMenu>(null);
   const [addingIds, setAddingIds] = useState<string[]>([]);
   const selectionMode = library.selectedIds.length > 0;
-  const sortAscending = library.sortDirection === "ascending";
   return (
     <>
       <TableLibraryWorkspace
@@ -43,23 +42,30 @@ export function StuffView({
         controls={
           <LibrarySortControls
             label={t("hand.sortBy")}
-            value={library.sortBy}
+            value={`${library.sortBy}:${library.sortDirection}`}
             options={[
-              { value: "dueDate", label: t("me.due") },
-              { value: "importance", label: t("me.importance") },
-              { value: "title", label: t("common.title") },
-              { value: "startDate", label: t("hand.startDate") },
+              {
+                value: "createdAt:ascending",
+                label: t("hand.sortCreatedAscending"),
+              },
+              {
+                value: "createdAt:descending",
+                label: t("hand.sortCreatedDescending"),
+              },
+              { value: "dueDate:ascending", label: t("hand.sortDueAscending") },
+              {
+                value: "dueDate:descending",
+                label: t("hand.sortDueDescending"),
+              },
             ]}
-            ascending={sortAscending}
-            directionLabel={t(
-              sortAscending ? "hand.ascending" : "hand.descending",
-            )}
-            onChange={(value) => library.setSortBy(value as TaskSort)}
-            onToggleDirection={() =>
-              library.setSortDirection(
-                sortAscending ? "descending" : "ascending",
-              )
-            }
+            onChange={(value) => {
+              const [sortBy, sortDirection] = value.split(":") as [
+                TaskSort,
+                typeof library.sortDirection,
+              ];
+              library.setSortBy(sortBy);
+              library.setSortDirection(sortDirection);
+            }}
           />
         }
         action={
@@ -126,7 +132,7 @@ export function StuffView({
       </TableLibraryWorkspace>
 
       <TaskDialog
-        key="new-stuff-task"
+        key={`new-stuff-task-${creating ? "open" : "closed"}`}
         open={creating}
         projects={library.projects}
         onClose={() => setCreating(false)}

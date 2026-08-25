@@ -11,7 +11,12 @@ export const PROJECT_RECENT_LIST = "project_list_recent";
 const recentWindow = 7 * 24 * 60 * 60 * 1000;
 
 export type ProjectListInput = Pick<ProjectList, "name" | "note" | "color">;
-export type ProjectSort = "startDate" | "endDate" | "score";
+export type ProjectSort =
+  | "createdAt"
+  | "score"
+  | "startDate"
+  | "endDate"
+  | "name";
 export type ProjectSortDirection = "ascending" | "descending";
 
 export function useProjectLibrary() {

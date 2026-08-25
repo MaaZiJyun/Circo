@@ -196,3 +196,19 @@ export function Card({
     </section>
   );
 }
+
+export function Panel({
+  className = "",
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className={`bg-white dark:bg-zinc-950 ${className}`}
+    >
+      {children}
+    </section>
+  );
+}

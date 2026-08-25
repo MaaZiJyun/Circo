@@ -32,7 +32,6 @@ export function HandProjectLibrarySection({
 }) {
   const { t } = useI18n();
   const selectionMode = library.selectedIds.length > 0;
-  const ascending = library.sortDirection === "ascending";
 
   return (
     <TableLibraryWorkspace
@@ -44,22 +43,48 @@ export function HandProjectLibrarySection({
       controls={
         <LibrarySortControls
           label={t("hand.sortBy")}
-          value={library.sortBy}
+          value={`${library.sortBy}:${library.sortDirection}`}
           options={[
-            { value: "startDate", label: t("hand.startDate") },
-            { value: "endDate", label: t("hand.endDate") },
-            { value: "score", label: t("hand.projectScore") },
+            {
+              value: "createdAt:ascending",
+              label: t("hand.sortCreatedAscending"),
+            },
+            {
+              value: "createdAt:descending",
+              label: t("hand.sortCreatedDescending"),
+            },
+            { value: "score:ascending", label: t("hand.sortScoreAscending") },
+            {
+              value: "score:descending",
+              label: t("hand.sortScoreDescending"),
+            },
+            {
+              value: "startDate:ascending",
+              label: t("hand.sortStartAscending"),
+            },
+            {
+              value: "startDate:descending",
+              label: t("hand.sortStartDescending"),
+            },
+            { value: "endDate:ascending", label: t("hand.sortEndAscending") },
+            {
+              value: "endDate:descending",
+              label: t("hand.sortEndDescending"),
+            },
+            { value: "name:ascending", label: t("hand.sortTitleAscending") },
+            {
+              value: "name:descending",
+              label: t("hand.sortTitleDescending"),
+            },
           ]}
-          ascending={ascending}
-          directionLabel={t(
-            ascending ? "hand.ascending" : "hand.descending",
-          )}
-          onChange={(value) => library.setSortBy(value as typeof library.sortBy)}
-          onToggleDirection={() =>
-            library.setSortDirection(
-              ascending ? "descending" : "ascending",
-            )
-          }
+          onChange={(value) => {
+            const [sortBy, sortDirection] = value.split(":") as [
+              typeof library.sortBy,
+              typeof library.sortDirection,
+            ];
+            library.setSortBy(sortBy);
+            library.setSortDirection(sortDirection);
+          }}
         />
       }
       action={
@@ -114,4 +139,3 @@ export function HandProjectLibrarySection({
     </TableLibraryWorkspace>
   );
 }
-
