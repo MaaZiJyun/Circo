@@ -41,7 +41,6 @@ export function FindView() {
   const [editing, setEditing] = useState<SourceRecord | null>(null);
   const [reading, setReading] = useState<SourceRecord | null>(null);
   const [editingList, setEditingList] = useState<LibraryList | null>(null);
-  const [selectionMode, setSelectionMode] = useState(false);
   const [addingIds, setAddingIds] = useState<string[]>([]);
   const [documentMenu, setDocumentMenu] = useState<LiteratureMenu | null>(null);
   const [operationError, setOperationError] = useState("");
@@ -54,6 +53,7 @@ export function FindView() {
     null,
   );
   const [pointForList, setPointForList] = useState<ReferencePoint | null>(null);
+  const selectionMode = library.selectedIds.length > 0;
   const customLists = library.lists.filter((item) => !item.system);
   const deleteSources = async (ids: string[]) => {
     if (!window.confirm(t("find.confirmDeleteFiles"))) return;
@@ -116,7 +116,6 @@ export function FindView() {
             selectionMode={selectionMode}
             operationError={operationError}
             onEnterSelection={(source) => {
-              setSelectionMode(true);
               library.setSelectedIds([source.id]);
             }}
             onOpenMenu={(source, position) =>
@@ -133,7 +132,6 @@ export function FindView() {
             onAddSelected={() => setAddingIds(library.selectedIds)}
             onDeleteSelected={() => void deleteSources(library.selectedIds)}
             onCloseSelection={() => {
-              setSelectionMode(false);
               library.setSelectedIds([]);
             }}
             onImport={() => setDialog("import")}

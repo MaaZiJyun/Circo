@@ -10,8 +10,36 @@ import { DataTable } from "@/shared/components/data-table";
 import type { MenuPosition } from "@/shared/components/context-menu";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
+import { parseBibTeX } from "../model/bibtex";
 import type { useLibraryManagement } from "../view-models/use-library-management";
 import { literatureDragType } from "./library-drag";
+
+function displayAuthors(source: SourceRecord) {
+  let raw = source.authors.trim();
+  let parsedFromCitation = false;
+  if (source.citation.trim()) {
+    try {
+      const citationAuthors = parseBibTeX(source.citation).fields.author?.trim();
+      if (citationAuthors) {
+        raw = citationAuthors;
+        parsedFromCitation = true;
+      }
+    } catch {
+      // Keep the stored author text for manually edited or incomplete citations.
+    }
+  }
+  if (!raw) return "—";
+  const authors = raw
+    .split(
+      parsedFromCitation
+        ? /\s+and\s+/i
+        : /\s*(?:,|;|、|\|)\s*/,
+    )
+    .map((author) => author.trim())
+    .filter(Boolean);
+  const visible = authors.slice(0, 2).join(", ");
+  return authors.length > 2 ? `${visible}...` : visible;
+}
 
 export function LiteratureTable({
   library,
@@ -57,13 +85,14 @@ export function LiteratureTable({
       columns={[
         {
           header: t("common.title"),
+          className: "w-[32%] min-w-[320px]",
           render: (source) => (
             <span
-              className={
+              className={`block break-words leading-6 ${
                 source.readingStatus === "read"
                   ? "font-normal text-zinc-500 dark:text-zinc-400"
                   : "font-semibold text-zinc-950 dark:text-zinc-50"
-              }
+              }`}
             >
               {source.title}
             </span>
@@ -71,8 +100,8 @@ export function LiteratureTable({
         },
         {
           header: t("find.authors"),
-          className: "text-zinc-600 dark:text-zinc-400",
-          render: (source) => source.authors || "—",
+          className: "w-[18%] min-w-[180px] text-zinc-600 dark:text-zinc-400",
+          render: displayAuthors,
         },
         {
           header: t("find.addedAt"),

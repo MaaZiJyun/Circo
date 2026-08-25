@@ -58,8 +58,8 @@ export function DataTable<T extends { id: string }>({
         <thead
           className={`${stickyHeader ? "sticky top-0 z-10 backdrop-blur " : ""}border-b border-zinc-200 bg-zinc-50/95 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/95`}
         >
-          <tr>
-            <th className="w-12 p-3">
+          <tr className="align-middle">
+            <th className="w-10 px-4 py-3 text-left">
               {selectionMode && (
                 <Checkbox
                   aria-label={selectAllLabel}
@@ -71,7 +71,10 @@ export function DataTable<T extends { id: string }>({
               )}
             </th>
             {columns.map((column) => (
-              <th key={column.header} className={`${column.className ?? ""}`}>
+              <th
+                key={column.header}
+                className={`p-3 text-left align-middle ${column.className ?? ""}`}
+              >
                 {column.header}
               </th>
             ))}
@@ -130,14 +133,14 @@ export function DataTable<T extends { id: string }>({
                 onOpenMenu(item, { x: event.clientX, y: event.clientY });
               }}
             >
-              <td className="p-3">
+              <td className="pl-3 py-3 align-middle">
                 <Checkbox
                   aria-label={getRowLabel(item)}
                   checked={selectedIds.includes(item.id)}
                   className={
                     selectionMode
                       ? "opacity-100"
-                      : "pointer-events-none opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+                      : "pointer-events-none border-zinc-300 opacity-0 text-zinc-400 transition-opacity dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
                   }
                   onChange={() =>
                     selectionMode
@@ -147,7 +150,10 @@ export function DataTable<T extends { id: string }>({
                 />
               </td>
               {columns.map((column) => (
-                <td key={column.header} className={`p-3 ${column.className ?? ""}`}>
+                <td
+                  key={column.header}
+                  className={`p-3 align-middle ${column.className ?? ""}`}
+                >
                   {column.render(item)}
                 </td>
               ))}
