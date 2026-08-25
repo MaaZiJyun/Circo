@@ -11,7 +11,7 @@ import { useTheme } from "@/shared/theme/theme-context";
 import { useStore } from "@/shared/view-models/store-context";
 import { MatrixFormulaSettings } from "@/modules/me/views/matrix-formula-settings";
 import { BackgroundMusicSettings } from "./background-music-settings";
-import { PageHeader, SectionHeader } from "./page-elements";
+import { SectionHeader } from "./page-elements";
 import { ProfileSettings } from "./profile-settings";
 import { StorageSettings } from "./storage-settings";
 import { TaskPreprocessingSettings } from "./task-preprocessing-settings";

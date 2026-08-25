@@ -8,7 +8,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { SelectionToolbar } from "@/shared/components/selection-toolbar";
-import { Badge, Button, Dialog, Select } from "@/shared/components/ui";
+import { Badge, Button, Checkbox, Dialog, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { Attachment, ProjectRecord } from "@/shared/model/entities";
 import { MarkdownPreview } from "@/modules/find/views/markdown-preview";
@@ -62,7 +62,7 @@ export function ProjectAttachmentTable({ attachments, projects, onDuplicate, onM
             {attachments.map((item) => (
               <tr
                 key={item.id}
-                className={`cursor-pointer select-none transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/60 ${selectedIds.includes(item.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
+                className={`group cursor-pointer select-none transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/60 ${selectedIds.includes(item.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""}`}
                 onClick={() => {
                   if (longPressed.current) { longPressed.current = false; return; }
                   if (selectedIds.length) toggle(item.id);
@@ -74,7 +74,19 @@ export function ProjectAttachmentTable({ attachments, projects, onDuplicate, onM
                 onPointerCancel={() => { if (longPress.current) clearTimeout(longPress.current); }}
                 onPointerLeave={() => { if (longPress.current) clearTimeout(longPress.current); }}
               >
-                <td className="px-4 py-4"><span className="grid size-9 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-900"><DocumentIcon className="size-5" /></span></td>
+                <td className="px-4 py-4">
+                  <span className="relative grid size-9 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-900">
+                    <DocumentIcon className={`size-5 transition-opacity ${selectedIds.length ? "opacity-0" : "group-hover:opacity-0"}`} />
+                    <span onClick={(event) => event.stopPropagation()}>
+                      <Checkbox
+                        aria-label={item.name}
+                        checked={selectedIds.includes(item.id)}
+                        className={`absolute inset-0 m-auto ${selectedIds.length ? "opacity-100" : "pointer-events-none opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"}`}
+                        onChange={() => toggle(item.id)}
+                      />
+                    </span>
+                  </span>
+                </td>
                 <td className="max-w-72 px-4 py-4"><p className="truncate font-semibold text-zinc-900 dark:text-zinc-100">{item.name}</p><p className="mt-1 truncate text-xs text-zinc-400">{item.filePath}</p></td>
                 <td className="px-4 py-4"><Badge>{fileType(item)}</Badge></td>
                 <td className="whitespace-nowrap px-4 py-3 text-zinc-500">{formatNumber(item.size / 1024, { maximumFractionDigits: 1 })} KB</td>

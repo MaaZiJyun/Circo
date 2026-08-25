@@ -53,14 +53,14 @@ export function DataTable<T extends { id: string }>({
   const allSelected =
     rows.length > 0 && rows.every((item) => selectedIds.includes(item.id));
   return (
-    <div className="h-full min-h-0 flex-1 overflow-auto rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <div className="h-full min-h-0 flex-1 overflow-auto rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
       <table className={`w-full ${minWidth} text-left text-sm`}>
         <thead
           className={`${stickyHeader ? "sticky top-0 z-10 backdrop-blur " : ""}border-b border-zinc-200 bg-zinc-50/95 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/95`}
         >
           <tr>
-            {selectionMode && (
-              <th className="w-12 p-3">
+            <th className="w-12 p-3">
+              {selectionMode && (
                 <Checkbox
                   aria-label={selectAllLabel}
                   checked={allSelected}
@@ -68,10 +68,10 @@ export function DataTable<T extends { id: string }>({
                     onSelectAll(allSelected ? [] : rows.map((item) => item.id))
                   }
                 />
-              </th>
-            )}
+              )}
+            </th>
             {columns.map((column) => (
-              <th key={column.header} className={`p-3 ${column.className ?? ""}`}>
+              <th key={column.header} className={`${column.className ?? ""}`}>
                 {column.header}
               </th>
             ))}
@@ -82,7 +82,7 @@ export function DataTable<T extends { id: string }>({
             <tr
               key={item.id}
               draggable
-              className={`cursor-grab select-none transition-colors hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${selectedIds.includes(item.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""} ${getRowClassName?.(item) ?? ""}`}
+              className={`group cursor-grab select-none transition-colors hover:bg-zinc-50 active:cursor-grabbing dark:hover:bg-zinc-900/60 ${selectedIds.includes(item.id) ? "bg-blue-50 dark:bg-blue-950/30" : ""} ${getRowClassName?.(item) ?? ""}`}
               onDragStart={(event) => {
                 const ids = selectedIds.includes(item.id)
                   ? selectedIds
@@ -105,6 +105,11 @@ export function DataTable<T extends { id: string }>({
                   return;
                 }
                 if (!selectionMode) return;
+                if (
+                  event.target instanceof Element &&
+                  event.target.closest("button,input,select,a")
+                )
+                  return;
                 event.preventDefault();
                 event.stopPropagation();
                 onToggleSelect(item.id);
@@ -125,15 +130,22 @@ export function DataTable<T extends { id: string }>({
                 onOpenMenu(item, { x: event.clientX, y: event.clientY });
               }}
             >
-              {selectionMode && (
-                <td className="p-3">
-                  <Checkbox
-                    aria-label={getRowLabel(item)}
-                    checked={selectedIds.includes(item.id)}
-                    onChange={() => undefined}
-                  />
-                </td>
-              )}
+              <td className="p-3">
+                <Checkbox
+                  aria-label={getRowLabel(item)}
+                  checked={selectedIds.includes(item.id)}
+                  className={
+                    selectionMode
+                      ? "opacity-100"
+                      : "pointer-events-none opacity-0 transition-opacity group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+                  }
+                  onChange={() =>
+                    selectionMode
+                      ? onToggleSelect(item.id)
+                      : onEnterSelection(item)
+                  }
+                />
+              </td>
               {columns.map((column) => (
                 <td key={column.header} className={`p-3 ${column.className ?? ""}`}>
                   {column.render(item)}
