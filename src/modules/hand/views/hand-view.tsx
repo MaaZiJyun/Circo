@@ -27,6 +27,7 @@ export function HandView() {
   const [projectSection, setProjectSection] = useState<ProjectSection>("overview");
   const [dialog, setDialog] = useState<DetailDialog>(null);
   const [taskParentId, setTaskParentId] = useState<string | undefined>();
+  const [taskStartAt, setTaskStartAt] = useState<string | undefined>();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ProjectRecord | null>(null);
   const [menu, setMenu] = useState<ProjectMenu>(null);
@@ -53,10 +54,16 @@ export function HandView() {
   const closeTaskDialog = () => {
     setDialog(null);
     setTaskParentId(undefined);
+    setTaskStartAt(undefined);
   };
   const openTaskDialog = (parentId?: string) => {
     setTaskParentId(parentId);
+    setTaskStartAt(undefined);
     setDialog("task");
+  };
+  const openDetailDialog = (next: DetailDialog, startAt?: string) => {
+    setTaskStartAt(next === "task" ? startAt : undefined);
+    setDialog(next);
   };
 
   return (
@@ -127,7 +134,7 @@ export function HandView() {
           </div>
           <ProjectWorkspace
             vm={vm}
-            openDialog={setDialog}
+            openDialog={openDetailDialog}
             onOpenTaskMenu={(task, position) => setTaskMenu({ task, position })}
             onEditProject={() => {
               if (vm.selected) setEditing(vm.selected);
@@ -149,6 +156,7 @@ export function HandView() {
         editingTaskList={editingTaskList}
         dialog={dialog}
         taskParentId={taskParentId}
+        taskStartAt={taskStartAt}
         menu={menu}
         taskMenu={taskMenu}
         onCloseDialog={closeProjectDialog}

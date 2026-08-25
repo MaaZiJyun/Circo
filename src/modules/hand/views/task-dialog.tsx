@@ -27,6 +27,7 @@ export function TaskDialog({
   defaultImportance = 50,
   taskId,
   parentId,
+  initialStartDate,
   projects,
   initialProjectId,
   onClose,
@@ -38,6 +39,7 @@ export function TaskDialog({
   defaultImportance?: number;
   taskId?: string;
   parentId?: string;
+  initialStartDate?: string;
   projects?: ProjectRecord[];
   initialProjectId?: string;
   onClose: () => void;
@@ -46,9 +48,10 @@ export function TaskDialog({
   const { t } = useI18n();
   const { state } = useStore();
   const createDefaultInput = () => {
-    const current = Date.now();
-    const defaultStartDate = formatLocalDateTime(current);
-    const defaultDueDate = formatLocalDateTime(current + 60 * 60 * 1000);
+    const current = parseLocalDateTime(initialStartDate ?? "");
+    const defaultStart = Number.isFinite(current) ? current : Date.now();
+    const defaultStartDate = formatLocalDateTime(defaultStart);
+    const defaultDueDate = formatLocalDateTime(defaultStart + 60 * 60 * 1000);
     return {
       title: "",
       description: "",

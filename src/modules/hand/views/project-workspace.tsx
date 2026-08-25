@@ -36,7 +36,7 @@ export function ProjectWorkspace({
   section,
 }: {
   vm: ViewModel;
-  openDialog: (dialog: DialogName) => void;
+  openDialog: (dialog: DialogName, taskStartAt?: string) => void;
   onOpenTaskMenu: (task: TaskRecord, position: { x: number; y: number }) => void;
   onEditProject: () => void;
   section: ProjectSection;
@@ -96,7 +96,13 @@ export function ProjectWorkspace({
               title={t("hand.timeline")}
               action={<Button variant="ghost" onClick={() => openDialog("task")}><PlusIcon className="size-4" />{t("hand.newTask")}</Button>}
             />
-            <ProjectGantt tasks={vm.tasks} startDate={vm.selected.startDate} endDate={vm.selected.endDate} />
+            <ProjectGantt
+              tasks={vm.tasks}
+              startDate={vm.selected.startDate}
+              endDate={vm.selected.endDate}
+              onUpdateTask={vm.updateTaskFromGantt}
+              onCreateTask={(startAt) => openDialog("task", startAt)}
+            />
             {selectedTaskIds.length > 0 && (
               <SelectionToolbar label={t("hand.selectedTasks").replace("{count}", String(selectedTaskIds.length))} onCancel={() => setSelectedTaskIds([])}>
                 <Button variant="secondary" onClick={() => setParentDialog(true)}>{t("hand.setParent")}</Button>

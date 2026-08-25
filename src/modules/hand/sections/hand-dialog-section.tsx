@@ -44,6 +44,7 @@ export function HandDialogSection({
   editingTaskList,
   dialog,
   taskParentId,
+  taskStartAt,
   menu,
   taskMenu,
   onCloseDialog,
@@ -70,6 +71,7 @@ export function HandDialogSection({
   editingTaskList: TaskList | null;
   dialog: "task" | "log" | "attachment" | null;
   taskParentId?: string;
+  taskStartAt?: string;
   menu: ProjectMenu;
   taskMenu: TaskMenu;
   onCloseDialog: () => void;
@@ -151,9 +153,10 @@ export function HandDialogSection({
         />
       )}
       <TaskDialog
-        key={`new-task-${vm.selected?.id ?? "none"}-${taskParentId ?? "root"}-${dialog === "task" ? "open" : "closed"}`}
+        key={`new-task-${vm.selected?.id ?? "none"}-${taskParentId ?? "root"}-${taskStartAt ?? "now"}-${dialog === "task" ? "open" : "closed"}`}
         open={dialog === "task"}
         parentId={taskParentId}
+        initialStartDate={taskStartAt}
         defaultImportance={vm.selected?.score ?? 50}
         onClose={onCloseTaskDialog}
         onSave={vm.addTask}

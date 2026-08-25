@@ -31,6 +31,22 @@ export type TaskInput = Pick<
   | "parentId"
 >;
 
+export type GanttTaskPatch = Partial<
+  Pick<
+    TaskRecord,
+    | "title"
+    | "description"
+    | "startDate"
+    | "dueDate"
+    | "estimatedMinutes"
+    | "actualMinutes"
+    | "status"
+    | "milestone"
+    | "expectedOutput"
+    | "dependencyIds"
+  >
+>;
+
 export function taskInput(task: TaskRecord): TaskInput {
   return {
     title: task.title,
@@ -165,6 +181,40 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
           : item,
       ),
     }));
+  const updateTaskFromGantt = (id: string, patch: GanttTaskPatch) => {
+    const stamp = now();
+    mutate((current) => {
+      const previous = current.tasks.find((task) => task.id === id);
+      if (!previous || isLockedCompletedPastTask(previous)) return current;
+
+      const nextStatus = patch.status ?? previous.status;
+      const completedAt =
+        nextStatus === "done" ? previous.completedAt ?? stamp : undefined;
+      const updatedTasks = current.tasks.map((task) =>
+        task.id === id
+          ? { ...task, ...patch, completedAt, updatedAt: stamp }
+          : task,
+      );
+
+      return {
+        ...current,
+        tasks:
+          previous.status !== "done" && nextStatus === "done"
+            ? appendNextRecurringTask(updatedTasks, id, stamp)
+            : updatedTasks,
+        dailyTasks: current.dailyTasks.map((task) =>
+          task.sourceTaskId === id && task.date === today()
+            ? {
+                ...task,
+                completed: nextStatus === "done",
+                completedAt: nextStatus === "done" ? completedAt : undefined,
+                updatedAt: stamp,
+              }
+            : task,
+        ),
+      };
+    });
+  };
   const moveTask = (id: string, projectId?: string) => {
     const stamp = now();
     mutate((current) => ({
@@ -211,6 +261,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     duplicateTask,
     advanceTask,
     updateTask,
+    updateTaskFromGantt,
     moveTask,
     deleteTask,
     setTaskParent,
