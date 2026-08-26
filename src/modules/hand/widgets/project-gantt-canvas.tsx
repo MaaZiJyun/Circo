@@ -23,6 +23,7 @@ import {
   type GanttTick,
 } from "../model/gantt-layout";
 import { ProjectGanttDependencies } from "./project-gantt-dependencies";
+import { formatDuration, formatTimingDelta, taskTiming } from "../model/task-timing";
 
 type Preview = { taskId: string; start: number; end: number } | null;
 type DragMode = "move" | "start" | "end";
@@ -42,6 +43,7 @@ export function ProjectGanttCanvas({
   chartWidth,
   totalHeight,
   todayX,
+  currentTime,
   preview,
   toX,
   onWheel,
@@ -59,6 +61,7 @@ export function ProjectGanttCanvas({
   chartWidth: number;
   totalHeight: number;
   todayX: number | null;
+  currentTime: number | null;
   preview: Preview;
   toX: (value: number) => number;
   onWheel: WheelEventHandler<HTMLDivElement>;
@@ -147,6 +150,7 @@ export function ProjectGanttCanvas({
           {rows.map((row, index) => {
             const shown = preview?.taskId === row.task.id ? preview : row;
             if (shown.end < range.start || shown.start > range.end) return null;
+            const timing = taskTiming(row.task, currentTime ?? undefined);
             const left = toX(clamp(shown.start, range.start, range.end));
             const width = Math.max(
               8,
@@ -161,9 +165,27 @@ export function ProjectGanttCanvas({
               0,
               1,
             );
+            const actualVisible =
+              timing.actualStart !== null && timing.actualEnd !== null;
+            const actualLeft = actualVisible
+              ? toX(clamp(timing.actualStart!, range.start, range.end))
+              : 0;
+            const actualWidth = actualVisible
+              ? Math.max(6, toX(clamp(timing.actualEnd!, range.start, range.end)) - actualLeft)
+              : 0;
             return (
-              <div
-                key={row.task.id}
+              <div key={row.task.id}>
+                {actualVisible && (
+                  <div
+                    className="pointer-events-none absolute z-[8] h-1.5 rounded-full bg-zinc-950/45 dark:bg-white/55"
+                    style={{
+                      left: actualLeft,
+                      top: index * ROW_HEIGHT + ROW_HEIGHT / 2 + 15,
+                      width: actualWidth,
+                    }}
+                  />
+                )}
+                <div
                 data-task-bar
                 className="group absolute z-10 hover:z-[60]"
                 style={{
@@ -212,6 +234,17 @@ export function ProjectGanttCanvas({
                     {Math.round(progress * 100)}% · {t("hand.dependencies")}{" "}
                     {row.task.dependencyIds.length}
                   </p>
+                  <p className="mt-1 border-t border-white/20 pt-1 text-zinc-300 dark:border-zinc-950/20 dark:text-zinc-700">
+                    {t("hand.ganttExpectedDuration")}: {formatDuration(row.task.estimatedMinutes)}
+                  </p>
+                  {actualVisible && (
+                    <>
+                      <p>{t("hand.ganttActualDuration")}: {formatDuration(timing.actualDurationMinutes ?? 0)}</p>
+                      <p>{t("hand.ganttStartDelta")}: {formatTimingDelta(timing.startDeltaMinutes)}</p>
+                      <p>{t("hand.ganttEndDelta")}: {formatTimingDelta(timing.endDeltaMinutes)}</p>
+                    </>
+                  )}
+                </div>
                 </div>
               </div>
             );

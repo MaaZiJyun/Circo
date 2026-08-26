@@ -150,6 +150,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
               ? {
                   ...item,
                   actualMinutes: (item.actualMinutes ?? 0) + minutes,
+                  actualStartedAt: item.actualStartedAt ?? session?.startedAt ?? stamp,
                   updatedAt: stamp,
                 }
               : item,

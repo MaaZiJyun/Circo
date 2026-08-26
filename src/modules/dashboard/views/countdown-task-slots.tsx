@@ -150,12 +150,14 @@ export function CountdownTaskSlots() {
                     task.actualMinutes +
                     (task.id === ejectedSourceId ? displacedMinutes : 0),
                   status: "doing",
+                  actualStartedAt: task.actualStartedAt ?? stamp,
                   updatedAt: stamp,
                 };
           return task.id === ejectedSourceId
             ? {
                 ...task,
                 actualMinutes: task.actualMinutes + displacedMinutes,
+                actualStartedAt: task.actualStartedAt ?? stamp,
                 status: task.status === "done" ? "done" : "todo",
                 updatedAt: stamp,
               }
@@ -209,6 +211,7 @@ export function CountdownTaskSlots() {
             ? {
                 ...task,
                 actualMinutes: task.actualMinutes + cachedMinutes,
+                actualStartedAt: task.actualStartedAt ?? stamp,
                 status: task.status === "done" ? "done" : "todo",
                 updatedAt: stamp,
               }

@@ -27,6 +27,7 @@ import {
   HOUR,
   isTaskDescendant,
 } from "../model/gantt-layout";
+import { formatDuration, formatTimingDelta, taskTiming } from "../model/task-timing";
 import type { GanttTaskPatch } from "../view-models/use-project-task-actions";
 
 const TASK_STATUSES: TaskRecord["status"][] = [
@@ -48,6 +49,7 @@ export function TaskGanttInspector({
   onSave: (patch: GanttTaskPatch) => void;
 }) {
   const { t } = useI18n();
+  const timing = taskTiming(task);
   const [draft, setDraft] = useState(() => ({
     title: task.title,
     status: task.status,
@@ -181,6 +183,32 @@ export function TaskGanttInspector({
               }
             />
           </Field>
+        </div>
+        <div className="grid gap-2 rounded-lg bg-zinc-50 p-3 text-xs dark:bg-zinc-900/70">
+          <div className="flex justify-between gap-3">
+            <span className="text-zinc-500">{t("hand.ganttExpectedDuration")}</span>
+            <span className="font-medium">{formatDuration(task.estimatedMinutes)}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-zinc-500">{t("hand.ganttActualStart")}</span>
+            <span className="font-medium">{task.actualStartedAt ?? t("hand.ganttNotRecorded")}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-zinc-500">{t("hand.ganttActualEnd")}</span>
+            <span className="font-medium">{task.completedAt ?? t("hand.ganttNotRecorded")}</span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-zinc-500">{t("hand.ganttStartDelta")}</span>
+            <span className={timing.startDeltaMinutes && timing.startDeltaMinutes > 0 ? "font-medium text-red-600" : "font-medium text-emerald-600"}>
+              {formatTimingDelta(timing.startDeltaMinutes)}
+            </span>
+          </div>
+          <div className="flex justify-between gap-3">
+            <span className="text-zinc-500">{t("hand.ganttEndDelta")}</span>
+            <span className={timing.endDeltaMinutes && timing.endDeltaMinutes > 0 ? "font-medium text-red-600" : "font-medium text-emerald-600"}>
+              {formatTimingDelta(timing.endDeltaMinutes)}
+            </span>
+          </div>
         </div>
         <Field label={t("hand.dependencies")}>
           <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-zinc-200 p-2 dark:border-zinc-800">

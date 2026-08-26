@@ -229,6 +229,7 @@ export interface TaskRecord extends BaseEntity, TaskImportanceDimensions, TaskUr
   importance: number;
   recurrence: TaskRecurrence | null;
   recurrenceSourceId?: string;
+  actualStartedAt?: string;
   completedAt?: string;
 }
 

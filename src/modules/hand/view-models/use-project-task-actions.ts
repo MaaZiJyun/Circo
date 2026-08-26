@@ -40,6 +40,7 @@ export type GanttTaskPatch = Partial<
     | "dueDate"
     | "estimatedMinutes"
     | "actualMinutes"
+    | "actualStartedAt"
     | "status"
     | "milestone"
     | "expectedOutput"
@@ -87,6 +88,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
       actualMinutes: 0,
+      actualStartedAt: undefined,
       completedAt: undefined,
       createdAt: stamp,
       updatedAt: stamp,
@@ -141,6 +143,10 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
                 status === "done" && !item.actualMinutes
                   ? item.estimatedMinutes
                   : item.actualMinutes,
+              actualStartedAt:
+                status !== "todo" || item.actualMinutes > 0
+                  ? item.actualStartedAt ?? stamp
+                  : item.actualStartedAt,
               updatedAt: stamp,
               completedAt: status === "done" ? stamp : undefined,
             }
@@ -190,9 +196,15 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       const nextStatus = patch.status ?? previous.status;
       const completedAt =
         nextStatus === "done" ? previous.completedAt ?? stamp : undefined;
+      const actualStartedAt =
+        patch.actualStartedAt ??
+        (nextStatus !== "todo" ||
+        (patch.actualMinutes ?? previous.actualMinutes) > 0
+          ? previous.actualStartedAt ?? stamp
+          : previous.actualStartedAt);
       const updatedTasks = current.tasks.map((task) =>
         task.id === id
-          ? { ...task, ...patch, completedAt, updatedAt: stamp }
+          ? { ...task, ...patch, actualStartedAt, completedAt, updatedAt: stamp }
           : task,
       );
 

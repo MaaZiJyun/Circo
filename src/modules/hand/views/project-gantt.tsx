@@ -248,6 +248,7 @@ export function ProjectGantt({
           chartWidth={chartWidth}
           totalHeight={totalHeight}
           todayX={todayX}
+          currentTime={currentTime}
           preview={preview}
           toX={toX}
           onWheel={handleWheel}
