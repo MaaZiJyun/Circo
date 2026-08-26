@@ -12,13 +12,14 @@ import { useTheme } from "@/shared/theme/theme-context";
 import { useStore } from "@/shared/view-models/store-context";
 import { MatrixFormulaSettings } from "@/modules/me/views/matrix-formula-settings";
 import { BackgroundMusicSettings } from "./background-music-settings";
+import { ExternalModuleSettings } from "./external-module-settings";
 import { SectionHeader } from "./page-elements";
 import { ProfileSettings } from "./profile-settings";
 import { StorageSettings } from "./storage-settings";
 import { TaskPreprocessingSettings } from "./task-preprocessing-settings";
 import { Alert, Button, Card, EmptyState, Field, Select, Tabs } from "./ui";
 
-type SettingsTab = "general" | "tasks" | "media" | "data" | "trash";
+type SettingsTab = "general" | "tasks" | "media" | "modules" | "data" | "trash";
 
 const trashCollections: CollectionName[] = [
   "cycles",
@@ -107,6 +108,7 @@ export function SettingsView() {
           { value: "general", label: t("settings.tabGeneral") },
           { value: "tasks", label: t("settings.tabTasks") },
           { value: "media", label: t("settings.tabMedia") },
+          { value: "modules", label: t("settings.tabModules") },
           { value: "data", label: t("settings.tabData") },
           { value: "trash", label: t("settings.tabTrash") },
         ]}
@@ -157,6 +159,8 @@ export function SettingsView() {
       )}
 
       {tab === "media" && <BackgroundMusicSettings />}
+
+      {tab === "modules" && <ExternalModuleSettings />}
 
       {tab === "data" && (
         <div className="space-y-8">

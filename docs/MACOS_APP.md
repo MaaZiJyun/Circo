@@ -15,7 +15,7 @@ dist/Circo-macOS-arm64.zip
 - Circo 工程目录；
 - Node.js、npm 或 `node_modules`；
 - Xcode、Terminal 或 SQLite 命令行工具；
-- 网络连接，双向翻译模型也已包含在应用中。
+- 网络连接；不使用可选模块时应用核心功能完全离线。
 
 压缩包比直接通过普通文件传输发送 `.app` 更可靠，可以保留 macOS bundle 的权限和资源属性。
 
@@ -25,7 +25,9 @@ dist/Circo-macOS-arm64.zip
 - 官方 Node.js 20 便携运行时；
 - Next.js production standalone server；
 - `public` 与 `.next/static` 前端资源；
-- 中英双向本地翻译模型。
+
+翻译模型、Python、MinerU 和 OCR 模型不包含在 `.app` 中，作为独立的
+`Circo-modules-macOS-arm64` 文件夹按需分发。
 
 应用不会包含构建者的 SQLite 数据库、文献、附件、笔记、日志、备份或工程源码。
 
@@ -65,13 +67,24 @@ npm run data:export
 
 ## 构建
 
-在 Apple Silicon Mac 的项目根目录运行：
+构建轻量应用：
 
 ```bash
 npm run app:macos
 ```
 
-首次构建会从 nodejs.org 下载固定版本的官方 Node.js 运行时并缓存到 `.build-cache/`，后续构建复用缓存。构建机器需要 Node.js/npm 和 Xcode Command Line Tools。
+按需构建外部模块包：
+
+```bash
+npm run models:download
+npm run mineru:prepare
+npm run modules:package
+```
+
+把生成的 `Circo-modules-macOS-arm64` 文件夹或 ZIP 单独发送给需要 PDF 转换、
+OCR 和中英翻译的用户。用户解压后在 Settings → Modules 选择该文件夹即可，
+可以放在任意可读位置，也可以随时切换或断开。外部模块当前仅支持 Apple Silicon；
+轻量 Circo.app 仍跟随其构建机器架构。
 
 输出：
 

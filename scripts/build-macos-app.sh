@@ -67,8 +67,7 @@ tar -xJf "$node_archive" -C "$temporary_dir"
 mkdir -p \
   "$temporary_app/Contents/MacOS" \
   "$temporary_app/Contents/Resources/runtime" \
-  "$temporary_app/Contents/Resources/server/.next" \
-  "$temporary_app/Contents/Resources/models"
+  "$temporary_app/Contents/Resources/server/.next"
 cp "$project_dir/macos/CircoApp/Info.plist" "$temporary_app/Contents/Info.plist"
 
 cp "$temporary_dir/$node_dist/bin/node" \
@@ -81,6 +80,17 @@ cp "$project_dir/.next/standalone/package.json" \
   "$temporary_app/Contents/Resources/server/package.json"
 cp -R "$project_dir/.next/standalone/node_modules" \
   "$temporary_app/Contents/Resources/server/node_modules"
+onnx_runtime_source="$project_dir/node_modules/onnxruntime-node/bin/napi-v3/darwin/$node_arch"
+onnx_runtime_destination="$temporary_app/Contents/Resources/server/node_modules/onnxruntime-node/bin/napi-v3/darwin/$node_arch"
+if [[ ! -f "$onnx_runtime_source/onnxruntime_binding.node" || \
+  ! -f "$onnx_runtime_source/libonnxruntime.1.21.0.dylib" ]]; then
+  echo "Error: ONNX Runtime native files are missing for macOS $node_arch." >&2
+  exit 1
+fi
+mkdir -p "$onnx_runtime_destination"
+cp "$onnx_runtime_source/onnxruntime_binding.node" \
+  "$onnx_runtime_source/libonnxruntime.1.21.0.dylib" \
+  "$onnx_runtime_destination/"
 cp -R "$project_dir/.next/standalone/.next/." \
   "$temporary_app/Contents/Resources/server/.next/"
 cp -R "$project_dir/.next/static" \
@@ -88,11 +98,6 @@ cp -R "$project_dir/.next/static" \
 if [[ -d "$project_dir/public" ]]; then
   cp -R "$project_dir/public" "$temporary_app/Contents/Resources/server/public"
 fi
-if [[ -d "$project_dir/data/models" ]]; then
-  cp -R "$project_dir/data/models/." \
-    "$temporary_app/Contents/Resources/models/"
-fi
-
 swiftc -O -framework AppKit -framework WebKit \
   "$project_dir/macos/CircoApp/main.swift" \
   "$project_dir/macos/CircoApp/CircoWindowController.swift" \

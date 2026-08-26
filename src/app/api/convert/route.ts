@@ -1,59 +1,14 @@
-import { PDFParse } from "pdf-parse";
 import fs from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { getStoragePath } from "@/shared/infrastructure/storage-config";
-import {
-  pdfAssetUrl,
-  pdfTextToMarkdown,
-} from "@/modules/find/model/pdf-converter";
+import { convertPdfWithMineru } from "@/modules/find/server/mineru-converter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const maxUploadSize = 200 * 1024 * 1024;
-const maxExtractedImages = 40;
-const maxExtractedImageBytes = 50 * 1024 * 1024;
-
-async function savePdfImages(
-  parser: PDFParse,
-  identifier: string,
-  markdownDirectory: string,
-) {
-  const result = await parser.getImage({
-    imageBuffer: true,
-    imageDataUrl: false,
-    imageThreshold: 120,
-  });
-  const images = new Map<number, string[]>();
-  let count = 0;
-  let totalBytes = 0;
-  const assetDirectory = identifier;
-  const assetPath = path.join(markdownDirectory, assetDirectory);
-  for (const page of result.pages) {
-    for (const image of page.images) {
-      if (
-        !image.data.length ||
-        count >= maxExtractedImages ||
-        totalBytes + image.data.length > maxExtractedImageBytes
-      )
-        continue;
-      count += 1;
-      totalBytes += image.data.length;
-      const token = `${page.pageNumber}-${count}.png`;
-      await fs.mkdir(assetPath, { recursive: true });
-      await fs.writeFile(
-        path.join(/* turbopackIgnore: true */ assetPath, token),
-        image.data,
-      );
-      const pageImages = images.get(page.pageNumber) ?? [];
-      pageImages.push(pdfAssetUrl(assetDirectory, token));
-      images.set(page.pageNumber, pageImages);
-    }
-  }
-  return images;
-}
-
 export async function POST(request: Request) {
   try {
     const form = await request.formData();
@@ -101,44 +56,24 @@ export async function POST(request: Request) {
         markdownPath,
       });
     }
-    const parser = new PDFParse({ data: bytes });
+    const temporaryDirectory = await fs.mkdtemp(
+      path.join(os.tmpdir(), "circo-mineru-"),
+    );
     try {
-      const result = await parser.getText({
-        cellSeparator: "\t",
-        lineEnforce: true,
-        pageJoiner: "",
-        parseHyperlinks: true,
-      });
-      const tables = await parser.getTable();
-      const images = await savePdfImages(
-        parser,
-        identifier,
+      const result = await convertPdfWithMineru(
+        path.join(/* turbopackIgnore: true */ directory, fileToken),
+        temporaryDirectory,
         markdownDirectory,
+        identifier,
       );
-      const hasExtractableContent =
-        result.pages.some((page) => page.text.trim()) || images.size > 0;
-      const content = pdfTextToMarkdown(result.pages, {
-        images,
-        tables: tables.pages,
-      });
       await fs.writeFile(
         path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
-        content,
+        result.content,
         "utf8",
       );
-      if (!hasExtractableContent)
-        return Response.json({
-          content: "",
-          pages: result.total,
-          fileToken,
-          filePath,
-          markdownToken,
-          markdownPath,
-          conversionError: "No extractable text found.",
-        });
       return Response.json({
-        content,
-        pages: result.total,
+        content: result.content,
+        pages: result.pages,
         fileToken,
         filePath,
         markdownToken,
@@ -162,7 +97,7 @@ export async function POST(request: Request) {
         conversionError,
       });
     } finally {
-      await parser.destroy();
+      await fs.rm(temporaryDirectory, { recursive: true, force: true });
     }
   } catch (error) {
     const message =

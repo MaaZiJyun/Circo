@@ -220,7 +220,7 @@ Circo-backup-YYYY-MM-DD.zip
 - 恢复前检查 AppState 兼容性、manifest version 和 ZIP 路径安全性。
 - 附件绝对路径会重新映射到当前 `storageDirectory`。
 - 恢复会替换当前数据库状态，并替换备份声明的文件目录。
-- `storage-config.json`、SQLite 文件本身和 `models/` 不包含在完整备份中。
+- `storage-config.json`、SQLite 文件本身、外部模块目录和模型不包含在完整备份中。
 
 ## 9. 删除与回收站
 

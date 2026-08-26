@@ -26,12 +26,21 @@ Find 用于管理、阅读和整理研究资料。文献可以加入自定义列
 
 支持导入 PDF、Markdown 和纯文本文件。PDF 导入后会同时保留原文件，并在本地生成可编辑的 Markdown：
 
-- 保留 `<!-- Page N -->` 页码锚点，便于 Markdown 内容回溯到原 PDF。
-- 识别常见标题、段落、列表和带网格的表格。
-- 合并普通段落断行，并修复英文跨行连字符断词。
-- 过滤重复页眉、页脚和独立页码。
-- 提取符合尺寸要求的内嵌图片，按 PDF 页归入 Markdown。
+- 使用本地 MinerU 识别版面、标题、段落、列表、表格、公式和图片。
+- 支持文本型 PDF 与扫描 PDF OCR，不再使用 PDF.js 文本提取或自定义排版规则。
+- 将 MinerU 提取的图片复制到 Circo 文献资源目录，并改写 Markdown 引用。
 - 支持从原 PDF 重新转换，以刷新 Markdown、表格和图片资源。
+
+PDF 转换要求本机安装 MinerU。macOS 推荐使用 Python 3.10–3.13 的独立环境：
+
+```bash
+uv pip install -U "mineru[all]"
+mineru --version
+```
+
+翻译模型和 MinerU 是可选的外部模块，不再放入 `.app`。在 Settings → Modules
+选择 `Circo-modules` 目录后即可使用，修改目录无需重启。开发模式未配置模块目录时，
+仍可通过 `MINERU_COMMAND=/absolute/path/to/mineru` 临时指定 MinerU。
 
 阅读界面采用 PDF 与 Markdown 双栏布局。桌面端可以拖动中间分隔条调整宽度，比例会保存在浏览器中；Markdown 支持阅读和编辑模式。PDF 中可以选择文本进行本地中英互译，也可以截取文本或页面区域创建带页码位置的文献观点。
 
@@ -41,7 +50,12 @@ Find 用于管理、阅读和整理研究资料。文献可以加入自定义列
 npm run models:download
 ```
 
-模型缓存在 `data/models/`，约占 232 MB，运行生产环境前应提前下载。
+模型下载到 `data/models/`，随后可与 MinerU 一起生成独立模块包：
+
+```bash
+npm run mineru:prepare
+npm run modules:package
+```
 
 ## 技术栈
 
@@ -50,7 +64,7 @@ npm run models:download
 - Tailwind CSS 4
 - Heroicons
 - SQLite + `better-sqlite3`
-- `pdf-parse`
+- MinerU（本地 PDF 版面分析、OCR 与 Markdown 转换）
 - Transformers.js + OPUS-MT ONNX 模型
 - Vitest
 

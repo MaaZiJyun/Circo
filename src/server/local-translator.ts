@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import type { TranslationPipeline } from "@huggingface/transformers";
+import { getTranslationModelsDirectory } from "@/shared/infrastructure/external-modules";
 
 const MODEL_BY_TARGET = {
   "zh-CN": "Xenova/opus-mt-en-zh",
@@ -9,26 +10,30 @@ const MODEL_BY_TARGET = {
 
 type TranslationTarget = keyof typeof MODEL_BY_TARGET;
 
-const pipelines = new Map<TranslationTarget, Promise<TranslationPipeline>>();
+const pipelines = new Map<string, Promise<TranslationPipeline>>();
 
 async function loadPipeline(target: TranslationTarget) {
-  const existing = pipelines.get(target);
+  const modelsDirectory = getTranslationModelsDirectory();
+  if (!modelsDirectory)
+    throw new Error(
+      "Translation module is not configured. Choose a Circo modules directory in Settings.",
+    );
+  const key = `${modelsDirectory}:${target}`;
+  const existing = pipelines.get(key);
   if (existing) return existing;
 
   const loading = (async () => {
     const { env, pipeline } = await import("@huggingface/transformers");
-    env.cacheDir = process.env.CIRCO_MODELS_DIR?.trim()
-      ? path.resolve(process.env.CIRCO_MODELS_DIR)
-      : path.join(process.cwd(), "data", "models");
-    env.allowRemoteModels = process.env.NODE_ENV !== "production";
+    env.cacheDir = path.resolve(modelsDirectory);
+    env.allowRemoteModels = false;
 
     return pipeline("translation", MODEL_BY_TARGET[target], {
       dtype: "q8",
     });
   })();
 
-  pipelines.set(target, loading);
-  loading.catch(() => pipelines.delete(target));
+  pipelines.set(key, loading);
+  loading.catch(() => pipelines.delete(key));
   return loading;
 }
 

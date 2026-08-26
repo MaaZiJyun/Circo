@@ -130,7 +130,6 @@ final class CircoAppDelegate: NSObject, NSApplicationDelegate {
       return
     }
     let dataURL = applicationSupportURL.appendingPathComponent("data", isDirectory: true)
-    let modelsURL = resourcesURL.appendingPathComponent("models", isDirectory: true)
     appendLog("Server: \(entryURL.path)\nData: \(dataURL.path)\n")
     let process = Process()
     let pipe = Pipe()
@@ -142,7 +141,6 @@ final class CircoAppDelegate: NSObject, NSApplicationDelegate {
     environment["HOSTNAME"] = "localhost"
     environment["PORT"] = "1204"
     environment["CIRCO_DATA_DIR"] = dataURL.path
-    environment["CIRCO_MODELS_DIR"] = modelsURL.path
     process.environment = environment
     process.standardOutput = pipe
     process.standardError = pipe

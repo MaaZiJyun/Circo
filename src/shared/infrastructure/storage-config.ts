@@ -14,6 +14,7 @@ export const defaultStorageConfig: StorageConfig = {
   databasePath: path.join(defaultDirectory, "circo.db"),
   storageDirectory: defaultDirectory,
   backgroundMusicDirectory: path.join(defaultDirectory, "background-audio"),
+  modulesDirectory: "",
 };
 
 export function getStorageConfig(): StorageConfig {
@@ -26,6 +27,7 @@ export function getStorageConfig(): StorageConfig {
       backgroundMusicDirectory:
         value.backgroundMusicDirectory?.trim() ||
         path.join(value.storageDirectory, "background-audio"),
+      modulesDirectory: value.modulesDirectory?.trim() || "",
     };
   } catch {
     return defaultStorageConfig;
@@ -36,16 +38,19 @@ function prepareConfig(config: StorageConfig): StorageConfig {
   const databasePath = config.databasePath.trim();
   const storageDirectory = config.storageDirectory.trim();
   const backgroundMusicDirectory = config.backgroundMusicDirectory.trim();
+  const modulesDirectory = config.modulesDirectory.trim();
   if (
     !path.isAbsolute(databasePath) ||
     !path.isAbsolute(storageDirectory) ||
-    !path.isAbsolute(backgroundMusicDirectory)
+    !path.isAbsolute(backgroundMusicDirectory) ||
+    (modulesDirectory !== "" && !path.isAbsolute(modulesDirectory))
   )
     throw new Error("Database and storage paths must be absolute.");
   if (
     databasePath.length > 1000 ||
     storageDirectory.length > 1000 ||
-    backgroundMusicDirectory.length > 1000
+    backgroundMusicDirectory.length > 1000 ||
+    modulesDirectory.length > 1000
   )
     throw new Error("Storage path is too long.");
   if (fs.existsSync(databasePath) && fs.statSync(databasePath).isDirectory())
@@ -60,16 +65,28 @@ function prepareConfig(config: StorageConfig): StorageConfig {
     !fs.statSync(backgroundMusicDirectory).isDirectory()
   )
     throw new Error("Background music path must point to a directory.");
+  if (
+    modulesDirectory &&
+    fs.existsSync(modulesDirectory) &&
+    !fs.statSync(modulesDirectory).isDirectory()
+  )
+    throw new Error("Modules path must point to a directory.");
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
   fs.mkdirSync(storageDirectory, { recursive: true });
   fs.mkdirSync(backgroundMusicDirectory, { recursive: true });
   fs.accessSync(path.dirname(databasePath), fs.constants.W_OK);
   fs.accessSync(storageDirectory, fs.constants.W_OK);
   fs.accessSync(backgroundMusicDirectory, fs.constants.W_OK);
+  if (modulesDirectory) fs.accessSync(modulesDirectory, fs.constants.R_OK);
   const database = new Database(databasePath);
   database.pragma("schema_version");
   database.close();
-  return { databasePath, storageDirectory, backgroundMusicDirectory };
+  return {
+    databasePath,
+    storageDirectory,
+    backgroundMusicDirectory,
+    modulesDirectory,
+  };
 }
 
 export function saveStorageConfig(config: StorageConfig): StorageConfig {

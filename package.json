@@ -17,7 +17,9 @@
     "db:init": "./scripts/db-init.sh",
     "db:shell": "sqlite3 data/circo.db",
     "data:export": "node scripts/export-circo-data.mjs",
-    "models:download": "node scripts/download-translation-models.mjs"
+    "models:download": "node scripts/download-translation-models.mjs",
+    "mineru:prepare": "./scripts/prepare-mineru-macos.sh",
+    "modules:package": "./scripts/build-external-modules.sh"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -27,7 +29,6 @@
     "better-sqlite3": "^12.11.1",
     "katex": "^0.18.4",
     "next": "16.3.0",
-    "pdf-parse": "^2.4.5",
     "pdfjs-dist": "5.4.296",
     "react": "19.2.8",
     "react-dom": "19.2.8"
