@@ -33,6 +33,7 @@ export const zh = {
   "common.edit": "编辑",
   "common.duplicate": "复制",
   "common.archive": "归档",
+  "common.unarchive": "取消归档",
   "hand.activityType": "Activity 类型",
   "activity.task": "Task · 目标任务",
   "activity.event": "Event · 事件",

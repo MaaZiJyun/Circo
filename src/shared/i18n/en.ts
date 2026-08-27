@@ -28,6 +28,7 @@ export const en: Record<import("./zh").MessageKey, string> = {
   "common.edit": "Edit",
   "common.duplicate": "Duplicate",
   "common.archive": "Archive",
+  "common.unarchive": "Unarchive",
   "hand.activityType": "Activity type",
   "activity.task": "Task · goal-oriented",
   "activity.event": "Event · participation",

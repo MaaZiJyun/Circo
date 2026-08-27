@@ -49,9 +49,15 @@ export function ProjectTaskActions({
           <ContextMenuItem onClick={() => { vm.duplicateTask(menu.task); onClose(); }}>
             <DocumentDuplicateIcon className="size-4" />{t("common.duplicate")}
           </ContextMenuItem>
-          <ContextMenuItem disabled={Boolean(menu.task.archivedAt)} onClick={() => { vm.archiveTask(menu.task.id); onClose(); }}>
-            <ArchiveBoxIcon className="size-4" />{t("common.archive")}
+          {menu.task.archivedAt ? (
+            <ContextMenuItem onClick={() => { vm.unarchiveTask(menu.task.id); onClose(); }}>
+              <ArchiveBoxIcon className="size-4" />{t("common.unarchive")}
+            </ContextMenuItem>
+          ) : (
+          <ContextMenuItem onClick={() => { vm.archiveTask(menu.task.id); onClose(); }}>
+          <ArchiveBoxIcon className="size-4" />{t("common.archive")}
           </ContextMenuItem>
+          )}
           <ContextMenuItem disabled={locked} danger onClick={() => {
             const task = menu.task;
             onClose();

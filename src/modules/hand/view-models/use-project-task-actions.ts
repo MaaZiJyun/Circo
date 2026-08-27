@@ -15,7 +15,7 @@ import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance } from "@/shared/model/task-importance";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
 import { completeTask } from "@/shared/model/task-lifecycle";
-import { archiveTask, isArchivedTask } from "@/shared/model/task-archive";
+import { archiveTask, isArchivedTask, unarchiveTask } from "@/shared/model/task-archive";
 import { useStore } from "@/shared/view-models/store-context";
 
 export type ActivityInput = Pick<
@@ -304,6 +304,8 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
   };
   const archive = (id: string) =>
     mutate((current) => archiveTask(current, id, now()));
+  const unarchive = (id: string) =>
+    mutate((current) => unarchiveTask(current, id, now()));
   const setTaskParent = (ids: string[], parentId: string | null) =>
     mutate((current) => {
       const editableIds = ids.filter(
@@ -326,6 +328,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     moveTask,
     deleteTask,
     archiveTask: archive,
+    unarchiveTask: unarchive,
     setTaskParent,
   };
 }

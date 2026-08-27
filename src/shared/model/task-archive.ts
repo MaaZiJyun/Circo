@@ -21,6 +21,21 @@ export function archiveTask(
   };
 }
 
+export function unarchiveTask(
+  state: AppState,
+  taskId: string,
+  stamp = now(),
+): AppState {
+  return {
+    ...state,
+    activities: state.activities.map((task) =>
+      task.id === taskId && task.archivedAt
+        ? { ...task, archivedAt: undefined, updatedAt: stamp }
+        : task,
+    ),
+  };
+}
+
 /**
  * Daily settlement is deliberately narrow: only completed activities selected in
  * this day's local cache are archived. Everything else remains editable.

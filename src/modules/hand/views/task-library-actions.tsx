@@ -94,10 +94,17 @@ export function TaskLibraryActions({
             <TrashIcon className="size-4" />
             {t("hand.removeFromList")}
           </ContextMenuItem>
-          <ContextMenuItem disabled={Boolean(task.archivedAt)} onClick={() => { library.archiveTask(task.id); onClose(); }}>
-            <ArchiveBoxIcon className="size-4" />
-            {t("common.archive")}
-          </ContextMenuItem>
+          {task.archivedAt ? (
+            <ContextMenuItem onClick={() => { library.unarchiveTask(task.id); onClose(); }}>
+              <ArchiveBoxIcon className="size-4" />
+              {t("common.unarchive")}
+            </ContextMenuItem>
+          ) : (
+            <ContextMenuItem onClick={() => { library.archiveTask(task.id); onClose(); }}>
+              <ArchiveBoxIcon className="size-4" />
+              {t("common.archive")}
+            </ContextMenuItem>
+          )}
           <ContextMenuItem
             disabled={locked}
             danger
