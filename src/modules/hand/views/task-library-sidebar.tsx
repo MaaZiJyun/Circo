@@ -1,13 +1,14 @@
 "use client";
 
 import {
+  ArchiveBoxIcon,
   BriefcaseIcon,
   FolderIcon,
   Squares2X2Icon,
 } from "@heroicons/react/24/outline";
 import { ListSidebar } from "@/shared/components/list-sidebar";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskList } from "@/shared/model/entities";
+import type { ActivityList } from "@/shared/model/entities";
 import type { useTaskLibrary } from "../view-models/use-task-library";
 
 export function TaskLibrarySidebar({
@@ -17,12 +18,12 @@ export function TaskLibrarySidebar({
 }: {
   library: ReturnType<typeof useTaskLibrary>;
   onCreate: () => void;
-  onEdit: (list: TaskList) => void;
+  onEdit: (list: ActivityList) => void;
 }) {
   const { t } = useI18n();
   return (
     <ListSidebar
-      title={t("hand.taskLists")}
+      title={t("hand.activityLists")}
       createLabel={t("hand.createList")}
       editLabel={t("common.edit")}
       deleteLabel={t("hand.deleteList")}
@@ -43,8 +44,10 @@ export function TaskLibrarySidebar({
           : list.system === "formal"
             ? library.formalTasks.length
             : list.system === "casual"
-              ? library.casualTasks.length
-              : library.casualTasks.filter((task) =>
+            ? library.casualTasks.length
+            : list.system === "archived"
+              ? library.archivedActivities.length
+            : library.casualTasks.filter((task) =>
                   (task.listIds ?? []).includes(list.id),
                 ).length
       }
@@ -53,6 +56,8 @@ export function TaskLibrarySidebar({
           <BriefcaseIcon className="size-4" />
         ) : list.system === "casual" ? (
           <FolderIcon className="size-4" />
+        ) : list.system === "archived" ? (
+          <ArchiveBoxIcon className="size-4" />
         ) : (
           <Squares2X2Icon
             className="size-4"

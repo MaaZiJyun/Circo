@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import type { AppRepository, AppState } from "@/shared/model/app-state";
-import type { ActivityRecord } from "@/shared/model/entities";
+import type { ActivityList, ActivityRecord } from "@/shared/model/entities";
 import { isAppState } from "@/shared/model/app-state";
 import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
@@ -55,10 +55,10 @@ const systemProjectLists = [
     system: "recent" as const,
   },
 ];
-const systemTaskLists = [
+const systemActivityLists = [
   {
     id: "task_list_default",
-    name: "All Tasks",
+    name: "All Activities",
     note: "All activities",
     color: "#18181b",
     system: "default" as const,
@@ -76,6 +76,13 @@ const systemTaskLists = [
     note: "Tasks that do not belong to any project",
     color: "#f59e0b",
     system: "casual" as const,
+  },
+  {
+    id: "task_list_archived",
+    name: "Archived",
+    note: "Archived activities",
+    color: "#71717a",
+    system: "archived" as const,
   },
 ];
 const systemIdeaLists = [
@@ -97,12 +104,14 @@ const systemIdeaLists = [
 
 type LegacySnapshot = AppState & {
   tasks?: ActivityRecord[];
+  taskLists?: ActivityList[];
   taskHistory?: Array<ActivityRecord & { status: "done" }>;
 };
 
 function withoutLegacyActivityFields(state: AppState): AppState {
   const normalized = { ...state } as LegacySnapshot;
   delete normalized.tasks;
+  delete normalized.taskLists;
   delete normalized.taskHistory;
   return normalized;
 }
@@ -251,13 +260,14 @@ function normalizeState(state: AppState): AppState {
   const existingLists = state.libraryLists ?? [];
   const systemListIds = new Set(systemLists.map((item) => item.id));
   const existingProjectLists = state.projectLists ?? [];
-  const existingTaskLists = state.taskLists ?? [];
+  const existingActivityLists =
+    state.activityLists ?? (state as LegacySnapshot).taskLists ?? [];
   const existingIdeaLists = state.ideaLists ?? [];
   const existingPointLists = state.pointLists ?? [];
   const systemProjectListIds = new Set(
     systemProjectLists.map((item) => item.id),
   );
-  const systemTaskListIds = new Set(systemTaskLists.map((item) => item.id));
+  const systemActivityListIds = new Set(systemActivityLists.map((item) => item.id));
   const systemIdeaListIds = new Set(systemIdeaLists.map((item) => item.id));
   const systemPointListIds = new Set(systemPointLists.map((item) => item.id));
   const normalizedTasks = normalizeTasks(sourceState);
@@ -363,16 +373,16 @@ function normalizeState(state: AppState): AppState {
         (item) => !systemProjectListIds.has(item.id),
       ),
     ],
-    taskLists: [
-      ...systemTaskLists.map(
+    activityLists: [
+      ...systemActivityLists.map(
         (item) =>
-          existingTaskLists.find((existing) => existing.id === item.id) ?? {
+          existingActivityLists.find((existing) => existing.id === item.id) ?? {
             ...item,
             createdAt: stamp,
             updatedAt: stamp,
           },
       ),
-      ...existingTaskLists.filter((item) => !systemTaskListIds.has(item.id)),
+      ...existingActivityLists.filter((item) => !systemActivityListIds.has(item.id)),
     ],
     ideaLists: [
       ...systemIdeaLists.map(

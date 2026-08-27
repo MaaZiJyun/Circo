@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ArrowUturnLeftIcon } from "@heroicons/react/24/outline";
 import { Button, Tabs } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ProjectList, ProjectRecord, TaskList } from "@/shared/model/entities";
+import type { ProjectList, ProjectRecord, ActivityList } from "@/shared/model/entities";
 import { HandDialogSection } from "../sections/hand-dialog-section";
 import { HandProjectLibrarySection } from "../sections/hand-library-section";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
@@ -35,7 +35,7 @@ export function HandView() {
   const [listDialog, setListDialog] = useState<"create" | "choose" | null>(null);
   const [editingList, setEditingList] = useState<ProjectList | null>(null);
   const [taskListDialog, setTaskListDialog] = useState<"create" | null>(null);
-  const [editingTaskList, setEditingTaskList] = useState<TaskList | null>(null);
+  const [editingTaskList, setEditingTaskList] = useState<ActivityList | null>(null);
 
   const openProject = (project: ProjectRecord) => {
     vm.setSelectedId(project.id);

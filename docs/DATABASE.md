@@ -61,14 +61,14 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | `sources`                | `SourceRecord[]`   | 文献、文件/Markdown 路径、阅读状态、评价和转换状态       |
 | `libraryLists`           | `LibraryList[]`    | 文献列表，`sources.listIds` 引用                         |
 | `projectLists`           | `ProjectList[]`    | 项目列表，`projects.listIds` 引用                        |
-| `taskLists`              | `TaskList[]`       | 任务列表，`activities.listIds` 引用                           |
+| `activityLists`             | `ActivityList[]`   | Activity 列表，`activities.listIds` 引用                      |
 | `ideaLists`              | `IdeaList[]`       | 想法列表，`ideas.listIds` 引用                           |
 | `pointLists`             | `PointList[]`      | Reference Point 列表                                     |
 | `points`                 | `ReferencePoint[]` | 通过 `sourceId` 关联文献，支持文本或图片坐标             |
 | `annotations`            | `Annotation[]`     | 文献批注，通过 `sourceId` 关联文献                       |
 | `ideas`                  | `Idea[]`           | 想法、评估、来源引用、聊天记录和列表                     |
 | `projects`               | `ProjectRecord[]`  | 项目基础信息、状态、日期、目标、想法和列表               |
-| `activities`                  | `ActivityRecord[]`     | Activity（Task/Event/Routine）定义、层级、依赖、排期、进度、评分和周期规则 |
+| `activities`               | `ActivityRecord[]` | Activity（Task/Event/Routine）定义、层级、依赖、排期、进度、评分和周期规则 |
 | `logs`                   | `ProjectLog[]`     | 项目日志元数据；正文同时写入 Markdown 文件               |
 | `attachments`            | `Attachment[]`     | 项目附件元数据；二进制文件位于文件系统                   |
 | `artifacts`              | `Artifact[]`       | 输出物及其项目、文献、想法关系                           |
@@ -118,14 +118,14 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | SHM 文件                 |           32 KiB（采集时） |
 | `PRAGMA integrity_check` |                       `ok` |
 
-集合数量包含回收站中的软删除记录；每日任务清单不属于数据库，而是浏览器 localStorage 中按日期保存的 task ID：
+集合数量包含回收站中的软删除记录；每日任务清单不属于数据库，而是浏览器 localStorage 中按日期保存的 Activity ID：
 
 | 集合         | 数量 | 集合         | 数量 |
 | ------------ | ---: | ------------ | ---: |
 | cycles       |    1 | goals        |    2 |
 | sessions     |   21 | events       |    1 |
 | sources      |    6 | libraryLists |    8 |
-| projectLists |    3 | taskLists    |    3 |
+| projectLists |    3 | activityLists |    4 |
 | ideaLists    |    2 | pointLists   |    3 |
 | points       |   14 | annotations  |    0 |
 | ideas        |    3 | projects     |    7 |

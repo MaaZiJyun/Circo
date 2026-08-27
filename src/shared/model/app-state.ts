@@ -17,7 +17,7 @@ import type {
   ReferencePoint,
   Relation,
   SourceRecord,
-  TaskList,
+  ActivityList,
   ActivityRecord,
   WorkSession,
 } from "./entities";
@@ -36,7 +36,7 @@ export interface AppState {
   sources: SourceRecord[];
   libraryLists: LibraryList[];
   projectLists: ProjectList[];
-  taskLists: TaskList[];
+  activityLists: ActivityList[];
   ideaLists: IdeaList[];
   pointLists: PointList[];
   points: ReferencePoint[];
@@ -209,7 +209,7 @@ function isProfile(value: unknown) {
 export function isAppState(value: unknown): value is AppState {
   if (!value || typeof value !== "object") return false;
   const item = value as Partial<AppState>;
-  const legacy = value as { tasks?: unknown };
+  const legacy = value as { tasks?: unknown; taskLists?: unknown };
   return (
     item.schemaVersion === 1 &&
     typeof item.revision === "number" &&
@@ -219,7 +219,7 @@ export function isAppState(value: unknown): value is AppState {
     Array.isArray(item.sources) &&
     (item.libraryLists === undefined || Array.isArray(item.libraryLists)) &&
     (item.projectLists === undefined || Array.isArray(item.projectLists)) &&
-    (item.taskLists === undefined || Array.isArray(item.taskLists)) &&
+    (Array.isArray(item.activityLists) || Array.isArray(legacy.taskLists)) &&
     (item.ideaLists === undefined || Array.isArray(item.ideaLists)) &&
     (item.pointLists === undefined || Array.isArray(item.pointLists)) &&
     (item.points === undefined || Array.isArray(item.points)) &&

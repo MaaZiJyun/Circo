@@ -29,7 +29,7 @@ const trashCollections: CollectionName[] = [
   "sources",
   "libraryLists",
   "projectLists",
-  "taskLists",
+  "activityLists",
   "ideaLists",
   "pointLists",
   "points",

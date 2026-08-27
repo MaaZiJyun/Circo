@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
-import type { TaskList } from "@/shared/model/entities";
+import type { ActivityList } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
 import { useProjectTaskActions } from "./use-project-task-actions";
@@ -10,10 +10,11 @@ import { useProjectTaskActions } from "./use-project-task-actions";
 export const TASK_DEFAULT_LIST = "task_list_default";
 export const TASK_FORMAL_LIST = "task_list_formal";
 export const TASK_CASUAL_LIST = "task_list_casual";
+export const TASK_ARCHIVED_LIST = "task_list_archived";
 
-export type TaskListInput = Pick<TaskList, "name" | "note" | "color">;
-export type TaskSort = "createdAt" | "dueDate" | "importance" | "title" | "startDate";
-export type TaskSortDirection = "ascending" | "descending";
+export type ActivityListInput = Pick<ActivityList, "name" | "note" | "color">;
+export type ActivitySort = "createdAt" | "dueDate" | "importance" | "title" | "startDate";
+export type ActivitySortDirection = "ascending" | "descending";
 
 export function useTaskLibrary() {
   const { state, mutate } = useStore();
@@ -21,39 +22,49 @@ export function useTaskLibrary() {
   const [activeListId, setActiveListId] = useState(TASK_DEFAULT_LIST);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [draggedIds, setDraggedIds] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<TaskSort>("dueDate");
+  const [sortBy, setSortBy] = useState<ActivitySort>("dueDate");
   const [sortDirection, setSortDirection] =
-    useState<TaskSortDirection>("ascending");
+    useState<ActivitySortDirection>("ascending");
 
   const lists = useMemo(
-    () => (state ? activeItems(state.taskLists) : []),
+    () => (state ? activeItems(state.activityLists) : []),
     [state],
   );
   const projects = useMemo(
     () => (state ? activeItems(state.projects) : []),
     [state],
   );
-  const allTasks = useMemo(
+  const allActivities = useMemo(
     () => (state ? activeItems(state.activities) : []),
     [state],
   );
+  const currentActivities = useMemo(
+    () => allActivities.filter((activity) => !activity.archivedAt),
+    [allActivities],
+  );
+  const archivedActivities = useMemo(
+    () => allActivities.filter((activity) => Boolean(activity.archivedAt)),
+    [allActivities],
+  );
   const formalTasks = useMemo(
-    () => allTasks.filter((task) => task.projectId),
-    [allTasks],
+    () => currentActivities.filter((activity) => activity.projectId),
+    [currentActivities],
   );
   const casualTasks = useMemo(
-    () => allTasks.filter((task) => !task.projectId),
-    [allTasks],
+    () => currentActivities.filter((activity) => !activity.projectId),
+    [currentActivities],
   );
 
   const activities = useMemo(() => {
     const filtered =
       activeListId === TASK_DEFAULT_LIST
-        ? allTasks
+        ? currentActivities
         : activeListId === TASK_FORMAL_LIST
           ? formalTasks
           : activeListId === TASK_CASUAL_LIST
             ? casualTasks
+            : activeListId === TASK_ARCHIVED_LIST
+              ? archivedActivities
             : casualTasks.filter((task) =>
                 (task.listIds ?? []).includes(activeListId),
               );
@@ -65,7 +76,7 @@ export function useTaskLibrary() {
           : a[sortBy].localeCompare(b[sortBy]);
       return comparison * direction;
     });
-  }, [activeListId, allTasks, formalTasks, casualTasks, sortBy, sortDirection]);
+  }, [activeListId, currentActivities, archivedActivities, formalTasks, casualTasks, sortBy, sortDirection]);
 
   const selectedList = lists.find((item) => item.id === activeListId);
 
@@ -80,9 +91,9 @@ export function useTaskLibrary() {
         : [...current, id],
     );
 
-  const createList = (input: TaskListInput) => {
+  const createList = (input: ActivityListInput) => {
     const stamp = now();
-    const list: TaskList = {
+    const list: ActivityList = {
       id: createId("task_list"),
       ...input,
       system: null,
@@ -91,14 +102,14 @@ export function useTaskLibrary() {
     };
     mutate((current) => ({
       ...current,
-      taskLists: [...current.taskLists, list],
+      activityLists: [...current.activityLists, list],
     }));
     selectList(list.id);
   };
-  const updateList = (id: string, input: TaskListInput) =>
+  const updateList = (id: string, input: ActivityListInput) =>
     mutate((current) => ({
       ...current,
-      taskLists: current.taskLists.map((item) =>
+      activityLists: current.activityLists.map((item) =>
         item.id === id && !item.system
           ? { ...item, ...input, updatedAt: now() }
           : item,
@@ -108,7 +119,7 @@ export function useTaskLibrary() {
     const stamp = now();
     mutate((current) => ({
       ...current,
-      taskLists: current.taskLists.map((item) =>
+      activityLists: current.activityLists.map((item) =>
         item.id === id && !item.system
           ? { ...item, deletedAt: stamp, updatedAt: stamp }
           : item,
@@ -170,7 +181,9 @@ export function useTaskLibrary() {
   return {
     lists,
     projects,
-    allTasks,
+    allTasks: currentActivities,
+    allActivities,
+    archivedActivities,
     formalTasks,
     casualTasks,
     activities,

@@ -8,7 +8,7 @@ import { Button, EmptyState } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ActivityRecord } from "@/shared/model/entities";
 import {
-  type TaskSort,
+  type ActivitySort,
   useTaskLibrary,
 } from "../view-models/use-task-library";
 import { ChooseListDialog } from "@/shared/components/list-dialogs";
@@ -37,7 +37,7 @@ export function StuffView({
         title={
           library.selectedList?.system
             ? t(`hand.taskList.${library.selectedList.system}`)
-            : library.selectedList?.name || t("hand.taskLists")
+            : library.selectedList?.name || t("hand.activityLists")
         }
         controls={
           <LibrarySortControls
@@ -60,7 +60,7 @@ export function StuffView({
             ]}
             onChange={(value) => {
               const [sortBy, sortDirection] = value.split(":") as [
-                TaskSort,
+                ActivitySort,
                 typeof library.sortDirection,
               ];
               library.setSortBy(sortBy);

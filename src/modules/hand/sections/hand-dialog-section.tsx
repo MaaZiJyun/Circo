@@ -13,7 +13,7 @@ import {
 } from "@/shared/components/context-menu";
 import { ChooseListDialog, ListFormDialog } from "@/shared/components/list-dialogs";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ProjectList, ProjectRecord, TaskList } from "@/shared/model/entities";
+import type { ProjectList, ProjectRecord, ActivityList } from "@/shared/model/entities";
 import type { useHandViewModel } from "../view-models/use-hand-view-model";
 import type { useProjectLibrary } from "../view-models/use-project-library";
 import type { useTaskLibrary } from "../view-models/use-task-library";
@@ -68,7 +68,7 @@ export function HandDialogSection({
   listDialog: "create" | "choose" | null;
   editingList: ProjectList | null;
   taskListDialog: "create" | null;
-  editingTaskList: TaskList | null;
+  editingTaskList: ActivityList | null;
   dialog: "task" | "log" | "attachment" | null;
   taskParentId?: string;
   taskStartAt?: string;

@@ -40,7 +40,7 @@ export function useHandViewModel() {
     () =>
       state && selected
         ? activeItems(state.activities).filter(
-            (item) => item.projectId === selected.id,
+            (item) => item.projectId === selected.id && !item.archivedAt,
           )
         : [],
     [state, selected],

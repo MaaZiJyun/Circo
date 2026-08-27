@@ -119,11 +119,11 @@ export interface ProjectList extends BaseEntity {
   system: "default" | "recent" | null;
 }
 
-export interface TaskList extends BaseEntity {
+export interface ActivityList extends BaseEntity {
   name: string;
   note: string;
   color: string;
-  system: "default" | "formal" | "casual" | null;
+  system: "default" | "formal" | "casual" | "archived" | null;
 }
 
 export interface IdeaList extends BaseEntity {

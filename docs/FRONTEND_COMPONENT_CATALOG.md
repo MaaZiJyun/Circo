@@ -59,7 +59,7 @@ page → view → section → widget → component → button/text
 
 | 模块 | view | 可复用 section/widget |
 | --- | --- | --- |
-| `dashboard` | `DashboardView` | `PeriodCountdown`、`ContributionCalendar`、规划/专注/复盘区块 |
+| `present`（内部模块仍为 dashboard） | `DashboardView` | `PeriodCountdown`、`ContributionCalendar`、规划/专注/复盘区块 |
 | `me` | `MeView` | 每日任务、历史、数据库信息区块 |
 | `find` | `FindView`、阅读器 | 文献库、参考点、阅读器、Markdown 编辑器区块 |
 | `mind` | `MindView` | 灵感列表、网格、编辑/评估区块 |
@@ -83,4 +83,3 @@ page → view → section → widget → component → button/text
 3. 业务 view 不直接创建原生 `button/input/select/textarea`；优先使用 component/widget。
 4. 每个源文件不超过 300 行，接近 240 行时主动拆分。
 5. 迁移必须保留旧导出，待所有调用方切换后再删除旧入口。
-
