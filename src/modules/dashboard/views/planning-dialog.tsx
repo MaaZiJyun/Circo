@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
+import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
 import { Button } from "@/shared/components/ui";
 import { CreateDailyTaskDialog } from "@/modules/me/views/daily-task-dialogs";
 import type { DailyTaskInput } from "@/modules/me/model/daily-task-input";
@@ -17,6 +18,7 @@ import { setTaskParents } from "@/shared/model/task-hierarchy";
 import { deleteRecurringTasks, type RecurringDeleteMode } from "@/shared/model/task-recurrence";
 import { useStore } from "@/shared/view-models/store-context";
 import { archiveTask } from "@/shared/model/task-archive";
+import { replaceActivityConditions } from "@/shared/model/activity-conditions";
 import {
   dayMinutes,
   PlanBasket,
@@ -63,7 +65,10 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
     else if (totalMinutes + item.estimatedMinutes <= dayMinutes)
       setSelected((current) => [...current, item]);
   };
-  const createIndependent = (input: DailyTaskInput) => {
+  const createIndependent = (
+    input: DailyTaskInput,
+    conditionDrafts: ActivityConditionDraft[] = [],
+  ) => {
     const stamp = now();
     const task: ActivityRecord = {
       id: createId("task"),
@@ -94,6 +99,10 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
     mutate((current) => ({
       ...current,
       activities: [...current.activities, task],
+      activityConditions: [
+        ...current.activityConditions,
+        ...replaceActivityConditions([], task.id, conditionDrafts),
+      ],
     }));
     if (totalMinutes + task.estimatedMinutes <= dayMinutes)
       setSelected((current) => [
@@ -140,7 +149,11 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       current.filter((item) => item.id !== task.id),
     );
   };
-  const updateIndependent = (task: ActivityRecord, input: ActivityInput) => {
+  const updateIndependent = (
+    task: ActivityRecord,
+    input: ActivityInput,
+    conditionDrafts?: ActivityConditionDraft[],
+  ) => {
     const stamp = now();
     const estimated = input.estimatedMinutes;
     mutate((current) => ({
@@ -157,6 +170,15 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
             }
           : item,
       ),
+      ...(conditionDrafts
+        ? {
+            activityConditions: replaceActivityConditions(
+              current.activityConditions,
+              task.id,
+              conditionDrafts,
+            ),
+          }
+        : {}),
     }));
     setSelected((current) => {
       const previous = current.find((item) => item.id === task.id);
@@ -182,7 +204,11 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       ];
     });
   };
-  const createSubtask = (parent: ActivityRecord, input: ActivityInput) => {
+  const createSubtask = (
+    parent: ActivityRecord,
+    input: ActivityInput,
+    conditionDrafts: ActivityConditionDraft[] = [],
+  ) => {
     const stamp = now();
     const task: ActivityRecord = {
       id: createId("task"),
@@ -199,7 +225,14 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, activities: [...current.activities, task] }));
+    mutate((current) => ({
+      ...current,
+      activities: [...current.activities, task],
+      activityConditions: [
+        ...current.activityConditions,
+        ...replaceActivityConditions([], task.id, conditionDrafts),
+      ],
+    }));
   };
   const setTaskParent = (ids: string[], parentId: string | null) => {
     mutate((current) => ({
@@ -308,6 +341,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         menu={taskMenu}
         onClose={() => setTaskMenu(null)}
         onUpdate={updateIndependent}
+        activityConditions={state.activityConditions}
         onDuplicate={duplicateIndependent}
         onRemove={removeIndependent}
         onCreate={createSubtask}

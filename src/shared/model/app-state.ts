@@ -19,6 +19,7 @@ import type {
   SourceRecord,
   ActivityList,
   ActivityRecord,
+  ActivityCondition,
   FocusRecord,
 } from "./entities";
 import type { FutureMessage } from "./message";
@@ -44,6 +45,7 @@ export interface AppState {
   ideas: Idea[];
   projects: ProjectRecord[];
   activities: ActivityRecord[];
+  activityConditions: ActivityCondition[];
   /** @deprecated Read only during migration; daily selections live in browser storage. */
   dailyTasks?: DailyTask[];
   logs: ProjectLog[];
@@ -60,6 +62,7 @@ export type CollectionName = Exclude<
   | "revision"
   | "updatedAt"
   | "profile"
+  | "activityConditions"
   | "dailyTasks"
 >;
 
@@ -226,6 +229,7 @@ export function isAppState(value: unknown): value is AppState {
     Array.isArray(item.projects) &&
     (Array.isArray(item.focus) || Array.isArray(legacy.sessions)) &&
     (Array.isArray(item.activities) || Array.isArray(legacy.tasks)) &&
+    (item.activityConditions === undefined || Array.isArray(item.activityConditions)) &&
     (item.dailyTasks === undefined || Array.isArray(item.dailyTasks)) &&
     Array.isArray(item.artifacts) &&
     Array.isArray(item.aiJobs) &&

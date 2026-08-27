@@ -69,6 +69,7 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | `ideas`                  | `Idea[]`           | 想法、评估、来源引用、聊天记录和列表                     |
 | `projects`               | `ProjectRecord[]`  | 项目基础信息、状态、日期、目标、想法和列表               |
 | `activities`               | `ActivityRecord[]` | Activity（Task/Event/Routine）定义、层级、依赖、排期、进度、评分和周期规则 |
+| `activityConditions`       | `ActivityCondition[]` | Activity 的完成条件及其勾选时间                         |
 | `logs`                   | `ProjectLog[]`     | 项目日志元数据；正文同时写入 Markdown 文件               |
 | `attachments`            | `Attachment[]`     | 项目附件元数据；二进制文件位于文件系统                   |
 | `artifacts`              | `Artifact[]`       | 输出物及其项目、文献、想法关系                           |
@@ -99,6 +100,15 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 - `duration`：本次 Focus 的实际时长，单位为分钟。
 - `focusOn`：本次 Focus 关联的 Activity ID。
 - Activity 的 `actualMinutes`、`actualStartedAt` 等实际投入数据，均以关联的 Focus 记录为事实来源。
+
+### ActivityCondition 关键字段
+
+- `id`：完成条件 ID。
+- `activityId`：关联的 Activity ID。
+- `condition`：完成条件文本。
+- `satisfiedAt`：条件被勾选的时间；未满足时为空。
+
+Activity 条件在 Activity 创建/编辑窗口中作为 Checklist 管理。只读查看模式允许勾选或取消勾选；编辑模式允许修改文本、新建和删除条件。
 
 当前关系约定：
 
@@ -176,6 +186,7 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | `projects` | 项目核心字段和完整 JSON payload |
 | `activities` | Activity 定义、排期、状态、实际时间和归档状态 |
 | `focus` | 专注工作会话和实际投入时间 |
+| `activity_condition` | Activity 完成条件和满足时间 |
 
 每张核心表都保留 `payload` 字段，用于保存暂时未拆成独立列的扩展字段。应用保存时会在同一事务内更新快照和关系型表；旧快照首次读取时会自动回填关系型表。
 

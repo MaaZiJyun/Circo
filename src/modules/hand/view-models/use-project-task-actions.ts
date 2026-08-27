@@ -1,6 +1,11 @@
 "use client";
 
 import type { ActivityType, ProjectRecord, ActivityRecord } from "@/shared/model/entities";
+import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
+import {
+  replaceActivityConditions,
+  setActivityConditionSatisfied,
+} from "@/shared/model/activity-conditions";
 import { createId, now } from "@/shared/model/factories";
 import {
   deleteRecurringTasks,
@@ -78,7 +83,11 @@ export function activityInput(task: ActivityRecord): ActivityInput {
 
 export function useProjectTaskActions(selected?: ProjectRecord) {
   const { mutate } = useStore();
-  const createTask = (input: ActivityInput, projectId?: string) => {
+  const createTask = (
+    input: ActivityInput,
+    projectId?: string,
+    conditionDrafts: ActivityConditionDraft[] = [],
+  ) => {
     const stamp = now();
     const task: ActivityRecord = {
       id: createId("task"),
@@ -96,11 +105,21 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, activities: [...current.activities, task] }));
+    mutate((current) => ({
+      ...current,
+      activities: [...current.activities, task],
+      activityConditions: [
+        ...current.activityConditions,
+        ...replaceActivityConditions([], task.id, conditionDrafts),
+      ],
+    }));
   };
-  const addTask = (input: ActivityInput) => {
+  const addTask = (
+    input: ActivityInput,
+    conditionDrafts: ActivityConditionDraft[] = [],
+  ) => {
     if (!selected) return;
-    createTask(input, selected.id);
+    createTask(input, selected.id, conditionDrafts);
   };
   const duplicateTask = (task: ActivityRecord) => {
     if (!selected) return;
@@ -168,7 +187,11 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       };
     });
   };
-  const updateTask = (id: string, input: ActivityInput) =>
+  const updateTask = (
+    id: string,
+    input: ActivityInput,
+    conditionDrafts?: ActivityConditionDraft[],
+  ) =>
     mutate((current) => ({
       ...current,
       activities: current.activities.map((item) =>
@@ -182,6 +205,37 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
               updatedAt: now(),
             }
           : item,
+      ),
+      ...(conditionDrafts
+        ? {
+            activityConditions: replaceActivityConditions(
+              current.activityConditions,
+              id,
+              conditionDrafts,
+            ),
+          }
+        : {}),
+    }));
+  const toggleActivityCondition = (id: string, satisfied: boolean) =>
+    mutate((current) => ({
+      ...current,
+      activityConditions: setActivityConditionSatisfied(
+        current.activityConditions,
+        id,
+        satisfied,
+        now(),
+      ),
+    }));
+  const updateActivityConditions = (
+    activityId: string,
+    conditionDrafts: ActivityConditionDraft[],
+  ) =>
+    mutate((current) => ({
+      ...current,
+      activityConditions: replaceActivityConditions(
+        current.activityConditions,
+        activityId,
+        conditionDrafts,
       ),
     }));
   const updateTaskFromGantt = (id: string, patch: GanttTaskPatch) => {
@@ -266,6 +320,8 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     duplicateTask,
     advanceTask,
     updateTask,
+    toggleActivityCondition,
+    updateActivityConditions,
     updateTaskFromGantt,
     moveTask,
     deleteTask,

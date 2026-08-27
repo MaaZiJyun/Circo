@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import type { AppRepository, AppState } from "@/shared/model/app-state";
-import type { ActivityList, ActivityRecord, FocusRecord } from "@/shared/model/entities";
+import type { ActivityCondition, ActivityList, ActivityRecord, FocusRecord } from "@/shared/model/entities";
 import { isAppState } from "@/shared/model/app-state";
 import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
@@ -199,9 +199,16 @@ function openDatabase(databasePath: string) {
       focus_on TEXT NOT NULL DEFAULT '',
       payload TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS activity_condition (
+      id TEXT PRIMARY KEY,
+      activity_id TEXT NOT NULL,
+      condition TEXT NOT NULL,
+      satisfied_at TEXT
+    );
     CREATE INDEX IF NOT EXISTS idx_activities_project_id ON activities(project_id);
     CREATE INDEX IF NOT EXISTS idx_activities_status_due_date ON activities(status, due_date);
     CREATE INDEX IF NOT EXISTS idx_focus_focus_on ON focus(focus_on);
+    CREATE INDEX IF NOT EXISTS idx_activity_condition_activity_id ON activity_condition(activity_id);
   `);
   if (database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'focus_legacy'").get()) {
     database.exec(`
@@ -234,7 +241,7 @@ function openDatabase(databasePath: string) {
 }
 
 function syncRelationalTables(database: Database.Database, state: AppState) {
-  database.exec("DELETE FROM projects; DELETE FROM activities; DELETE FROM focus;");
+  database.exec("DELETE FROM projects; DELETE FROM activities; DELETE FROM focus; DELETE FROM activity_condition;");
   const projectInsert = database.prepare(`
     INSERT INTO projects
       (id, name, status, start_date, end_date, score, deleted_at, created_at, updated_at, payload)
@@ -261,6 +268,20 @@ function syncRelationalTables(database: Database.Database, state: AppState) {
   `);
   for (const focus of state.focus ?? []) {
     focusInsert.run({ id: focus.id, startedAt: focus.startedAt, endedAt: focus.endedAt, duration: focus.duration, focusOn: focus.focusOn, payload: JSON.stringify(focus) });
+  }
+  const conditionInsert = database.prepare(`
+    INSERT INTO activity_condition
+      (id, activity_id, condition, satisfied_at)
+    VALUES
+      (@id, @activityId, @condition, @satisfiedAt)
+  `);
+  for (const item of state.activityConditions ?? []) {
+    conditionInsert.run({
+      id: item.id,
+      activityId: item.activityId,
+      condition: item.condition,
+      satisfiedAt: item.satisfiedAt ?? null,
+    });
   }
 }
 function readSnapshot(database: Database.Database): AppState | null {
@@ -478,6 +499,13 @@ function normalizeState(state: AppState): AppState {
       ...normalizeTaskFactors(item),
     })),
     activities: normalizedTasks,
+    activityConditions: (state.activityConditions ?? []).filter(
+      (item): item is ActivityCondition =>
+        Boolean(item) &&
+        typeof item.id === "string" &&
+        typeof item.activityId === "string" &&
+        typeof item.condition === "string",
+    ),
     logs: Array.from(
       new Map(state.logs.map((item) => [item.id, item])).values(),
     ).map((item) => ({

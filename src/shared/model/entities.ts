@@ -243,6 +243,13 @@ export interface ActivityRecord extends BaseEntity, TaskImportanceDimensions, Ta
   archivedAt?: string;
 }
 
+export interface ActivityCondition {
+  id: string;
+  activityId: string;
+  condition: string;
+  satisfiedAt?: string;
+}
+
 export interface DailyTask extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
   date: string;
   title: string;

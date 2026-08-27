@@ -260,6 +260,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
+    activityConditions: [],
     logs: [
       {
         id: "log_1",

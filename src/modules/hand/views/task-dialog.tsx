@@ -5,11 +5,16 @@ import { TaskRecurrenceFields } from "@/shared/components/task-recurrence-fields
 import { TaskImportanceFields } from "@/shared/components/task-importance-fields";
 import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
 import { TaskEffortFields } from "@/shared/components/task-effort-fields";
-import { Button, Dialog, Field, Input, Select, Switch, Tabs, Textarea } from "@/shared/components/ui";
+import {
+  ActivityConditionChecklist,
+} from "@/shared/components/activity-condition-checklist";
+import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
+import { Button, Dialog, Field, Input, Select, Switch, Tabs } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ActivityRecord, ActivityType, ProjectRecord } from "@/shared/model/entities";
 import {
   estimateMinutes,
+  createId,
   formatLocalDateTime,
   parseLocalDateTime,
 } from "@/shared/model/factories";
@@ -30,6 +35,9 @@ export function TaskDialog({
   initialStartDate,
   projects,
   dependencyActivities,
+  initialConditions,
+  readOnly = false,
+  onConditionToggle,
   initialProjectId,
   title,
   onClose,
@@ -44,10 +52,17 @@ export function TaskDialog({
   initialStartDate?: string;
   projects?: ProjectRecord[];
   dependencyActivities?: ActivityRecord[];
+  initialConditions?: ActivityConditionDraft[];
+  readOnly?: boolean;
+  onConditionToggle?: (id: string, satisfied: boolean) => void;
   initialProjectId?: string;
   title?: string;
   onClose: () => void;
-  onSave: (input: ActivityInput, projectId?: string) => void;
+  onSave: (
+    input: ActivityInput,
+    projectId?: string,
+    conditions?: ActivityConditionDraft[],
+  ) => void;
 }) {
   const { t } = useI18n();
   const { state } = useStore();
@@ -73,10 +88,22 @@ export function TaskDialog({
     } satisfies ActivityInput;
   };
   const [projectId, setProjectId] = useState(initialProjectId ?? "");
-  const [input, setInput] = useState<ActivityInput>(
-    () => initial ?? createDefaultInput(),
+  const [input, setInput] = useState<ActivityInput>(() => {
+    const value = initial ?? createDefaultInput();
+    const derivedMinutes = estimateMinutes(value.startDate, value.dueDate);
+    return {
+      ...value,
+      estimatedMinutes: Number.isFinite(derivedMinutes)
+        ? derivedMinutes
+        : value.estimatedMinutes,
+    };
+  });
+  const [conditions, setConditions] = useState<ActivityConditionDraft[]>(
+    () => initialConditions ?? [],
   );
+  const [editingMode, setEditingMode] = useState(!readOnly);
   const [showMore, setShowMore] = useState(false);
+  const canEdit = !readOnly || editingMode;
   const updateSchedule = (field: "startDate" | "dueDate", value: string) => {
     setInput((current) => {
       if (field === "startDate") {
@@ -99,20 +126,6 @@ export function TaskDialog({
           Number.isFinite(start) && Number.isFinite(due)
             ? estimateMinutes(current.startDate, value)
             : current.estimatedMinutes,
-      };
-    });
-  };
-  const updateDuration = (value: string) => {
-    setInput((current) => {
-      const hours = Math.max(0, Number(value) || 0);
-      const estimatedMinutes = Math.round(hours * 60);
-      const start = parseLocalDateTime(current.startDate);
-      return {
-        ...current,
-        estimatedMinutes,
-        dueDate: Number.isFinite(start)
-          ? formatLocalDateTime(start + estimatedMinutes * 60 * 1000)
-          : current.dueDate,
       };
     });
   };
@@ -146,8 +159,19 @@ export function TaskDialog({
     });
   };
   const submit = () => {
-    if (!input.title.trim()) return;
-    onSave({ ...input, parentId: input.parentId }, projectId || undefined);
+    if (!canEdit || !input.title.trim()) return;
+    const derivedMinutes = estimateMinutes(input.startDate, input.dueDate);
+    onSave(
+      {
+        ...input,
+        parentId: input.parentId,
+        estimatedMinutes: Number.isFinite(derivedMinutes)
+          ? derivedMinutes
+          : input.estimatedMinutes,
+      },
+      projectId || undefined,
+      conditions,
+    );
     onClose();
     setInput(createDefaultInput());
   };
@@ -159,6 +183,14 @@ export function TaskDialog({
       onClose={onClose}
     >
       <div className="grid gap-4">
+        {readOnly && !editingMode && (
+          <div className="flex justify-end">
+            <Button type="button" variant="secondary" onClick={() => setEditingMode(true)}>
+              {t("common.edit")}
+            </Button>
+          </div>
+        )}
+        <fieldset disabled={!canEdit} className="grid gap-4">
         <Field label={t("hand.taskTitle")}>
           <Input
             autoFocus
@@ -211,23 +243,6 @@ export function TaskDialog({
             />
           </Field>
         </div>
-        <Field label={t("me.taskEstimateHours")}>
-          <Input
-            type="number"
-            min="0"
-            step="0.25"
-            value={input.estimatedMinutes / 60}
-            onChange={(event) => updateDuration(event.target.value)}
-          />
-        </Field>
-        <Field label={t("hand.expectedOutput")}>
-          <Textarea
-            value={input.expectedOutput}
-            onChange={(event) =>
-              setInput({ ...input, expectedOutput: event.target.value })
-            }
-          />
-        </Field>
         <Button variant="secondary" onClick={() => setShowMore((value) => !value)}>
           {showMore ? t("hand.collapseMore") : t("hand.more")}
         </Button>
@@ -257,7 +272,42 @@ export function TaskDialog({
             />
           </div>
         )}
-        <Button onClick={submit}>{t("common.save")}</Button>
+        </fieldset>
+        <ActivityConditionChecklist
+          conditions={conditions}
+          editable={canEdit}
+          allowToggle={readOnly || !edit}
+          onChange={(id, condition) =>
+            setConditions((current) =>
+              current.map((item) =>
+                item.id === id ? { ...item, condition } : item,
+              ),
+            )
+          }
+          onToggle={(id, satisfied) => {
+            setConditions((current) =>
+              current.map((item) =>
+                item.id === id
+                  ? {
+                      ...item,
+                      satisfiedAt: satisfied ? new Date().toISOString() : undefined,
+                    }
+                  : item,
+              ),
+            );
+            if (readOnly) onConditionToggle?.(id, satisfied);
+          }}
+          onAdd={() =>
+            setConditions((current) => [
+              ...current,
+              { id: createId("condition"), activityId: taskId ?? "", condition: "" },
+            ])
+          }
+          onDelete={(id) =>
+            setConditions((current) => current.filter((item) => item.id !== id))
+          }
+        />
+        {canEdit && <Button onClick={submit}>{t("common.save")}</Button>}
       </div>
     </Dialog>
   );

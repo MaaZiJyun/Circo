@@ -23,6 +23,8 @@ import { ProjectSecondarySections } from "../sections/project-secondary-sections
 import { ProjectGantt } from "../widgets/project-gantt";
 import { isLockedCompletedPastTask } from "./project-task-actions";
 import { TaskRow } from "@/shared/components/task-row";
+import { TaskDialog } from "./task-dialog";
+import { activityInput } from "../view-models/use-project-task-actions";
 
 type DialogName = "task" | "log" | "attachment" | null;
 export type ProjectSection = "overview" | "plan" | "logs" | "attachments";
@@ -45,6 +47,7 @@ export function ProjectWorkspace({
   const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [parentDialog, setParentDialog] = useState(false);
   const [parentId, setParentId] = useState("");
+  const [inspectingTask, setInspectingTask] = useState<ActivityRecord | null>(null);
   if (!vm.selected) return null;
   const parentCandidates = vm.activities.filter((task) => !selectedTaskIds.includes(task.id));
 
@@ -99,9 +102,12 @@ export function ProjectWorkspace({
             <ProjectGantt
               activities={vm.ganttActivities}
               focus={vm.focus}
+              activityConditions={vm.activityConditions}
               startDate={vm.selected.startDate}
               endDate={vm.selected.endDate}
               onUpdateTask={vm.updateTaskFromGantt}
+              onUpdateConditions={vm.updateActivityConditions}
+              onToggleCondition={vm.toggleActivityCondition}
               onCreateTask={(startAt) => openDialog("task", startAt)}
             />
             {selectedTaskIds.length > 0 && (
@@ -128,6 +134,7 @@ export function ProjectWorkspace({
                     milestone={task.milestone}
                     toggleDisabled={isLockedCompletedPastTask(task)}
                     onToggle={() => vm.advanceTask(task)}
+                    onClick={() => setInspectingTask(task)}
                     deadlineInline
                     action={<span onClick={(event) => event.stopPropagation()}><Checkbox aria-label={task.title} checked={selectedTaskIds.includes(task.id)} onChange={() => setSelectedTaskIds((current) => current.includes(task.id) ? current.filter((id) => id !== task.id) : [...current, task.id])} /></span>}
                     onContextMenu={(event) => { event.preventDefault(); onOpenTaskMenu(task, { x: event.clientX, y: event.clientY }); }}
@@ -150,6 +157,28 @@ export function ProjectWorkspace({
           <Button disabled={!parentId} onClick={() => { vm.setTaskParent(selectedTaskIds, parentId); setSelectedTaskIds([]); setParentId(""); setParentDialog(false); }}>{t("hand.setParent")}</Button>
         </div>
       </Dialog>
+      {inspectingTask && (
+        <TaskDialog
+          key={`inspect-task-${inspectingTask.id}`}
+          open
+          edit
+          readOnly
+          taskId={inspectingTask.id}
+          initial={activityInput(inspectingTask)}
+          initialConditions={vm.activityConditions.filter(
+            (item) => item.activityId === inspectingTask.id,
+          )}
+          dependencyActivities={vm.ganttActivities.filter(
+            (candidate) => candidate.id !== inspectingTask.id,
+          )}
+          onClose={() => setInspectingTask(null)}
+          onConditionToggle={vm.toggleActivityCondition}
+          onSave={(input, _projectId, conditions) => {
+            vm.updateTask(inspectingTask.id, input, conditions);
+            setInspectingTask(null);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -183,6 +183,7 @@ export function useTaskLibrary() {
     projects,
     allTasks: currentActivities,
     allActivities,
+    activityConditions: state?.activityConditions ?? [],
     archivedActivities,
     formalTasks,
     casualTasks,

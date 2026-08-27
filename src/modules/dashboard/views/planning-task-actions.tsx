@@ -8,6 +8,8 @@ import {
   type MenuPosition,
 } from "@/shared/components/context-menu";
 import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
+import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
+import type { ActivityCondition } from "@/shared/model/entities";
 import { activityInput } from "@/modules/hand/view-models/use-project-task-actions";
 import { TaskDialog } from "@/modules/hand/views/task-dialog";
 import { useI18n } from "@/shared/i18n/i18n-context";
@@ -23,6 +25,7 @@ export type PlanningTaskMenu = {
 export function PlanningTaskActions({
   menu,
   onClose,
+  activityConditions,
   onUpdate,
   onDuplicate,
   onRemove,
@@ -31,10 +34,19 @@ export function PlanningTaskActions({
 }: {
   menu: PlanningTaskMenu;
   onClose: () => void;
-  onUpdate: (task: ActivityRecord, input: ActivityInput) => void;
+  activityConditions: ActivityCondition[];
+  onUpdate: (
+    task: ActivityRecord,
+    input: ActivityInput,
+    conditions?: ActivityConditionDraft[],
+  ) => void;
   onDuplicate: (task: ActivityRecord) => void;
   onRemove: (task: ActivityRecord, mode?: RecurringDeleteMode) => void;
-  onCreate: (parent: ActivityRecord, input: ActivityInput) => void;
+  onCreate: (
+    parent: ActivityRecord,
+    input: ActivityInput,
+    conditions?: ActivityConditionDraft[],
+  ) => void;
   onArchive?: (task: ActivityRecord) => void;
 }) {
   const { t } = useI18n();
@@ -104,8 +116,13 @@ export function PlanningTaskActions({
           open
           edit
           initial={activityInput(editing)}
+          initialConditions={activityConditions.filter(
+            (item) => item.activityId === editing.id,
+          )}
           onClose={() => setEditing(null)}
-          onSave={(input) => onUpdate(editing, input)}
+          onSave={(input, _projectId, conditions) =>
+            onUpdate(editing, input, conditions)
+          }
         />
       )}
       {creatingFor && (
@@ -114,7 +131,9 @@ export function PlanningTaskActions({
           open
           parentId={creatingFor.id}
           onClose={() => setCreatingFor(null)}
-          onSave={(input) => onCreate(creatingFor, input)}
+          onSave={(input, _projectId, conditions) =>
+            onCreate(creatingFor, input, conditions)
+          }
         />
       )}
       {deleting && (

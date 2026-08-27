@@ -159,7 +159,9 @@ export function HandDialogSection({
         initialStartDate={taskStartAt}
         defaultImportance={vm.selected?.score ?? 50}
         onClose={onCloseTaskDialog}
-        onSave={vm.addTask}
+        onSave={(_input, _projectId, conditions) =>
+          vm.addTask(_input, conditions)
+        }
       />
       {dialog === "log" && vm.selected && (
         <ProjectLogEditor

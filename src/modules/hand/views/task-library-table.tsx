@@ -22,13 +22,13 @@ export function TaskLibraryTable({
   library,
   selectionMode,
   onEnterSelection,
-  onEdit,
+  onInspect,
   onOpenMenu,
 }: {
   library: ReturnType<typeof useTaskLibrary>;
   selectionMode: boolean;
   onEnterSelection: (task: ActivityRecord) => void;
-  onEdit: (task: ActivityRecord) => void;
+  onInspect: (task: ActivityRecord) => void;
   onOpenMenu: (task: ActivityRecord, position: MenuPosition) => void;
 }) {
   const { t, formatDate } = useI18n();
@@ -54,9 +54,7 @@ export function TaskLibraryTable({
       onSelectAll={library.setSelectedIds}
       onToggleSelect={library.toggleSelected}
       onEnterSelection={onEnterSelection}
-      onClick={(task) => {
-        if (!task.archivedAt) onEdit(task);
-      }}
+      onClick={onInspect}
       onOpenMenu={onOpenMenu}
       onDragStart={(event, task, ids) => {
         library.setDraggedIds(ids);

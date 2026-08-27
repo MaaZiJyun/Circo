@@ -20,6 +20,8 @@ import { archiveTask as archiveTaskRecord } from "@/shared/model/task-archive";
 import { useStore } from "@/shared/view-models/store-context";
 import { taskCoordinatesFromFormula } from "../model/task-coordinate-formula";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
+import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
+import { replaceActivityConditions } from "@/shared/model/activity-conditions";
 import type { DailyTaskInput } from "../model/daily-task-input";
 import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
 
@@ -98,9 +100,10 @@ export function useDailyTaskCache() {
       return priorityB - priorityA || a.createdAt.localeCompare(b.createdAt);
     });
     return {
-      projects: activeItems(state.projects),
-      activities,
-      dailyTasks: sorted,
+    projects: activeItems(state.projects),
+    activities,
+    activityConditions: state.activityConditions,
+    dailyTasks: sorted,
       profile: state.profile,
       metrics: calculateMetrics(state),
     };
@@ -117,7 +120,10 @@ export function useDailyTaskCache() {
     saveIds([...taskIds, task.id]);
   };
 
-  const addIndependent = (input: DailyTaskInput) => {
+  const addIndependent = (
+    input: DailyTaskInput,
+    conditionDrafts: ActivityConditionDraft[] = [],
+  ) => {
     if (!input.title.trim()) return;
     const stamp = now();
     const source: ActivityRecord = {
@@ -140,11 +146,22 @@ export function useDailyTaskCache() {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, activities: [...current.activities, source] }));
+    mutate((current) => ({
+      ...current,
+      activities: [...current.activities, source],
+      activityConditions: [
+        ...current.activityConditions,
+        ...replaceActivityConditions([], source.id, conditionDrafts),
+      ],
+    }));
     saveIds([...taskIds, source.id]);
   };
 
-  const addSubtask = (parent: ActivityRecord, input: ActivityInput) => {
+  const addSubtask = (
+    parent: ActivityRecord,
+    input: ActivityInput,
+    conditionDrafts: ActivityConditionDraft[] = [],
+  ) => {
     const stamp = now();
     const task: ActivityRecord = {
       id: createId("task"),
@@ -160,7 +177,14 @@ export function useDailyTaskCache() {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, activities: [...current.activities, task] }));
+    mutate((current) => ({
+      ...current,
+      activities: [...current.activities, task],
+      activityConditions: [
+        ...current.activityConditions,
+        ...replaceActivityConditions([], task.id, conditionDrafts),
+      ],
+    }));
     saveIds([...taskIds, task.id]);
   };
 
@@ -194,7 +218,11 @@ export function useDailyTaskCache() {
     });
   };
 
-  const updateTask = (item: DailyTask, input: DailyTaskInput) => {
+  const updateTask = (
+    item: DailyTask,
+    input: DailyTaskInput,
+    conditionDrafts?: ActivityConditionDraft[],
+  ) => {
     if (!input.title.trim() || !item.sourceTaskId) return;
     const stamp = now();
     mutate((current) => ({
@@ -219,6 +247,15 @@ export function useDailyTaskCache() {
             }
           : task,
       ),
+      ...(conditionDrafts && item.sourceTaskId
+        ? {
+            activityConditions: replaceActivityConditions(
+              current.activityConditions,
+              item.sourceTaskId,
+              conditionDrafts,
+            ),
+          }
+        : {}),
     }));
   };
 

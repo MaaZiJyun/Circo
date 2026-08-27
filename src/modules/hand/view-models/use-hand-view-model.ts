@@ -240,6 +240,7 @@ export function useHandViewModel() {
     activities,
     ganttActivities: projectActivities,
     focus: state?.focus ?? [],
+    activityConditions: state?.activityConditions ?? [],
     logs,
     attachments,
     plannedMinutes,

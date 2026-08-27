@@ -28,6 +28,7 @@ export function StuffView({
   const { t } = useI18n();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ActivityRecord | null>(null);
+  const [inspecting, setInspecting] = useState<ActivityRecord | null>(null);
   const [menu, setMenu] = useState<TaskLibraryMenu>(null);
   const [addingIds, setAddingIds] = useState<string[]>([]);
   const selectionMode = library.selectedIds.length > 0;
@@ -120,7 +121,7 @@ export function StuffView({
             library={library}
             selectionMode={selectionMode}
             onEnterSelection={(task) => library.setSelectedIds([task.id])}
-            onEdit={setEditing}
+            onInspect={setInspecting}
             onOpenMenu={(task, position) => setMenu({ task, position })}
           />
         ) : (
@@ -136,7 +137,9 @@ export function StuffView({
         open={creating}
         projects={library.projects}
         onClose={() => setCreating(false)}
-        onSave={(input, projectId) => library.createTask(input, projectId)}
+        onSave={(input, projectId, conditions) =>
+          library.createTask(input, projectId, conditions)
+        }
       />
       {editing && (
         <TaskDialog
@@ -145,8 +148,32 @@ export function StuffView({
           edit
           taskId={editing.id}
           initial={activityInput(editing)}
+          initialConditions={library.activityConditions.filter(
+            (item) => item.activityId === editing.id,
+          )}
           onClose={() => setEditing(null)}
-          onSave={(input) => library.updateTask(editing.id, input)}
+          onSave={(_input, _projectId, conditions) =>
+            library.updateTask(editing.id, _input, conditions)
+          }
+        />
+      )}
+      {inspecting && (
+        <TaskDialog
+          key={`inspect-stuff-task-${inspecting.id}`}
+          open
+          edit
+          readOnly
+          taskId={inspecting.id}
+          initial={activityInput(inspecting)}
+          initialConditions={library.activityConditions.filter(
+            (item) => item.activityId === inspecting.id,
+          )}
+          onClose={() => setInspecting(null)}
+          onConditionToggle={library.toggleActivityCondition}
+          onSave={(input, _projectId, conditions) => {
+            library.updateTask(inspecting.id, input, conditions);
+            setInspecting(null);
+          }}
         />
       )}
       {addingIds.length > 0 && (

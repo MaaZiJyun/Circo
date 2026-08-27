@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Dialog, EmptyState, Input } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ActivityRecord } from "@/shared/model/entities";
+import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
 import type { DailyTaskInput } from "../model/daily-task-input";
 import { TaskDialog } from "@/modules/hand/views/task-dialog";
 import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
@@ -16,13 +17,15 @@ export function CreateDailyTaskDialog({
   title,
   plannedDate,
   initial,
+  initialConditions,
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (input: DailyTaskInput) => void;
+  onSave: (input: DailyTaskInput, conditions?: ActivityConditionDraft[]) => void;
   title?: string;
   plannedDate?: string;
   initial?: DailyTaskInput;
+  initialConditions?: ActivityConditionDraft[];
 }) {
   const convertToActivity = (value?: DailyTaskInput): ActivityInput | undefined =>
     value
@@ -42,10 +45,11 @@ export function CreateDailyTaskDialog({
     <TaskDialog
       open={open}
       initial={convertToActivity(initial)}
+      initialConditions={initialConditions}
       initialStartDate={initial?.dueAt ?? (plannedDate ? `${plannedDate}T09:00` : undefined)}
       onClose={onClose}
-      onSave={(value) => {
-        onSave({ ...value, dueAt: value.dueDate });
+      onSave={(value, _projectId, conditions) => {
+        onSave({ ...value, dueAt: value.dueDate }, conditions);
       }}
       title={title}
     />

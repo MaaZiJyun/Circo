@@ -64,8 +64,9 @@ export function ProjectTaskActions({
       )}
       {editing && (
         <TaskDialog key={`edit-task-${editing.id}`} open edit taskId={editing.id} initial={activityInput(editing)}
+          initialConditions={vm.activityConditions.filter((item) => item.activityId === editing.id)}
           onClose={() => setEditing(null)}
-          onSave={(input) => vm.updateTask(editing.id, input)} />
+          onSave={(input, _projectId, conditions) => vm.updateTask(editing.id, input, conditions)} />
       )}
       {moving && (
         <TaskMoveDialog key={`move-task-${moving.id}`} task={moving} projects={vm.projects}

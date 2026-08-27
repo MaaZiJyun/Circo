@@ -11,7 +11,11 @@ import {
 } from "react";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { formatLocalDateTime } from "@/shared/model/factories";
-import type { ActivityRecord, FocusRecord } from "@/shared/model/entities";
+import type {
+  ActivityCondition,
+  ActivityRecord,
+  FocusRecord,
+} from "@/shared/model/entities";
 import { TaskDialog } from "./task-dialog";
 import {
   DAY,
@@ -30,6 +34,7 @@ import {
   type GanttRow,
   type GanttScale,
 } from "../model/gantt-layout";
+import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
 import type { GanttTaskPatch } from "../view-models/use-project-task-actions";
 import { useCurrentTime } from "../view-models/use-current-time";
 import { ProjectGanttCanvas } from "../widgets/project-gantt-canvas";
@@ -50,16 +55,22 @@ type Preview = { taskId: string; start: number; end: number } | null;
 export function ProjectGantt({
   activities,
   focus,
+  activityConditions,
   startDate,
   endDate,
   onUpdateTask,
+  onUpdateConditions,
+  onToggleCondition,
   onCreateTask,
 }: {
   activities: ActivityRecord[];
   focus: FocusRecord[];
+  activityConditions: ActivityCondition[];
   startDate: string;
   endDate: string;
   onUpdateTask: (id: string, patch: GanttTaskPatch) => void;
+  onUpdateConditions: (id: string, conditions: ActivityConditionDraft[]) => void;
+  onToggleCondition: (id: string, satisfied: boolean) => void;
   onCreateTask: (startAt: string) => void;
 }) {
   const { t, locale } = useI18n();
@@ -278,16 +289,22 @@ export function ProjectGantt({
           key={`gantt-edit-${selectedTask.id}`}
           open
           edit
+          readOnly
           taskId={selectedTask.id}
           initial={activityInput(selectedTask)}
+          initialConditions={activityConditions.filter(
+            (item) => item.activityId === selectedTask.id,
+          )}
           dependencyActivities={activities.filter(
             (candidate) =>
               candidate.id !== selectedTask.id &&
               !isTaskDescendant(activities, candidate.id, selectedTask.id),
           )}
           onClose={() => setSelectedTaskId(null)}
-          onSave={(input) => {
+          onConditionToggle={onToggleCondition}
+          onSave={(input, _projectId, conditions) => {
             onUpdateTask(selectedTask.id, input);
+            if (conditions) onUpdateConditions(selectedTask.id, conditions);
             setSelectedTaskId(null);
           }}
         />

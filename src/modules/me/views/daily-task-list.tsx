@@ -160,7 +160,7 @@ export function DailyTaskList() {
       <CreateDailyTaskDialog
         open={dialog === "create"}
         onClose={() => setDialog(null)}
-        onSave={vm.addIndependent}
+        onSave={(input, conditions) => vm.addIndependent(input, conditions)}
       />
       {menu && (
         <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
@@ -237,8 +237,11 @@ export function DailyTaskList() {
           open
           title={t("common.edit")}
           initial={vm.inputFor(editing)}
+          initialConditions={vm.activityConditions.filter(
+            (item) => item.activityId === editing.sourceTaskId,
+          )}
           onClose={() => setEditing(null)}
-          onSave={(input) => vm.updateTask(editing, input)}
+          onSave={(input, conditions) => vm.updateTask(editing, input, conditions)}
         />
       )}
       {subtaskParent && (
@@ -247,7 +250,9 @@ export function DailyTaskList() {
           open
           parentId={subtaskParent.id}
           onClose={() => setSubtaskParent(null)}
-          onSave={(input) => vm.addSubtask(subtaskParent, input)}
+          onSave={(input, _projectId, conditions) =>
+            vm.addSubtask(subtaskParent, input, conditions)
+          }
         />
       )}
     </>

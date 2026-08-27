@@ -22,6 +22,7 @@ export function TaskRow({
   toggleDisabled = false,
   draggable = false,
   onToggle,
+  onClick,
   onContextMenu,
   onDragStart,
   action,
@@ -40,6 +41,7 @@ export function TaskRow({
   toggleDisabled?: boolean;
   draggable?: boolean;
   onToggle: () => void;
+  onClick?: () => void;
   onContextMenu?: React.MouseEventHandler<HTMLDivElement>;
   onDragStart?: React.DragEventHandler<HTMLDivElement>;
   action?: React.ReactNode;
@@ -53,7 +55,10 @@ export function TaskRow({
     <div
       draggable={draggable || undefined}
       className={`select-none flex items-start gap-3 py-3 ${draggable ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"}`}
-      onClick={() => setExpandedOverride(!expanded)}
+      onClick={() => {
+        if (onClick) onClick();
+        else setExpandedOverride(!expanded);
+      }}
       onContextMenu={onContextMenu}
       onDragStart={onDragStart}
     >
