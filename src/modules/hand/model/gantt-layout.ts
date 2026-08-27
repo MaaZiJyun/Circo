@@ -39,7 +39,21 @@ export function buildGanttRows(
     }
     return depth;
   };
-  return dependencyOrder(activities).map((task) => {
+  const orderedActivities = activities
+    .map((task, index) => ({ task, index }))
+    .sort((a, b) => {
+      const startA = safeDate(
+        taskDateTime(a.task.startDate, false),
+        Number.MAX_SAFE_INTEGER,
+      );
+      const startB = safeDate(
+        taskDateTime(b.task.startDate, false),
+        Number.MAX_SAFE_INTEGER,
+      );
+      return startA - startB || a.index - b.index;
+    })
+    .map(({ task }) => task);
+  return orderedActivities.map((task) => {
     const end = safeDate(taskDateTime(task.dueDate, true), fallbackEnd);
     const start = safeDate(
       taskDateTime(task.startDate, false),
@@ -206,26 +220,6 @@ export function formatRange(start: number, end: number, locale: string) {
     minute: "2-digit",
   });
   return `${formatter.format(start)} → ${formatter.format(end)}`;
-}
-
-function dependencyOrder(activities: ActivityRecord[]) {
-  const byId = new Map(activities.map((task) => [task.id, task]));
-  const result: ActivityRecord[] = [];
-  const visited = new Set<string>();
-  const visiting = new Set<string>();
-  const visit = (task: ActivityRecord) => {
-    if (visited.has(task.id) || visiting.has(task.id)) return;
-    visiting.add(task.id);
-    (task.dependencyIds ?? []).forEach((id) => {
-      const dependency = byId.get(id);
-      if (dependency) visit(dependency);
-    });
-    visiting.delete(task.id);
-    visited.add(task.id);
-    result.push(task);
-  };
-  activities.forEach(visit);
-  return result;
 }
 
 function safeDate(value: string | undefined, fallback: number) {

@@ -10,7 +10,12 @@ import {
 import { Button, Dialog, Field, Input, Tabs } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { DailyTask } from "@/shared/model/entities";
-import { formatLocalDateTime, now, today } from "@/shared/model/factories";
+import {
+  formatLocalDateTime,
+  now,
+  parseLocalDateTime,
+  today,
+} from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
 import { addFocus } from "@/shared/model/focus";
 import { useDailyTaskCache } from "@/modules/me/view-models/use-daily-task-cache";
@@ -37,7 +42,6 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
   const [mode, setMode] = useState<"online" | "offline">("online");
   const [offlineStart, setOfflineStart] = useState("");
   const [offlineEnd, setOfflineEnd] = useState("");
-  const [offlineDuration, setOfflineDuration] = useState("");
   const [taskId, setTaskId] = useState("");
   const startedAt = useRef("");
   const accumulated = useRef(0);
@@ -64,6 +68,13 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
   if (!state || !dailyCache) return null;
   const currentDate = today();
   const activities = dailyCache.dailyTasks.filter((task) => task.date === currentDate && !task.deletedAt);
+  const offlineDurationMinutes = (() => {
+    const start = parseLocalDateTime(offlineStart);
+    const end = parseLocalDateTime(offlineEnd);
+    return Number.isFinite(start) && Number.isFinite(end) && end > start
+      ? (end - start) / 60_000
+      : 0;
+  })();
   const pause = () => {
     if (segmentStart.current !== null)
       accumulated.current += performance.now() - segmentStart.current;
@@ -92,7 +103,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
     if (!task) return;
     const stamp = now();
     const minutes = mode === "offline"
-      ? Math.max(0, Number(offlineDuration) || 0)
+      ? offlineDurationMinutes
       : accumulated.current / 60_000;
     const focusStartedAt = mode === "offline" ? offlineStart : (startedAt.current || stamp);
     const focusEndedAt = mode === "offline" ? offlineEnd : stamp;
@@ -123,7 +134,6 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
               const start = Date.now();
               setOfflineStart(formatLocalDateTime(start));
               setOfflineEnd(formatLocalDateTime(start + 60 * 60 * 1000));
-              setOfflineDuration("60");
             }
           }}
           fullWidth
@@ -159,9 +169,9 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
                 <Input type="datetime-local" value={offlineEnd} onChange={(event) => setOfflineEnd(event.target.value)} />
               </Field>
             </div>
-            <Field label={t("dashboard.focusDuration")}>
-              <Input type="number" min="0" step="1" value={offlineDuration} onChange={(event) => setOfflineDuration(event.target.value)} />
-            </Field>
+            <p className="text-xs text-zinc-500">
+              {t("dashboard.focusDuration")}: {Math.round(offlineDurationMinutes)} {t("common.minutes")}
+            </p>
           </div>
         )}
         {mode === "online" && !stopped ? (
@@ -196,7 +206,15 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
         )}
         {(stopped || mode === "offline") && (
           <div className="flex justify-center gap-2">
-            <Button disabled={!taskId || elapsed <= 0} onClick={save}>
+            <Button
+              disabled={
+                !taskId ||
+                (mode === "offline"
+                  ? offlineDurationMinutes <= 0
+                  : elapsed <= 0)
+              }
+              onClick={save}
+            >
               {t("dashboard.saveFocus")}
             </Button>
             <Button variant="danger" onClick={onClose}>

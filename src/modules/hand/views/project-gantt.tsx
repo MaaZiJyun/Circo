@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { formatLocalDateTime } from "@/shared/model/factories";
-import type { ActivityRecord } from "@/shared/model/entities";
+import type { ActivityRecord, FocusRecord } from "@/shared/model/entities";
 import { TaskDialog } from "./task-dialog";
 import {
   DAY,
@@ -49,12 +49,14 @@ type Preview = { taskId: string; start: number; end: number } | null;
 
 export function ProjectGantt({
   activities,
+  focus,
   startDate,
   endDate,
   onUpdateTask,
   onCreateTask,
 }: {
   activities: ActivityRecord[];
+  focus: FocusRecord[];
   startDate: string;
   endDate: string;
   onUpdateTask: (id: string, patch: GanttTaskPatch) => void;
@@ -248,6 +250,7 @@ export function ProjectGantt({
           range={range}
           chartWidth={chartWidth}
           totalHeight={totalHeight}
+          focus={focus}
           todayX={todayX}
           currentTime={currentTime}
           preview={preview}

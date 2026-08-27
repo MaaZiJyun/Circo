@@ -239,6 +239,7 @@ export function useHandViewModel() {
     setSelectedId,
     activities,
     ganttActivities: projectActivities,
+    focus: state?.focus ?? [],
     logs,
     attachments,
     plannedMinutes,

@@ -1,5 +1,7 @@
 "use client";
 
+import { createPortal } from "react-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type {
   DragEvent,
   MouseEventHandler,
@@ -11,7 +13,7 @@ import type {
 
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ActivityRecord } from "@/shared/model/entities";
+import type { ActivityRecord, FocusRecord } from "@/shared/model/entities";
 import {
   BAR_HEIGHT,
   buildWeekendBands,
@@ -23,7 +25,7 @@ import {
   type GanttTick,
 } from "../model/gantt-layout";
 import { ProjectGanttDependencies } from "./project-gantt-dependencies";
-import { formatDuration, formatTimingDelta, taskTiming } from "../model/task-timing";
+import { formatDuration, taskTiming } from "../model/task-timing";
 
 type Preview = { taskId: string; start: number; end: number } | null;
 type DragMode = "move" | "start" | "end";
@@ -42,6 +44,7 @@ export function ProjectGanttCanvas({
   range,
   chartWidth,
   totalHeight,
+  focus,
   todayX,
   currentTime,
   preview,
@@ -60,6 +63,7 @@ export function ProjectGanttCanvas({
   range: { start: number; end: number };
   chartWidth: number;
   totalHeight: number;
+  focus: FocusRecord[];
   todayX: number | null;
   currentTime: number | null;
   preview: Preview;
@@ -77,7 +81,69 @@ export function ProjectGanttCanvas({
   onCreateDependency: (sourceId: string, target: ActivityRecord) => void;
 }) {
   const { t, locale } = useI18n();
+  const [hovered, setHovered] = useState<{
+    row: GanttRow;
+    anchor: HTMLElement;
+  } | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState({ left: 0, top: 0 });
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const hideTooltipTimer = useRef<number | null>(null);
+  const scrollingAt = useRef(0);
+
+  const cancelHideTooltip = () => {
+    if (hideTooltipTimer.current !== null) {
+      window.clearTimeout(hideTooltipTimer.current);
+      hideTooltipTimer.current = null;
+    }
+  };
+  const hideTooltip = () => {
+    cancelHideTooltip();
+    hideTooltipTimer.current = window.setTimeout(() => {
+      if (Date.now() - scrollingAt.current < 300) return;
+      setHovered(null);
+    }, 160);
+  };
+
+  useLayoutEffect(() => {
+    if (!hovered) return;
+    const updatePosition = () => {
+      const anchor = hovered.anchor.getBoundingClientRect();
+      const tooltip = tooltipRef.current;
+      const width = tooltip?.offsetWidth ?? 288;
+      const height = tooltip?.offsetHeight ?? 150;
+      const gap = 8;
+      const margin = 8;
+      const preferredLeft = anchor.left + anchor.width / 2 - width / 2;
+      const left = Math.min(
+        Math.max(margin, preferredLeft),
+        Math.max(margin, window.innerWidth - width - margin),
+      );
+      const below = anchor.bottom + gap;
+      const above = anchor.top - height - gap;
+      const top = below + height <= window.innerHeight - margin
+        ? below
+        : above >= margin
+          ? above
+          : Math.max(margin, window.innerHeight - height - margin);
+      setTooltipPosition({ left, top });
+    };
+    const onScroll = () => {
+      scrollingAt.current = Date.now();
+      updatePosition();
+    };
+    const frame = window.requestAnimationFrame(updatePosition);
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, [hovered]);
+
+  useEffect(() => () => cancelHideTooltip(), []);
   return (
+    <>
     <div
       ref={scrollRef}
       className="min-w-0 overflow-x-auto overscroll-x-contain"
@@ -150,7 +216,7 @@ export function ProjectGanttCanvas({
           {rows.map((row, index) => {
             const shown = preview?.taskId === row.task.id ? preview : row;
             if (shown.end < range.start || shown.start > range.end) return null;
-            const timing = taskTiming(row.task, currentTime ?? undefined);
+            const timing = taskTiming(row.task, currentTime ?? undefined, focus);
             const left = toX(clamp(shown.start, range.start, range.end));
             const width = Math.max(
               8,
@@ -180,7 +246,7 @@ export function ProjectGanttCanvas({
                     className="pointer-events-none absolute z-[8] h-1.5 rounded-full bg-zinc-950/45 dark:bg-white/55"
                     style={{
                       left: actualLeft,
-                      top: index * ROW_HEIGHT + ROW_HEIGHT / 2 + 15,
+                      top: index * ROW_HEIGHT + 6,
                       width: actualWidth,
                     }}
                   />
@@ -195,6 +261,11 @@ export function ProjectGanttCanvas({
                   height: BAR_HEIGHT,
                 }}
                 onClick={() => onTaskClick(row.task.id)}
+                onMouseEnter={(event) => {
+                  cancelHideTooltip();
+                  setHovered({ row, anchor: event.currentTarget });
+                }}
+                onMouseLeave={hideTooltip}
                 onPointerDown={(event) => onBeginDrag(event, row, "move")}
                 onDragOver={(event) => event.preventDefault()}
                 onDrop={(event) =>
@@ -226,25 +297,6 @@ export function ProjectGanttCanvas({
                   <span className="pointer-events-none absolute right-0 top-1/2 size-3 -translate-y-1/2 translate-x-1/2 rotate-45 border border-amber-600 bg-amber-400 dark:border-amber-300" />
                 )}
                 <DependencyHandle taskId={row.task.id} />
-                <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 hidden w-max max-w-72 -translate-x-1/2 rounded-lg bg-zinc-950 px-3 py-2 text-[11px] leading-5 text-white shadow-lg group-hover:block dark:bg-zinc-100 dark:text-zinc-950">
-                  <p className="font-medium">{row.task.title}</p>
-                  <p>{formatRange(shown.start, shown.end, locale)}</p>
-                  <p>
-                    {t(statusLabels[row.task.status])} ·{" "}
-                    {Math.round(progress * 100)}% · {t("hand.dependencies")}{" "}
-                    {row.task.dependencyIds.length}
-                  </p>
-                  <p className="mt-1 border-t border-white/20 pt-1 text-zinc-300 dark:border-zinc-950/20 dark:text-zinc-700">
-                    {t("hand.ganttExpectedDuration")}: {formatDuration(row.task.estimatedMinutes)}
-                  </p>
-                  {actualVisible && (
-                    <>
-                      <p>{t("hand.ganttActualDuration")}: {formatDuration(timing.actualDurationMinutes ?? 0)}</p>
-                      <p>{t("hand.ganttStartDelta")}: {formatTimingDelta(timing.startDeltaMinutes)}</p>
-                      <p>{t("hand.ganttEndDelta")}: {formatTimingDelta(timing.endDeltaMinutes)}</p>
-                    </>
-                  )}
-                </div>
                 </div>
               </div>
             );
@@ -262,7 +314,63 @@ export function ProjectGanttCanvas({
         </div>
       </div>
     </div>
+    {hovered && typeof document !== "undefined" && createPortal(
+      <div
+        ref={tooltipRef}
+        role="tooltip"
+        className="fixed z-[1000] w-[18rem] max-w-[calc(100vw-1rem)] rounded-lg bg-zinc-950 px-3 py-2 text-[11px] leading-5 text-white shadow-xl ring-1 ring-black/10 dark:bg-zinc-100 dark:text-zinc-950"
+        style={{ left: tooltipPosition.left, top: tooltipPosition.top }}
+        onMouseEnter={cancelHideTooltip}
+        onMouseLeave={hideTooltip}
+      >
+        <p className="font-medium">{hovered.row.task.title}</p>
+        <p>{formatRange(hovered.row.start, hovered.row.end, locale)}</p>
+        <p>
+          {t(statusLabels[hovered.row.task.status])} · {Math.round(
+            clamp(
+              hovered.row.task.status === "done"
+                ? 1
+                : hovered.row.task.estimatedMinutes
+                  ? hovered.row.task.actualMinutes / hovered.row.task.estimatedMinutes
+                  : 0,
+              0,
+              1,
+            ) * 100,
+          )}% · {t("hand.dependencies")} {hovered.row.task.dependencyIds.length}
+        </p>
+        <p className="mt-1 border-t border-white/20 pt-1 text-zinc-300 dark:border-zinc-950/20 dark:text-zinc-700">
+          {t("hand.ganttExpectedDuration")}: {formatDuration(hovered.row.task.estimatedMinutes)}
+        </p>
+        {(() => {
+          const timing = taskTiming(hovered.row.task, currentTime ?? undefined, focus);
+          if (timing.actualStart === null || timing.actualEnd === null) return null;
+          return (
+            <>
+              <p>{t("hand.ganttActualDuration")}: {formatDuration(timing.actualDurationMinutes ?? 0)}</p>
+              <p>{formatTimingLabel("start", timing.startDeltaMinutes, t)}</p>
+              <p>{formatTimingLabel("end", timing.endDeltaMinutes, t)}</p>
+            </>
+          );
+        })()}
+      </div>,
+      document.body,
+    )}
+    </>
   );
+}
+
+function formatTimingLabel(
+  kind: "start" | "end",
+  deltaMinutes: number | null,
+  translate: (key: Parameters<ReturnType<typeof useI18n>["t"]>[0]) => string,
+) {
+  if (deltaMinutes === null) return "";
+  const direction = deltaMinutes > 0
+    ? kind === "start" ? "hand.ganttLateStart" : "hand.ganttLateEnd"
+    : deltaMinutes < 0
+      ? kind === "start" ? "hand.ganttEarlyStart" : "hand.ganttEarlyEnd"
+      : kind === "start" ? "hand.ganttOnTimeStart" : "hand.ganttOnTimeEnd";
+  return `${translate(direction)}${deltaMinutes === 0 ? "" : ` ${formatDuration(Math.abs(deltaMinutes))}`}`;
 }
 
 function DependencyHandle({ taskId }: { taskId: string }) {

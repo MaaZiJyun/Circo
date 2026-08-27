@@ -98,6 +98,7 @@ export function ProjectWorkspace({
             />
             <ProjectGantt
               activities={vm.ganttActivities}
+              focus={vm.focus}
               startDate={vm.selected.startDate}
               endDate={vm.selected.endDate}
               onUpdateTask={vm.updateTaskFromGantt}

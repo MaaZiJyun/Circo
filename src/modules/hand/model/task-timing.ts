@@ -1,4 +1,4 @@
-import type { ActivityRecord } from "@/shared/model/entities";
+import type { ActivityRecord, FocusRecord } from "@/shared/model/entities";
 
 export type TaskTiming = {
   plannedStart: number;
@@ -10,22 +10,53 @@ export type TaskTiming = {
   actualDurationMinutes: number | null;
 };
 
-export function taskTiming(task: ActivityRecord, now = Date.now()): TaskTiming {
+export function taskTiming(
+  task: ActivityRecord,
+  now = Date.now(),
+  focusRecords: FocusRecord[] = [],
+): TaskTiming {
   const plannedStart = parseDate(task.startDate);
   const plannedEnd = parseDate(task.dueDate, true);
-  const actualStart = parseDate(task.actualStartedAt);
+  const relatedFocus = focusRecords
+    .filter((focus) => focus.focusOn === task.id)
+    .map((focus) => ({
+      start: parseDate(focus.startedAt),
+      end: parseDate(focus.endedAt),
+      duration: Number.isFinite(focus.duration) ? Math.max(0, focus.duration) : 0,
+    }))
+    .filter((focus) => Number.isFinite(focus.start));
+  const actualStart = relatedFocus.length
+    ? Math.min(...relatedFocus.map((focus) => focus.start))
+    : parseDate(task.actualStartedAt);
   const completed = parseDate(task.completedAt);
-  const actualEnd = completed ?? (task.status === "doing" ? now : null);
+  const actualEnd = relatedFocus.length
+    ? Math.max(
+        ...relatedFocus
+          .map((focus) => focus.end)
+          .filter((value): value is number => Number.isFinite(value)),
+      )
+    : completed ?? (task.status === "doing" ? now : null);
+  const safeActualStart = Number.isFinite(actualStart) ? actualStart : null;
+  const safeActualEnd = Number.isFinite(actualEnd) ? actualEnd : null;
+  const actualDurationMinutes = relatedFocus.length
+    ? relatedFocus.reduce((total, focus) => total + focus.duration, 0)
+    : safeActualStart !== null && safeActualEnd !== null
+      ? minutes(safeActualEnd - safeActualStart)
+      : null;
   return {
     plannedStart,
     plannedEnd,
-    actualStart,
-    actualEnd,
-    startDeltaMinutes: actualStart === null ? null : minutes(actualStart - plannedStart),
-    endDeltaMinutes: actualEnd === null ? null : minutes(actualEnd - plannedEnd),
-    actualDurationMinutes: actualStart !== null && actualEnd !== null
-      ? minutes(actualEnd - actualStart)
-      : null,
+    actualStart: safeActualStart,
+    actualEnd: safeActualEnd,
+    startDeltaMinutes:
+      safeActualStart !== null && Number.isFinite(plannedStart)
+        ? minutes(safeActualStart - plannedStart)
+        : null,
+    endDeltaMinutes:
+      safeActualEnd !== null && Number.isFinite(plannedEnd)
+        ? minutes(safeActualEnd - plannedEnd)
+        : null,
+    actualDurationMinutes,
   };
 }
 
