@@ -161,7 +161,7 @@
 |---|---|---|---|
 | `LiteratureTable` | `find/views/literature-table.tsx` | `SourceRecord` | 标题→`title`；作者→`authors`；添加时间→`createdAt`；来源→`origin`；发表日期→`publicationDate`；标签→`tags[]`；收藏→`favorite`；评分→`rating` |
 | `ProjectTable` | `hand/views/project-table.tsx` | `ProjectRecord` | 标题→`name`；简介→`purpose`；状态→`status`；score→`score`；开始→`startDate`；结束→`endDate`；标签→`tags[]`；关联灵感→`ideaIds[]` |
-| `TaskLibraryTable` | `hand/views/task-library-table.tsx` | `TaskRecord` | 标题→`title`；分类→`projectId`(项目名) / `listIds[]`(列表名)；状态→`status`；截止→`dueDate`；重要度→`importance`；估时→`estimatedMinutes` |
+| `TaskLibraryTable` | `hand/views/task-library-table.tsx` | `ActivityRecord` | 标题→`title`；分类→`projectId`(项目名) / `listIds[]`(列表名)；状态→`status`；截止→`dueDate`；重要度→`importance`；估时→`estimatedMinutes` |
 | `ProjectAttachmentTable` | `hand/views/project-attachment-table.tsx` | `Attachment` | 图标(文件类型)；标题→`name`+`filePath`；类型→`mimeType`/扩展名；大小→`size`；日期→`createdAt`；说明→`description` |
 
 > 注：`ProjectAttachmentTable` 仍是独立 `<table>` 实现（含内嵌的附件预览/移动对话框），尚未迁移到 `DataTable`，列为后续统一项。
@@ -189,7 +189,7 @@ status: "concept"|"planning"|"active"|"paused"|"completed"|"archived",
 goalId?, ideaIds: string[], listIds: string[], tags: string[], score: number
 ```
 
-**TaskRecord**（任务）
+**ActivityRecord**（任务）
 ```ts
 projectId?, listIds?, parentId?, title, description, startDate, dueDate,
 priority: "low"|"medium"|"high", status: "todo"|"doing"|"done"|"overdue",

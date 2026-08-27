@@ -5,11 +5,11 @@ import { DataTable } from "@/shared/components/data-table";
 import type { MenuPosition } from "@/shared/components/context-menu";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import type { useTaskLibrary } from "../view-models/use-task-library";
 
 const statusTone: Record<
-  TaskRecord["status"],
+  ActivityRecord["status"],
   "neutral" | "info" | "success" | "warning"
 > = {
   todo: "neutral",
@@ -27,12 +27,12 @@ export function TaskLibraryTable({
 }: {
   library: ReturnType<typeof useTaskLibrary>;
   selectionMode: boolean;
-  onEnterSelection: (task: TaskRecord) => void;
-  onEdit: (task: TaskRecord) => void;
-  onOpenMenu: (task: TaskRecord, position: MenuPosition) => void;
+  onEnterSelection: (task: ActivityRecord) => void;
+  onEdit: (task: ActivityRecord) => void;
+  onOpenMenu: (task: ActivityRecord, position: MenuPosition) => void;
 }) {
   const { t, formatDate } = useI18n();
-  const categoryOf = (task: TaskRecord) => {
+  const categoryOf = (task: ActivityRecord) => {
     if (task.projectId)
       return (
         library.projects.find((item) => item.id === task.projectId)?.name ??
@@ -45,7 +45,7 @@ export function TaskLibraryTable({
   };
   return (
     <DataTable
-      rows={library.tasks}
+      rows={library.activities}
       minWidth="min-w-[900px]"
       selectionMode={selectionMode}
       selectedIds={library.selectedIds}
@@ -54,7 +54,9 @@ export function TaskLibraryTable({
       onSelectAll={library.setSelectedIds}
       onToggleSelect={library.toggleSelected}
       onEnterSelection={onEnterSelection}
-      onClick={onEdit}
+      onClick={(task) => {
+        if (!task.archivedAt) onEdit(task);
+      }}
       onOpenMenu={onOpenMenu}
       onDragStart={(event, task, ids) => {
         library.setDraggedIds(ids);
@@ -80,8 +82,8 @@ export function TaskLibraryTable({
         {
           header: t("common.status"),
           render: (task) => (
-            <Badge tone={statusTone[task.status]}>
-              {t(statusLabels[task.status])}
+            <Badge tone={task.archivedAt ? "neutral" : statusTone[task.status]}>
+              {task.archivedAt ? t(statusLabels.archived) : t(statusLabels[task.status])}
             </Badge>
           ),
         },

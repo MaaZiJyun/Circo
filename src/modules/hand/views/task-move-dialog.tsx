@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, Dialog, Field, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
+import type { ProjectRecord, ActivityRecord } from "@/shared/model/entities";
 
 export function TaskMoveDialog({
   task,
@@ -11,7 +11,7 @@ export function TaskMoveDialog({
   onClose,
   onMove,
 }: {
-  task: TaskRecord;
+  task: ActivityRecord;
   projects: ProjectRecord[];
   onClose: () => void;
   onMove: (projectId: string) => void;

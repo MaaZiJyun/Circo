@@ -1,4 +1,4 @@
-import type { DailyTask, TaskRecord } from "./entities";
+import type { DailyTask, ActivityRecord } from "./entities";
 
 export function deadlineTime(value: string) {
   const normalized = /^\d{4}-\d{2}-\d{2}$/.test(value)
@@ -17,9 +17,9 @@ export function isOverdue(
 }
 
 export function taskStatusAt(
-  task: TaskRecord,
+  task: ActivityRecord,
   currentTime = Date.now(),
-): TaskRecord["status"] {
+): ActivityRecord["status"] {
   if (task.status === "done") return "done";
   if (isOverdue(task.dueDate, false, currentTime)) return "overdue";
   return task.status === "overdue" ? "todo" : task.status;
@@ -28,7 +28,7 @@ export function taskStatusAt(
 export function dailyTaskStatusAt(
   task: DailyTask,
   currentTime = Date.now(),
-): TaskRecord["status"] {
+): ActivityRecord["status"] {
   if (task.completed) return "done";
   return isOverdue(task.dueAt, false, currentTime) ? "overdue" : "todo";
 }

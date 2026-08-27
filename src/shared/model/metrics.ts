@@ -20,7 +20,7 @@ export function calculateMetrics(state: AppState): GrowthMetrics {
     .reduce((total, item) => total + item.minutes, 0);
   const dueTasks = Array.from(
     new Map(
-      [...activeItems(state.tasks), ...activeItems(state.taskHistory ?? [])].map((item) => [
+      activeItems(state.activities).map((item) => [
         item.id,
         item,
       ]),

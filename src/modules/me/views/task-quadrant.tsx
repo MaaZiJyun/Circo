@@ -20,16 +20,16 @@ const bubbleColors: Record<
   eliminate: [37, 99, 235],
 };
 export function TaskQuadrant({
-  tasks,
+  activities,
   coordinates,
   formulas,
 }: {
-  tasks: DailyTask[];
+  activities: DailyTask[];
   coordinates: (task: DailyTask) => TaskCoordinates;
   formulas?: MatrixFormulaSettings;
 }) {
   const { t } = useI18n();
-  const activeTasks = tasks.filter((task) => !task.completed);
+  const activeTasks = activities.filter((task) => !task.completed);
   const taskPoints = activeTasks.map((task) => ({
     task,
     point: coordinates(task),

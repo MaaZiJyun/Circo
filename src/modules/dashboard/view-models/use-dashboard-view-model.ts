@@ -27,13 +27,16 @@ export function useDashboardViewModel() {
       .slice()
       .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
       .slice(0, 3);
-    const historyTasks: DailyTask[] = activeItems(state.taskHistory ?? []).map((task) => ({
-      ...task,
-      date: task.completedAt.slice(0, 10),
-      dueAt: task.dueDate,
-      completed: true,
-      sourceTaskId: task.id,
-    }));
+    const archivedTasks: DailyTask[] = activeItems(state.activities)
+      .filter((task) => task.archivedAt && task.completedAt)
+      .map((task) => ({
+        ...task,
+        date: task.completedAt!.slice(0, 10),
+        dueAt: task.dueDate,
+        completed: true,
+        sourceTaskId: task.id,
+      }));
+    const historyTasks = archivedTasks;
     return {
       activeCycle,
       goals,

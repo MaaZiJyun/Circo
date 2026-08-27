@@ -92,5 +92,5 @@ export const messageEn: Record<keyof typeof messageZh, string> = {
   "messages.dailySummary.intro":
     "Here is the daily activity summary for {date}.",
   "messages.dailySummary.activities": "Today's activities:",
-  "messages.dailySummary.noTasks": "No tasks were added to the daily list.",
+  "messages.dailySummary.noTasks": "No activities were added to the daily list.",
 };

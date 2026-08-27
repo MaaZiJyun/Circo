@@ -20,10 +20,10 @@ export interface DailyScore {
 const round = (value: number) => Math.round(value * 10) / 10;
 
 export function calculateDailyScore(
-  tasks: DailyTask[],
+  activities: DailyTask[],
   date: string,
 ): DailyScore {
-  const active = tasks.filter((task) => !task.deletedAt && task.date === date);
+  const active = activities.filter((task) => !task.deletedAt && task.date === date);
   const completed = active.filter((task) => task.completed);
   const scoringTime = new Date(`${date}T23:59:59.999`).getTime();
   const overdue = active.filter((task) =>

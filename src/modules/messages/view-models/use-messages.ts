@@ -49,7 +49,7 @@ export function useMessages() {
     activeItems(state.projects).forEach((item) =>
       rows.push({ kind: "project", id: item.id, label: item.name }),
     );
-    activeItems(state.tasks).forEach((item) =>
+    activeItems(state.activities).forEach((item) =>
       rows.push({ kind: "task", id: item.id, label: item.title }),
     );
     return rows;

@@ -183,7 +183,7 @@ export const settingsMediaEn: Record<keyof typeof settingsMediaZh, string> = {
   "settings.taskPreprocessingAdd": "Add category",
   "settings.taskPreprocessingNewName": "New category",
   "settings.taskPreprocessingDelete": "Delete category",
-  "settings.taskPreprocessingGenericLocked": "The “Other tasks” category is the fallback and cannot be deleted.",
+  "settings.taskPreprocessingGenericLocked": "The “Other activities” category is the fallback and cannot be deleted.",
   "settings.taskPreprocessingSave": "Save preprocessing rules",
   "settings.taskPreprocessingReset": "Restore default rules",
   "settings.taskPreprocessingSaved": "Task preprocessing rules saved.",
@@ -221,7 +221,7 @@ export const settingsMediaEn: Record<keyof typeof settingsMediaZh, string> = {
     "The live Deadline score calculated from the due time and current time, from 1–5.",
   "settings.taskVariable.delayLoss": "The stored delay-loss score, from 1–5.",
   "settings.taskVariable.blocking":
-    "The number of other tasks that depend on this task, from 0–5.",
+    "The number of other activities that depend on this task, from 0–5.",
   "settings.taskVariable.urgency":
     "The sum of deadline, delayLoss, and blocking, from 2–15.",
   "settings.taskVariable.complexity":
@@ -246,11 +246,11 @@ export const settingsMediaEn: Record<keyof typeof settingsMediaZh, string> = {
   "settings.matrixVariable.estimatedMinutes":
     "The current task’s estimated duration in minutes.",
   "settings.matrixVariable.maxEstimatedMinutes":
-    "The largest estimated duration among unfinished tasks in the matrix, with a minimum of 1. Useful for proportional bubble sizing.",
+    "The largest estimated duration among unfinished activities in the matrix, with a minimum of 1. Useful for proportional bubble sizing.",
   "settings.matrixVariable.effort":
     "The task Effort; it controls bubble size by default.",
   "settings.matrixVariable.maxEffort":
-    "The maximum Effort among unfinished tasks in the matrix.",
+    "The maximum Effort among unfinished activities in the matrix.",
   "settings.matrixVariable.priority":
     "Importance × Urgency ÷ Effort; it controls color intensity by default.",
   "settings.matrixVariable.remainingMinutes":

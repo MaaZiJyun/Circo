@@ -8,7 +8,7 @@ import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
 import { now, today } from "@/shared/model/factories";
 import type { DailyReviewAnswers } from "@/shared/model/message";
-import type { DailyTask } from "@/shared/model/entities";
+import { archiveSettledTasks } from "@/shared/model/task-archive";
 import { useStore } from "@/shared/view-models/store-context";
 import { useDailyTaskCache } from "@/modules/me/view-models/use-daily-task-cache";
 
@@ -80,17 +80,9 @@ export function FinishTodayDialog({
       }),
       emptyAnswers(),
     );
-    const completedToday: DailyTask[] = (state.taskHistory ?? [])
-      .filter((task) => task.completedAt.slice(0, 10) === today())
-      .map((task) => ({
-        ...task,
-        date: today(),
-        dueAt: task.dueDate,
-        completed: true,
-        sourceTaskId: task.id,
-      }));
+    const completedToday = dailyCache.dailyTasks.filter((task) => task.completed);
     const { message, result } = buildDailySummaryMessage({
-      dailyTasks: [...dailyCache.dailyTasks, ...completedToday],
+      dailyTasks: dailyCache.dailyTasks,
       date: today(),
       stamp,
       deliverAt: stamp,
@@ -98,14 +90,21 @@ export function FinishTodayDialog({
       t,
       formatNumber,
     });
-    mutate((current) =>
-      current.messages.some((item) => item.id === message.id)
-        ? current
+    mutate((current) => {
+      const settled = archiveSettledTasks(
+        current,
+        completedToday.flatMap((task) =>
+          task.sourceTaskId ? [task.sourceTaskId] : [],
+        ),
+        stamp,
+      );
+      return settled.messages.some((item) => item.id === message.id)
+        ? settled
         : {
-            ...current,
-            messages: [...current.messages, message],
-          },
-    );
+            ...settled,
+            messages: [...settled.messages, message],
+          };
+    });
     clearDailyTaskDate(today());
     window.dispatchEvent(new Event("circo-message-delivered"));
     onFinished(result.score);

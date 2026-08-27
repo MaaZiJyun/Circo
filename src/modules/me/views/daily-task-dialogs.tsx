@@ -14,7 +14,7 @@ import { TaskRecurrenceFields } from "@/shared/components/task-recurrence-fields
 import { TaskImportanceFields } from "@/shared/components/task-importance-fields";
 import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
 import { TaskEffortFields } from "@/shared/components/task-effort-fields";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { addDays, today } from "@/shared/model/factories";
 import { defaultTaskImportance, taskImportance } from "@/shared/model/task-importance";
 import { preprocessTask } from "@/shared/model/task-preprocessor";
@@ -179,24 +179,24 @@ export function CreateDailyTaskDialog({
 
 export function RetrieveTaskDialog({
   open,
-  tasks,
+  activities,
   projectName,
   existingIds,
   onClose,
   onChoose,
 }: {
   open: boolean;
-  tasks: TaskRecord[];
+  activities: ActivityRecord[];
   projectName: (id?: string) => string;
   existingIds: string[];
   onClose: () => void;
-  onChoose: (task: TaskRecord) => void;
+  onChoose: (task: ActivityRecord) => void;
 }) {
   const { t } = useI18n();
   const [query, setQuery] = useState("");
   const results = useMemo(
     () =>
-      tasks.filter(
+      activities.filter(
         (task) =>
           task.status !== "done" &&
           !existingIds.includes(task.id) &&
@@ -204,7 +204,7 @@ export function RetrieveTaskDialog({
             .toLowerCase()
             .includes(query.trim().toLowerCase()),
       ),
-    [existingIds, projectName, query, tasks],
+    [existingIds, projectName, query, activities],
   );
   return (
     <Dialog

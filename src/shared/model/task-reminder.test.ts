@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { TaskRecord } from "./entities";
+import type { ActivityRecord } from "./entities";
 import { activeTaskReminders, taskReminderTime } from "./task-reminder";
 
-const task: TaskRecord = {
+const task: ActivityRecord = {
   id: "task_1",
   title: "Prepare report",
   description: "",

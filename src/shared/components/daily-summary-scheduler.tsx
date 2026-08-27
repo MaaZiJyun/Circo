@@ -41,13 +41,16 @@ export function DailySummaryScheduler() {
     const current = new Date();
     const dueDate = latestDueDate(current);
     const existing = new Set((state.messages ?? []).map((item) => item.id));
-    const historicalTasks: DailyTask[] = (state.taskHistory ?? []).map((task) => ({
-      ...task,
-      date: task.completedAt.slice(0, 10),
-      dueAt: task.dueDate,
-      completed: true,
-      sourceTaskId: task.id,
-    }));
+    const archivedTasks: DailyTask[] = state.activities
+      .filter((task) => !task.deletedAt && task.archivedAt && task.completedAt)
+      .map((task) => ({
+        ...task,
+        date: task.completedAt!.slice(0, 10),
+        dueAt: task.dueDate,
+        completed: true,
+        sourceTaskId: task.id,
+      }));
+    const historicalTasks = archivedTasks;
     const allDailyTasks = [...(dailyCache?.dailyTasks ?? []), ...historicalTasks];
     const historicalDates = historicalTasks
       .filter((task) => task.date <= dueDate)

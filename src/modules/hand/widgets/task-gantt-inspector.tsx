@@ -15,7 +15,7 @@ import {
 } from "@/shared/components/ui";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import {
   estimateMinutes,
   formatLocalDateTime,
@@ -30,7 +30,7 @@ import {
 import { formatDuration, formatTimingDelta, taskTiming } from "../model/task-timing";
 import type { GanttTaskPatch } from "../view-models/use-project-task-actions";
 
-const TASK_STATUSES: TaskRecord["status"][] = [
+const TASK_STATUSES: ActivityRecord["status"][] = [
   "todo",
   "doing",
   "done",
@@ -39,12 +39,12 @@ const TASK_STATUSES: TaskRecord["status"][] = [
 
 export function TaskGanttInspector({
   task,
-  tasks,
+  activities,
   onClose,
   onSave,
 }: {
-  task: TaskRecord;
-  tasks: TaskRecord[];
+  task: ActivityRecord;
+  activities: ActivityRecord[];
   onClose: () => void;
   onSave: (patch: GanttTaskPatch) => void;
 }) {
@@ -129,7 +129,7 @@ export function TaskGanttInspector({
           <Select
             value={draft.status}
             onChange={(event) => {
-              const status = event.target.value as TaskRecord["status"];
+              const status = event.target.value as ActivityRecord["status"];
               setDraft({
                 ...draft,
                 status,
@@ -212,12 +212,12 @@ export function TaskGanttInspector({
         </div>
         <Field label={t("hand.dependencies")}>
           <div className="max-h-40 space-y-1 overflow-y-auto rounded-lg border border-zinc-200 p-2 dark:border-zinc-800">
-            {tasks
+            {activities
               .filter(
                 (candidate) =>
                   candidate.id !== task.id &&
                   candidate.projectId === task.projectId &&
-                  !isTaskDescendant(tasks, candidate.id, task.id),
+                  !isTaskDescendant(activities, candidate.id, task.id),
               )
               .map((candidate) => {
                 const checked = draft.dependencyIds.includes(candidate.id);
@@ -230,7 +230,7 @@ export function TaskGanttInspector({
                       checked={checked}
                       disabled={
                         !checked &&
-                        createsDependencyCycle(tasks, candidate.id, task.id)
+                        createsDependencyCycle(activities, candidate.id, task.id)
                       }
                       onChange={(next) =>
                         setDraft({

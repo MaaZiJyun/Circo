@@ -18,8 +18,7 @@ import type {
   Relation,
   SourceRecord,
   TaskList,
-  TaskRecord,
-  TaskHistoryRecord,
+  ActivityRecord,
   WorkSession,
 } from "./entities";
 import type { FutureMessage } from "./message";
@@ -44,8 +43,7 @@ export interface AppState {
   annotations: Annotation[];
   ideas: Idea[];
   projects: ProjectRecord[];
-  tasks: TaskRecord[];
-  taskHistory: TaskHistoryRecord[];
+  activities: ActivityRecord[];
   /** @deprecated Read only during migration; daily selections live in browser storage. */
   dailyTasks?: DailyTask[];
   logs: ProjectLog[];
@@ -211,6 +209,7 @@ function isProfile(value: unknown) {
 export function isAppState(value: unknown): value is AppState {
   if (!value || typeof value !== "object") return false;
   const item = value as Partial<AppState>;
+  const legacy = value as { tasks?: unknown };
   return (
     item.schemaVersion === 1 &&
     typeof item.revision === "number" &&
@@ -226,7 +225,7 @@ export function isAppState(value: unknown): value is AppState {
     (item.points === undefined || Array.isArray(item.points)) &&
     Array.isArray(item.ideas) &&
     Array.isArray(item.projects) &&
-    (item.taskHistory === undefined || Array.isArray(item.taskHistory)) &&
+    (Array.isArray(item.activities) || Array.isArray(legacy.tasks)) &&
     (item.dailyTasks === undefined || Array.isArray(item.dailyTasks)) &&
     Array.isArray(item.artifacts) &&
     Array.isArray(item.aiJobs) &&

@@ -37,7 +37,7 @@ export function MarkdownCardPicker({
               deletedAt: item.deletedAt,
             }))
           : kind === "task"
-            ? state.tasks.map((item) => ({
+            ? state.activities.map((item) => ({
                 id: item.id,
                 label: item.title,
                 deletedAt: item.deletedAt,

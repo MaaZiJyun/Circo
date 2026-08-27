@@ -1,4 +1,4 @@
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 
 export type TaskTiming = {
   plannedStart: number;
@@ -10,7 +10,7 @@ export type TaskTiming = {
   actualDurationMinutes: number | null;
 };
 
-export function taskTiming(task: TaskRecord, now = Date.now()): TaskTiming {
+export function taskTiming(task: ActivityRecord, now = Date.now()): TaskTiming {
   const plannedStart = parseDate(task.startDate);
   const plannedEnd = parseDate(task.dueDate, true);
   const actualStart = parseDate(task.actualStartedAt);

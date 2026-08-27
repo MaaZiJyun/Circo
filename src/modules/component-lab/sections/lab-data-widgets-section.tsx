@@ -4,7 +4,7 @@ import { useState } from "react";
 import { EllipsisHorizontalIcon } from "@heroicons/react/24/outline";
 import { Badge, Button, Card, Checkbox, ContextMenu, ContextMenuItem, DataTable, EmptyState, TaskHierarchyList, TaskRow } from "@/shared/components";
 import type { DataTableColumn } from "@/shared/components/data-table";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 
 type DemoRow = { id: string; name: string; status: "ready" | "doing" | "done"; owner: string };
 const rows: DemoRow[] = [
@@ -12,7 +12,7 @@ const rows: DemoRow[] = [
   { id: "row-2", name: "Selected row", status: "doing", owner: "Local" },
   { id: "row-3", name: "Completed row", status: "done", owner: "Local" },
 ];
-const taskBase: TaskRecord = {
+const taskBase: ActivityRecord = {
   id: "lab-task-1",
   title: "Expandable task row",
   description: "Click the row to inspect its details.",
@@ -79,7 +79,7 @@ export function LabDataWidgetsSection() {
         </Card>
         <Card className="xl:col-span-2">
           <h3 className="mb-4 font-semibold">TaskRow / TaskHierarchyList</h3>
-          <TaskHierarchyList tasks={[task]} onSetParent={() => undefined} renderTask={(item) => <TaskRow title={item.title} description={item.description} status={item.status} dueAt={item.dueDate} estimatedMinutes={item.estimatedMinutes} actualMinutes={item.actualMinutes} expectedOutput={item.expectedOutput} milestone={item.milestone} onToggle={() => setTask((current) => ({ ...current, status: current.status === "done" ? "todo" : "done" }))} />} />
+          <TaskHierarchyList activities={[task]} onSetParent={() => undefined} renderTask={(item) => <TaskRow title={item.title} description={item.description} status={item.status} dueAt={item.dueDate} estimatedMinutes={item.estimatedMinutes} actualMinutes={item.actualMinutes} expectedOutput={item.expectedOutput} milestone={item.milestone} onToggle={() => setTask((current) => ({ ...current, status: current.status === "done" ? "todo" : "done" }))} />} />
           <div className="mt-3 flex items-center gap-2 text-xs text-zinc-500"><Checkbox checked={task.status === "done"} onChange={() => setTask((current) => ({ ...current, status: current.status === "done" ? "todo" : "done" }))} aria-label="Toggle task sample" /> Task state: {task.status}</div>
         </Card>
       </div>

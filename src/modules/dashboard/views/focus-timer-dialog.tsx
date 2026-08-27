@@ -74,7 +74,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
 
   if (!state || !dailyCache) return null;
   const currentDate = today();
-  const tasks = dailyCache.dailyTasks.filter((task) => task.date === currentDate && !task.deletedAt);
+  const activities = dailyCache.dailyTasks.filter((task) => task.date === currentDate && !task.deletedAt);
   const pause = () => {
     if (segmentStart.current !== null)
       accumulated.current += performance.now() - segmentStart.current;
@@ -107,7 +107,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
     setEditingTime(false);
   };
   const save = () => {
-    const task = tasks.find((item) => item.id === taskId);
+    const task = activities.find((item) => item.id === taskId);
     const cycle =
       state.cycles.find(
         (item) => !item.deletedAt && item.status === "active",
@@ -136,8 +136,8 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
     mutate((current) => ({
       ...current,
       sessions: session ? [...current.sessions, session] : current.sessions,
-      tasks: current.tasks.map((item) =>
-        item.id === task.sourceTaskId
+      activities: current.activities.map((item) =>
+        item.id === task.sourceTaskId && !item.archivedAt
           ? {
               ...item,
               actualMinutes: (item.actualMinutes ?? 0) + minutes,
@@ -229,7 +229,7 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
             </Button>
           </div>
         ) : (
-          <TaskAssignment tasks={tasks} taskId={taskId} onChange={setTaskId} />
+          <TaskAssignment activities={activities} taskId={taskId} onChange={setTaskId} />
         )}
         {stopped && (
           <div className="flex justify-center gap-2">
@@ -247,11 +247,11 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
 }
 
 function TaskAssignment({
-  tasks,
+  activities,
   taskId,
   onChange,
 }: {
-  tasks: DailyTask[];
+  activities: DailyTask[];
   taskId: string;
   onChange: (id: string) => void;
 }) {
@@ -262,7 +262,7 @@ function TaskAssignment({
         {t("dashboard.assignFocusTask")}
       </legend>
       <div className="grid max-h-52 gap-1 overflow-y-auto rounded-xl border border-zinc-200 p-2 dark:border-zinc-800">
-        {tasks.map((task) => (
+        {activities.map((task) => (
           <label
             key={task.id}
             className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg px-3 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
@@ -276,7 +276,7 @@ function TaskAssignment({
             <span className="min-w-0 truncate">{task.title}</span>
           </label>
         ))}
-        {!tasks.length && (
+        {!activities.length && (
           <p className="p-3 text-sm text-zinc-500">
             {t("dashboard.noDailyTasks")}
           </p>

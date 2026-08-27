@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { formatTimingDelta, taskTiming } from "./task-timing";
 
-const task = (changes: Partial<TaskRecord> = {}): TaskRecord =>
+const task = (changes: Partial<ActivityRecord> = {}): ActivityRecord =>
   ({
     id: "task-1",
     title: "Task",
@@ -28,7 +28,7 @@ const task = (changes: Partial<TaskRecord> = {}): TaskRecord =>
     createdAt: "",
     updatedAt: "",
     ...changes,
-  }) as TaskRecord;
+  }) as ActivityRecord;
 
 describe("taskTiming", () => {
   it("records late start and overdue finish", () => {

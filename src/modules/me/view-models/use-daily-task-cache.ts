@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
-import type { DailyTask, TaskRecord } from "@/shared/model/entities";
+import type { DailyTask, ActivityRecord } from "@/shared/model/entities";
 import { createId, estimateMinutes, now, startDateFromDue, today } from "@/shared/model/factories";
 import { calculateMetrics } from "@/shared/model/metrics";
 import { readDailyTaskIds, writeDailyTaskIds } from "@/shared/model/daily-task-local-storage";
@@ -10,14 +10,15 @@ import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance, taskImportanceDimensions } from "@/shared/model/task-importance";
 import { normalizeTaskFactors } from "@/shared/model/task-factors";
 import { dailyTaskStatusAt } from "@/shared/model/task-status";
-import { completeTask } from "@/shared/model/task-history";
+import { completeTask } from "@/shared/model/task-lifecycle";
+import { archiveTask as archiveTaskRecord } from "@/shared/model/task-archive";
 import { useStore } from "@/shared/view-models/store-context";
 import { taskCoordinatesFromFormula } from "../model/task-coordinate-formula";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
 import type { DailyTaskInput } from "../model/daily-task-input";
-import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
+import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
 
-function taskAsDaily(task: TaskRecord, date: string): DailyTask {
+function taskAsDaily(task: ActivityRecord, date: string): DailyTask {
   return {
     ...task,
     id: task.id,
@@ -67,11 +68,11 @@ export function useDailyTaskCache() {
 
   const view = useMemo(() => {
     if (!state) return null;
-    const tasks = activeItems(state.tasks);
-    const taskById = new Map(tasks.map((task) => [task.id, task]));
+    const activities = activeItems(state.activities).filter((task) => !task.archivedAt);
+    const taskById = new Map(activities.map((task) => [task.id, task]));
     const dailyTasks = taskIds
       .map((id) => taskById.get(id))
-      .filter((task): task is TaskRecord => Boolean(task))
+      .filter((task): task is ActivityRecord => Boolean(task))
       .map((task) => taskAsDaily(task, date));
     const currentTime = Date.parse(date);
     const sorted = dailyTasks.slice().sort((a, b) => {
@@ -81,7 +82,7 @@ export function useDailyTaskCache() {
     });
     return {
       projects: activeItems(state.projects),
-      tasks,
+      activities,
       dailyTasks: sorted,
       profile: state.profile,
       metrics: calculateMetrics(state),
@@ -94,15 +95,15 @@ export function useDailyTaskCache() {
     writeDailyTaskIds(date, unique);
   };
 
-  const retrieve = (task: TaskRecord) => {
-    if (task.status === "done" || taskIds.includes(task.id)) return;
+  const retrieve = (task: ActivityRecord) => {
+    if (task.archivedAt || task.status === "done" || taskIds.includes(task.id)) return;
     saveIds([...taskIds, task.id]);
   };
 
   const addIndependent = (input: DailyTaskInput) => {
     if (!input.title.trim()) return;
     const stamp = now();
-    const source: TaskRecord = {
+    const source: ActivityRecord = {
       id: createId("task"),
       title: input.title.trim(),
       description: input.description,
@@ -110,6 +111,7 @@ export function useDailyTaskCache() {
       dueDate: input.dueAt,
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
+      activityType: "task",
       estimatedMinutes: input.estimatedMinutes,
       actualMinutes: 0,
       milestone: input.milestone,
@@ -121,13 +123,13 @@ export function useDailyTaskCache() {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, tasks: [...current.tasks, source] }));
+    mutate((current) => ({ ...current, activities: [...current.activities, source] }));
     saveIds([...taskIds, source.id]);
   };
 
-  const addSubtask = (parent: TaskRecord, input: TaskInput) => {
+  const addSubtask = (parent: ActivityRecord, input: ActivityInput) => {
     const stamp = now();
-    const task: TaskRecord = {
+    const task: ActivityRecord = {
       id: createId("task"),
       projectId: parent.projectId,
       parentId: parent.id,
@@ -141,28 +143,36 @@ export function useDailyTaskCache() {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
+    mutate((current) => ({ ...current, activities: [...current.activities, task] }));
     saveIds([...taskIds, task.id]);
   };
 
   const setTaskParent = (ids: string[], parentId: string | null) =>
-    mutate((current) => ({ ...current, tasks: setTaskParents(current.tasks, ids, parentId, now()) }));
+    mutate((current) => ({
+      ...current,
+      activities: setTaskParents(
+        current.activities,
+        ids.filter((id) => !current.activities.find((task) => task.id === id)?.archivedAt),
+        parentId,
+        now(),
+      ),
+    }));
 
   const setCompleted = (item: DailyTask, completed: boolean) => {
     if (item.completed === completed || !item.sourceTaskId) return;
     const stamp = now();
     if (completed) {
       mutate((current) => completeTask(current, item.sourceTaskId!, stamp));
-      saveIds(taskIds.filter((id) => id !== item.sourceTaskId));
       return;
     }
     mutate((current) => {
-      const history = (current.taskHistory ?? []).find((task) => task.id === item.sourceTaskId);
-      if (!history) return current;
       return {
         ...current,
-        tasks: [...current.tasks, { ...history, status: "todo" as const, completedAt: undefined, updatedAt: stamp }],
-        taskHistory: current.taskHistory.filter((task) => task.id !== history.id),
+        activities: current.activities.map((task) =>
+          task.id === item.sourceTaskId && !task.archivedAt
+            ? { ...task, status: "todo" as const, completedAt: undefined, updatedAt: stamp }
+            : task,
+        ),
       };
     });
   };
@@ -172,8 +182,8 @@ export function useDailyTaskCache() {
     const stamp = now();
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((task) =>
-        task.id === item.sourceTaskId
+      activities: current.activities.map((task) =>
+        task.id === item.sourceTaskId && !task.archivedAt
           ? {
               ...task,
               title: input.title.trim(),
@@ -219,7 +229,9 @@ export function useDailyTaskCache() {
     toggle: (item: DailyTask) => setCompleted(item, !item.completed),
     updateTask,
     inputFor,
-    statusFor: (item: DailyTask): TaskRecord["status"] => dailyTaskStatusAt(item),
+    archiveTask: (id: string) =>
+      mutate((current) => archiveTaskRecord(current, id, now())),
+    statusFor: (item: DailyTask): ActivityRecord["status"] => dailyTaskStatusAt(item),
     deleteTask: (id: string) => saveIds(taskIds.filter((item) => item !== id)),
     projectName: (id?: string) => view.projects.find((project) => project.id === id)?.name ?? "",
     coordinates: (item: DailyTask) => taskCoordinatesFromFormula(item, state?.profile.matrixFormulas, Date.now(), view.dailyTasks),

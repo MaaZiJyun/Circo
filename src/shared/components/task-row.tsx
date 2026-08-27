@@ -4,7 +4,7 @@ import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import { useState } from "react";
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { Badge } from "./ui";
 
 export function TaskRow({
@@ -28,7 +28,7 @@ export function TaskRow({
 }: {
   title: string;
   description: string;
-  status: TaskRecord["status"];
+  status: ActivityRecord["status"];
   dueAt: string;
   completedAt?: string;
   estimatedMinutes: number;

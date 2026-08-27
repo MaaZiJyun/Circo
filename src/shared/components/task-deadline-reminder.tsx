@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { CheckIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { activeItems } from "@/shared/model/app-state";
 import { now } from "@/shared/model/factories";
-import { completeTask } from "@/shared/model/task-history";
+import { completeTask } from "@/shared/model/task-lifecycle";
 import { deadlineTime } from "@/shared/model/task-status";
 import {
   activeTaskReminders,
@@ -31,7 +31,7 @@ export function TaskDeadlineReminder() {
 
   if (!state || currentTime === null) return null;
   const reminder = activeTaskReminders(
-    activeItems(state.tasks),
+    activeItems(state.activities),
     currentTime,
     new Set(dismissed),
   )[0];

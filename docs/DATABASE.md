@@ -61,15 +61,14 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | `sources`                | `SourceRecord[]`   | 文献、文件/Markdown 路径、阅读状态、评价和转换状态       |
 | `libraryLists`           | `LibraryList[]`    | 文献列表，`sources.listIds` 引用                         |
 | `projectLists`           | `ProjectList[]`    | 项目列表，`projects.listIds` 引用                        |
-| `taskLists`              | `TaskList[]`       | 任务列表，`tasks.listIds` 引用                           |
+| `taskLists`              | `TaskList[]`       | 任务列表，`activities.listIds` 引用                           |
 | `ideaLists`              | `IdeaList[]`       | 想法列表，`ideas.listIds` 引用                           |
 | `pointLists`             | `PointList[]`      | Reference Point 列表                                     |
 | `points`                 | `ReferencePoint[]` | 通过 `sourceId` 关联文献，支持文本或图片坐标             |
 | `annotations`            | `Annotation[]`     | 文献批注，通过 `sourceId` 关联文献                       |
 | `ideas`                  | `Idea[]`           | 想法、评估、来源引用、聊天记录和列表                     |
 | `projects`               | `ProjectRecord[]`  | 项目基础信息、状态、日期、目标、想法和列表               |
-| `tasks`                  | `TaskRecord[]`     | 项目任务、层级、依赖、排期、进度、评分和周期规则         |
-| `taskHistory`            | `TaskHistoryRecord[]` | 已完成任务快照，完成后从 `tasks` 移入                    |
+| `activities`                  | `ActivityRecord[]`     | Activity（Task/Event/Routine）定义、层级、依赖、排期、进度、评分和周期规则 |
 | `logs`                   | `ProjectLog[]`     | 项目日志元数据；正文同时写入 Markdown 文件               |
 | `attachments`            | `Attachment[]`     | 项目附件元数据；二进制文件位于文件系统                   |
 | `artifacts`              | `Artifact[]`       | 输出物及其项目、文献、想法关系                           |
@@ -77,13 +76,14 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | `aiJobs`                 | `AIJob[]`          | 本地演示型 AI 任务历史；与 Gantt 任务预处理无关          |
 | `messages`               | `FutureMessage[]`  | 未来消息、附件引用、每日计划和每日复盘                   |
 
-### TaskRecord 关键字段
+### ActivityRecord 关键字段
 
 任务除基础字段外，包含：
 
 - 归属与层级：`projectId`、`listIds`、`parentId`。
 - 排期：`startDate`、`dueDate`、`estimatedMinutes`、`actualMinutes`。
-- 状态：`todo | doing | done | overdue`、`completedAt`。
+- Activity：`activityType`（`task | event | routine`）；旧记录缺失时按 `task` 处理。
+- 状态：`todo | doing | done | overdue`、`completedAt`、`archivedAt`。
 - Gantt：`dependencyIds`、`milestone`。
 - 内容：`title`、`description`、`expectedOutput`。
 - 优先级：`priority`、`importance`。
@@ -98,6 +98,7 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 - `dependencyIds` 保存当前任务的前置任务 ID，即 Finish-to-Start 的 source task。
 - 应用层负责防止自身依赖、循环依赖、跨项目依赖及将自己的子任务设为前置任务。
 - Done 任务在 Gantt 中按 100% 进度显示。
+- 完成不会把任务移出 `activities`；每日缓存结算时，仅结算清单中的已完成任务自动写入 `archivedAt`。未完成、未结算以及其他 Activity 不会自动归档；手动归档后记录只读。
 
 ## 4. 当前本地数据库快照
 
@@ -128,12 +129,12 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | ideaLists    |    2 | pointLists   |    3 |
 | points       |   14 | annotations  |    0 |
 | ideas        |    3 | projects     |    7 |
-| tasks        |   49 | taskHistory  |   63 |
-| logs         |   16 | attachments  |    6 |
-| artifacts    |    1 | relations    |    3 |
-| aiJobs       |   11 | messages     |   30 |
+| activities        |   49 | attachments  |    6 |
+| logs         |   16 | artifacts    |    1 |
+| relations    |    3 | aiJobs       |   11 |
+| messages     |   30 |              |      |
 
-补充状态：当前 active tasks 为 37、回收站 tasks 为 12、active projects 为 4、active sources 为 6。
+补充状态：当前 active activities 为 37、回收站 activities 为 12、active projects 为 4、active sources 为 6。
 
 ## 5. 读写流程
 
@@ -144,8 +145,7 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | 表 | 主要用途 |
 | --- | --- |
 | `projects` | 项目核心字段和完整 JSON payload |
-| `tasks` | 未完成任务、排期、状态和实际时间 |
-| `task_history` | 已完成任务历史快照 |
+| `activities` | Activity 定义、排期、状态、实际时间和归档状态 |
 | `sessions` | 专注工作会话和实际投入时间 |
 
 每张核心表都保留 `payload` 字段，用于保存暂时未拆成独立列的扩展字段。应用保存时会在同一事务内更新快照和关系型表；旧快照首次读取时会自动回填关系型表。

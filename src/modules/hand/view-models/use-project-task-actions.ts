@@ -1,8 +1,7 @@
 "use client";
 
-import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
+import type { ActivityType, ProjectRecord, ActivityRecord } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
-import { today } from "@/shared/model/factories";
 import {
   deleteRecurringTasks,
   type RecurringDeleteMode,
@@ -10,11 +9,12 @@ import {
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance } from "@/shared/model/task-importance";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
-import { completeTask } from "@/shared/model/task-history";
+import { completeTask } from "@/shared/model/task-lifecycle";
+import { archiveTask, isArchivedTask } from "@/shared/model/task-archive";
 import { useStore } from "@/shared/view-models/store-context";
 
-export type TaskInput = Pick<
-  TaskRecord,
+export type ActivityInput = Pick<
+  ActivityRecord,
   | "title"
   | "description"
   | "startDate"
@@ -33,11 +33,11 @@ export type TaskInput = Pick<
   | "uncertainty"
   | "recurrence"
   | "parentId"
->;
+> & { activityType?: ActivityType };
 
 export type GanttTaskPatch = Partial<
   Pick<
-    TaskRecord,
+    ActivityRecord,
     | "title"
     | "description"
     | "startDate"
@@ -52,7 +52,7 @@ export type GanttTaskPatch = Partial<
   >
 >;
 
-export function taskInput(task: TaskRecord): TaskInput {
+export function activityInput(task: ActivityRecord): ActivityInput {
   return {
     title: task.title,
     description: task.description,
@@ -72,20 +72,19 @@ export function taskInput(task: TaskRecord): TaskInput {
     uncertainty: task.uncertainty,
     recurrence: task.recurrence,
     parentId: task.parentId,
+    activityType: task.activityType ?? "task",
   };
 }
 
-const isLockedCompletedPastTask = (task: TaskRecord) =>
-  task.status === "done" && task.dueDate.slice(0, 10) < today();
-
 export function useProjectTaskActions(selected?: ProjectRecord) {
   const { mutate } = useStore();
-  const createTask = (input: TaskInput, projectId?: string) => {
+  const createTask = (input: ActivityInput, projectId?: string) => {
     const stamp = now();
-    const task: TaskRecord = {
+    const task: ActivityRecord = {
       id: createId("task"),
       ...(projectId ? { projectId } : {}),
       ...input,
+      activityType: input.activityType ?? "task",
       listIds: [],
       estimatedMinutes: input.estimatedMinutes,
       importance: taskImportance(input),
@@ -97,13 +96,13 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
+    mutate((current) => ({ ...current, activities: [...current.activities, task] }));
   };
-  const addTask = (input: TaskInput) => {
+  const addTask = (input: ActivityInput) => {
     if (!selected) return;
     createTask(input, selected.id);
   };
-  const duplicateTask = (task: TaskRecord) => {
+  const duplicateTask = (task: ActivityRecord) => {
     if (!selected) return;
     addTask({
       title: task.title,
@@ -124,11 +123,12 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
       uncertainty: task.uncertainty,
       recurrence: task.recurrence,
       parentId: task.parentId,
+      activityType: task.activityType ?? "task",
     });
   };
-  const advanceTask = (task: TaskRecord) => {
-    if (isLockedCompletedPastTask(task)) return;
-    const status: TaskRecord["status"] =
+  const advanceTask = (task: ActivityRecord) => {
+    if (isArchivedTask(task)) return;
+    const status: ActivityRecord["status"] =
       task.status === "todo"
         ? "doing"
         : task.status === "doing"
@@ -138,7 +138,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
             : "todo";
     const stamp = now();
     mutate((current) => {
-      const tasks = current.tasks.map((item) =>
+      const activities = current.activities.map((item) =>
         item.id === task.id
           ? {
               ...item,
@@ -157,22 +157,22 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
           : item,
       );
       if (status === "done") {
-        const completed = completeTask({ ...current, tasks }, task.id, stamp);
+        const completed = completeTask({ ...current, activities }, task.id, stamp);
         return {
           ...completed,
         };
       }
       return {
         ...current,
-        tasks,
+        activities,
       };
     });
   };
-  const updateTask = (id: string, input: TaskInput) =>
+  const updateTask = (id: string, input: ActivityInput) =>
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((item) =>
-        item.id === id && !isLockedCompletedPastTask(item)
+      activities: current.activities.map((item) =>
+        item.id === id && !item.archivedAt
           ? {
               ...item,
               ...input,
@@ -187,8 +187,8 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
   const updateTaskFromGantt = (id: string, patch: GanttTaskPatch) => {
     const stamp = now();
     mutate((current) => {
-      const previous = current.tasks.find((task) => task.id === id);
-      if (!previous || isLockedCompletedPastTask(previous)) return current;
+      const previous = current.activities.find((task) => task.id === id);
+      if (!previous || previous.archivedAt) return current;
 
       const nextStatus = patch.status ?? previous.status;
       const completedAt =
@@ -199,13 +199,13 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
         (patch.actualMinutes ?? previous.actualMinutes) > 0
           ? previous.actualStartedAt ?? stamp
           : previous.actualStartedAt);
-      const updatedTasks = current.tasks.map((task) =>
+      const updatedTasks = current.activities.map((task) =>
         task.id === id
           ? { ...task, ...patch, actualStartedAt, completedAt, updatedAt: stamp }
           : task,
       );
       if (nextStatus === "done") {
-        const completed = completeTask({ ...current, tasks: updatedTasks }, id, stamp);
+        const completed = completeTask({ ...current, activities: updatedTasks }, id, stamp);
         return {
           ...completed,
         };
@@ -213,7 +213,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
 
       return {
         ...current,
-        tasks: updatedTasks,
+        activities: updatedTasks,
       };
     });
   };
@@ -221,8 +221,8 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     const stamp = now();
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((item) =>
-        item.id === id && !isLockedCompletedPastTask(item)
+      activities: current.activities.map((item) =>
+        item.id === id && !item.archivedAt
           ? { ...item, projectId, updatedAt: stamp }
           : item,
       ),
@@ -231,18 +231,24 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
   const deleteTask = (id: string, mode: RecurringDeleteMode = "series") => {
     const stamp = now();
     mutate((current) => {
-      const result = deleteRecurringTasks(current.tasks, id, mode, stamp);
+      if (current.activities.find((task) => task.id === id)?.archivedAt) return current;
+      const result = deleteRecurringTasks(current.activities, id, mode, stamp);
       return {
         ...current,
-        tasks: result.tasks,
+        activities: result.activities,
       };
     });
   };
+  const archive = (id: string) =>
+    mutate((current) => archiveTask(current, id, now()));
   const setTaskParent = (ids: string[], parentId: string | null) =>
     mutate((current) => {
+      const editableIds = ids.filter(
+        (id) => !current.activities.find((task) => task.id === id)?.archivedAt,
+      );
       return {
         ...current,
-        tasks: setTaskParents(current.tasks, ids, parentId, now()),
+        activities: setTaskParents(current.activities, editableIds, parentId, now()),
       };
     });
   return {
@@ -254,6 +260,7 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     updateTaskFromGantt,
     moveTask,
     deleteTask,
+    archiveTask: archive,
     setTaskParent,
   };
 }

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import type { AppRepository, AppState } from "@/shared/model/app-state";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { isAppState } from "@/shared/model/app-state";
 import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
@@ -12,7 +12,6 @@ import { normalizeBackgroundAudio } from "@/shared/model/background-audio";
 import { normalizeTaskImportance } from "@/shared/model/task-importance";
 import { normalizeTaskFactors } from "@/shared/model/task-factors";
 import { normalizeTasks, withoutLegacyRoutineTasks } from "@/shared/model/task-normalization";
-import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 const systemLists = [
   {
@@ -60,7 +59,7 @@ const systemTaskLists = [
   {
     id: "task_list_default",
     name: "All Tasks",
-    note: "All tasks",
+    note: "All activities",
     color: "#18181b",
     system: "default" as const,
   },
@@ -95,10 +94,40 @@ const systemIdeaLists = [
     system: "recent" as const,
   },
 ];
+
+type LegacySnapshot = AppState & {
+  tasks?: ActivityRecord[];
+  taskHistory?: Array<ActivityRecord & { status: "done" }>;
+};
+
+function withoutLegacyActivityFields(state: AppState): AppState {
+  const normalized = { ...state } as LegacySnapshot;
+  delete normalized.tasks;
+  delete normalized.taskHistory;
+  return normalized;
+}
+
+function dropLegacyTaskHistory(database: Database.Database) {
+  database.exec("DROP TABLE IF EXISTS task_history");
+}
+
 function openDatabase(databasePath: string) {
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
   const database = new Database(databasePath);
   database.pragma("journal_mode = WAL");
+  const hasLegacyTasksTable = Boolean(
+    database
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'tasks'")
+      .get(),
+  );
+  const hasActivitiesTable = Boolean(
+    database
+      .prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'activities'")
+      .get(),
+  );
+  if (hasLegacyTasksTable && !hasActivitiesTable) {
+    database.exec("ALTER TABLE tasks RENAME TO activities");
+  }
   database.exec(`
     CREATE TABLE IF NOT EXISTS app_snapshots (
       id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -119,7 +148,7 @@ function openDatabase(databasePath: string) {
       updated_at TEXT NOT NULL,
       payload TEXT NOT NULL
     );
-    CREATE TABLE IF NOT EXISTS tasks (
+    CREATE TABLE IF NOT EXISTS activities (
       id TEXT PRIMARY KEY,
       project_id TEXT,
       parent_id TEXT,
@@ -131,21 +160,8 @@ function openDatabase(databasePath: string) {
       actual_minutes REAL NOT NULL DEFAULT 0,
       actual_started_at TEXT,
       completed_at TEXT,
-      deleted_at TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL,
-      payload TEXT NOT NULL
-    );
-    CREATE TABLE IF NOT EXISTS task_history (
-      id TEXT PRIMARY KEY,
-      project_id TEXT,
-      title TEXT NOT NULL,
-      start_date TEXT,
-      due_date TEXT,
-      estimated_minutes REAL NOT NULL DEFAULT 0,
-      actual_minutes REAL NOT NULL DEFAULT 0,
-      actual_started_at TEXT,
-      completed_at TEXT NOT NULL,
+      archived_at TEXT,
+      activity_type TEXT NOT NULL DEFAULT 'task',
       deleted_at TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
@@ -164,16 +180,27 @@ function openDatabase(databasePath: string) {
       effective INTEGER NOT NULL DEFAULT 0,
       payload TEXT NOT NULL
     );
-    CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);
-    CREATE INDEX IF NOT EXISTS idx_tasks_status_due_date ON tasks(status, due_date);
-    CREATE INDEX IF NOT EXISTS idx_task_history_completed_at ON task_history(completed_at);
+    CREATE INDEX IF NOT EXISTS idx_activities_project_id ON activities(project_id);
+    CREATE INDEX IF NOT EXISTS idx_activities_status_due_date ON activities(status, due_date);
     CREATE INDEX IF NOT EXISTS idx_sessions_task_id ON sessions(task_id);
   `);
+  for (const statement of [
+    "ALTER TABLE activities ADD COLUMN archived_at TEXT",
+    "ALTER TABLE activities ADD COLUMN activity_type TEXT NOT NULL DEFAULT 'task'",
+  ]) {
+    try {
+      database.exec(statement);
+    } catch (error) {
+      if (!(error instanceof Error) || !error.message.includes("duplicate column name")) {
+        throw error;
+      }
+    }
+  }
   return database;
 }
 
 function syncRelationalTables(database: Database.Database, state: AppState) {
-  database.exec("DELETE FROM projects; DELETE FROM tasks; DELETE FROM task_history; DELETE FROM sessions;");
+  database.exec("DELETE FROM projects; DELETE FROM activities; DELETE FROM sessions;");
   const projectInsert = database.prepare(`
     INSERT INTO projects
       (id, name, status, start_date, end_date, score, deleted_at, created_at, updated_at, payload)
@@ -184,22 +211,13 @@ function syncRelationalTables(database: Database.Database, state: AppState) {
     projectInsert.run({ id: project.id, name: project.name, status: project.status, startDate: project.startDate, endDate: project.endDate, score: project.score, deletedAt: project.deletedAt ?? null, createdAt: project.createdAt, updatedAt: project.updatedAt, payload: JSON.stringify(project) });
   }
   const taskInsert = database.prepare(`
-    INSERT INTO tasks
-      (id, project_id, parent_id, title, status, start_date, due_date, estimated_minutes, actual_minutes, actual_started_at, completed_at, deleted_at, created_at, updated_at, payload)
+    INSERT INTO activities
+      (id, project_id, parent_id, title, status, start_date, due_date, estimated_minutes, actual_minutes, actual_started_at, completed_at, archived_at, activity_type, deleted_at, created_at, updated_at, payload)
     VALUES
-      (@id, @projectId, @parentId, @title, @status, @startDate, @dueDate, @estimatedMinutes, @actualMinutes, @actualStartedAt, @completedAt, @deletedAt, @createdAt, @updatedAt, @payload)
+      (@id, @projectId, @parentId, @title, @status, @startDate, @dueDate, @estimatedMinutes, @actualMinutes, @actualStartedAt, @completedAt, @archivedAt, @activityType, @deletedAt, @createdAt, @updatedAt, @payload)
   `);
-  for (const task of state.tasks) {
-    taskInsert.run({ id: task.id, projectId: task.projectId ?? null, parentId: task.parentId ?? null, title: task.title, status: task.status, startDate: task.startDate, dueDate: task.dueDate, estimatedMinutes: task.estimatedMinutes, actualMinutes: task.actualMinutes, actualStartedAt: task.actualStartedAt ?? null, completedAt: task.completedAt ?? null, deletedAt: task.deletedAt ?? null, createdAt: task.createdAt, updatedAt: task.updatedAt, payload: JSON.stringify(task) });
-  }
-  const historyInsert = database.prepare(`
-    INSERT INTO task_history
-      (id, project_id, title, start_date, due_date, estimated_minutes, actual_minutes, actual_started_at, completed_at, deleted_at, created_at, updated_at, payload)
-    VALUES
-      (@id, @projectId, @title, @startDate, @dueDate, @estimatedMinutes, @actualMinutes, @actualStartedAt, @completedAt, @deletedAt, @createdAt, @updatedAt, @payload)
-  `);
-  for (const task of state.taskHistory ?? []) {
-    historyInsert.run({ id: task.id, projectId: task.projectId ?? null, title: task.title, startDate: task.startDate, dueDate: task.dueDate, estimatedMinutes: task.estimatedMinutes, actualMinutes: task.actualMinutes, actualStartedAt: task.actualStartedAt ?? null, completedAt: task.completedAt, deletedAt: task.deletedAt ?? null, createdAt: task.createdAt, updatedAt: task.updatedAt, payload: JSON.stringify(task) });
+  for (const task of state.activities) {
+    taskInsert.run({ id: task.id, projectId: task.projectId ?? null, parentId: task.parentId ?? null, title: task.title, status: task.status, startDate: task.startDate, dueDate: task.dueDate, estimatedMinutes: task.estimatedMinutes, actualMinutes: task.actualMinutes, actualStartedAt: task.actualStartedAt ?? null, completedAt: task.completedAt ?? null, archivedAt: task.archivedAt ?? null, activityType: task.activityType ?? "task", deletedAt: task.deletedAt ?? null, createdAt: task.createdAt, updatedAt: task.updatedAt, payload: JSON.stringify(task) });
   }
   const sessionInsert = database.prepare(`
     INSERT INTO sessions
@@ -222,6 +240,12 @@ function readSnapshot(database: Database.Database): AppState | null {
   return normalizeState(parsed);
 }
 function normalizeState(state: AppState): AppState {
+  const legacyActivities = (state as LegacySnapshot).tasks ?? [];
+  const sourceState = {
+    ...state,
+    activities: state.activities ?? legacyActivities,
+  } as AppState;
+  const legacyHistory = (state as LegacySnapshot).taskHistory ?? [];
   const stamp = state.updatedAt || new Date().toISOString();
   const systemPointLists = seedPointLists(stamp);
   const existingLists = state.libraryLists ?? [];
@@ -236,7 +260,7 @@ function normalizeState(state: AppState): AppState {
   const systemTaskListIds = new Set(systemTaskLists.map((item) => item.id));
   const systemIdeaListIds = new Set(systemIdeaLists.map((item) => item.id));
   const systemPointListIds = new Set(systemPointLists.map((item) => item.id));
-  let normalizedTasks = normalizeTasks(state);
+  const normalizedTasks = normalizeTasks(sourceState);
   const legacyDailyTasks = (state.dailyTasks ?? []).map((item) => ({
     ...item,
     description: item.description ?? "",
@@ -271,29 +295,35 @@ function normalizeState(state: AppState): AppState {
       complexity: item.complexity,
       uncertainty: item.uncertainty,
       recurrence: null,
+      activityType: "task",
       projectId: item.projectId,
       completedAt: item.completedAt,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
-    } as TaskRecord);
+    } as ActivityRecord);
   }
-  const migratedHistory = [...(state.taskHistory ?? [])];
-  for (const task of normalizedTasks.filter((item) => item.status === "done")) {
-    if (!migratedHistory.some((item) => item.id === task.id)) {
-      migratedHistory.push({
-        ...task,
+  for (const history of legacyHistory) {
+    const completedAt = history.completedAt ?? history.updatedAt ?? stamp;
+    const existingIndex = normalizedTasks.findIndex((task) => task.id === history.id);
+    if (existingIndex >= 0) {
+      normalizedTasks[existingIndex] = {
+        ...normalizedTasks[existingIndex],
         status: "done",
-        completedAt: task.completedAt ?? task.updatedAt ?? stamp,
-      });
+        completedAt,
+        archivedAt: normalizedTasks[existingIndex].archivedAt ?? completedAt,
+      };
+      continue;
     }
-    normalizedTasks = appendNextRecurringTask(
-      normalizedTasks,
-      task.id,
-      task.completedAt ?? task.updatedAt ?? stamp,
-    ).filter((item) => item.id !== task.id);
+    normalizedTasks.push({
+      ...history,
+      status: "done",
+      activityType: history.activityType ?? "task",
+      completedAt,
+      archivedAt: history.archivedAt ?? completedAt,
+    });
   }
   return {
-    ...withoutLegacyRoutineTasks(state),
+    ...withoutLegacyActivityFields(withoutLegacyRoutineTasks(state)),
     profile: {
       name: state.profile?.name?.trim() || "Me",
       avatarDataUrl: state.profile?.avatarDataUrl ?? "",
@@ -407,13 +437,7 @@ function normalizeState(state: AppState): AppState {
       ...normalizeTaskImportance(item, item.importance ?? 50),
       ...normalizeTaskFactors(item),
     })),
-    tasks: normalizedTasks,
-    taskHistory: migratedHistory.map((item) => ({
-      ...item,
-      status: "done" as const,
-      completedAt: item.completedAt ?? item.updatedAt,
-      actualMinutes: item.actualMinutes ?? 0,
-    })),
+    activities: normalizedTasks,
     logs: Array.from(
       new Map(state.logs.map((item) => [item.id, item])).values(),
     ).map((item) => ({
@@ -460,6 +484,7 @@ function writeSnapshot(database: Database.Database, state: AppState): AppState {
       payload: JSON.stringify(persisted),
       updatedAt: saved.updatedAt,
     });
+  dropLegacyTaskHistory(database);
   syncRelationalTables(database, saved);
   return saved;
 }
@@ -476,7 +501,23 @@ export class SqliteAppRepository implements AppRepository {
     try {
       const state = readSnapshot(database);
       if (state) {
-        database.transaction(() => syncRelationalTables(database, state))();
+        const row = database
+          .prepare("SELECT payload FROM app_snapshots WHERE id = 1")
+          .get() as { payload: string } | undefined;
+        const rawPayload = row ? (JSON.parse(row.payload) as {
+          taskHistory?: unknown;
+          tasks?: unknown;
+        }) : null;
+        const hasLegacyFields = Boolean(
+          rawPayload?.taskHistory || rawPayload?.tasks,
+        );
+        if (hasLegacyFields) {
+          return database.transaction(() => writeSnapshot(database, state))();
+        }
+        database.transaction(() => {
+          dropLegacyTaskHistory(database);
+          syncRelationalTables(database, state);
+        })();
         return state;
       }
       return database.transaction(() =>

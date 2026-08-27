@@ -19,7 +19,7 @@ describe("task urgency", () => {
       delayLoss: 5,
       dependencyIds: [],
     };
-    const tasks = [
+    const activities = [
       target,
       ...Array.from({ length: 4 }, (_, index) => ({
         id: `task-${index}`,
@@ -28,8 +28,8 @@ describe("task urgency", () => {
         dependencyIds: ["target"],
       })),
     ];
-    expect(taskBlocking("target", tasks)).toBe(4);
-    expect(taskUrgency(target, tasks, now)).toEqual({
+    expect(taskBlocking("target", activities)).toBe(4);
+    expect(taskUrgency(target, activities, now)).toEqual({
       deadline: 1,
       delayLoss: 5,
       blocking: 4,

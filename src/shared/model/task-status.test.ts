@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { TaskRecord } from "./entities";
+import type { ActivityRecord } from "./entities";
 import { deadlineTime, taskStatusAt } from "./task-status";
 
-const task = (change: Partial<TaskRecord> = {}): TaskRecord => ({
+const task = (change: Partial<ActivityRecord> = {}): ActivityRecord => ({
   id: "task_1",
   title: "Task",
   description: "",

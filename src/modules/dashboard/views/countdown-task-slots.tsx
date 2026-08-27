@@ -110,7 +110,7 @@ export function CountdownTaskSlots() {
       ? cachedElapsed(cacheRef.current[displacedId], displacedEnd) / 60
       : 0;
     mutate((current) => {
-      const dailyTask = current.tasks.find(
+      const dailyTask = current.activities.find(
         (task) => task.id === dailyTaskId && !task.deletedAt && task.status !== "done",
       );
       if (!dailyTask) return current;
@@ -122,8 +122,8 @@ export function CountdownTaskSlots() {
       return {
         ...current,
         profile: { ...current.profile, countdownTaskSlots: nextSlots },
-        tasks: current.tasks.map((task) => {
-          if (task.id === dailyTask.id)
+        activities: current.activities.map((task) => {
+          if (task.id === dailyTask.id && !task.archivedAt)
             return task.status === "done"
               ? task
               : {
@@ -135,7 +135,7 @@ export function CountdownTaskSlots() {
                   actualStartedAt: task.actualStartedAt ?? stamp,
                   updatedAt: stamp,
                 };
-          return task.id === ejectedId
+          return task.id === ejectedId && !task.archivedAt
             ? {
                 ...task,
                 actualMinutes: task.actualMinutes + displacedMinutes,
@@ -176,8 +176,8 @@ export function CountdownTaskSlots() {
       return {
         ...current,
         profile: { ...current.profile, countdownTaskSlots: nextSlots },
-        tasks: current.tasks.map((task) =>
-          task.id === dailyTaskId
+        activities: current.activities.map((task) =>
+          task.id === dailyTaskId && !task.archivedAt
             ? {
                 ...task,
                 actualMinutes: task.actualMinutes + cachedMinutes,

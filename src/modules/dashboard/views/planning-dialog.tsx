@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
+import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
 import { Button } from "@/shared/components/ui";
 import { CreateDailyTaskDialog } from "@/modules/me/views/daily-task-dialogs";
 import type { DailyTaskInput } from "@/modules/me/model/daily-task-input";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { activeItems } from "@/shared/model/app-state";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import type { DailyPlanItem, FutureMessage } from "@/shared/model/message";
 import { addDays, createId, now, startDateFromDue } from "@/shared/model/factories";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
@@ -16,6 +16,7 @@ import { taskImportance } from "@/shared/model/task-importance";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
 import { deleteRecurringTasks, type RecurringDeleteMode } from "@/shared/model/task-recurrence";
 import { useStore } from "@/shared/view-models/store-context";
+import { archiveTask } from "@/shared/model/task-archive";
 import {
   dayMinutes,
   PlanBasket,
@@ -42,8 +43,8 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
   const [taskMenu, setTaskMenu] = useState<PlanningTaskMenu>(null);
   if (!state) return null;
   const projects = activeItems(state.projects);
-  const tasks = activeItems(state.tasks);
-  const independentTasks = tasks.filter(
+  const activities = activeItems(state.activities);
+  const independentTasks = activities.filter(
     (task) => !task.projectId && task.status !== "done",
   );
   const totalMinutes = selected.reduce(
@@ -64,7 +65,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
   };
   const createIndependent = (input: DailyTaskInput) => {
     const stamp = now();
-    const task: TaskRecord = {
+    const task: ActivityRecord = {
       id: createId("task"),
       title: input.title.trim(),
       description: input.description,
@@ -84,6 +85,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       recurrence: input.recurrence,
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
+      activityType: "task",
       actualMinutes: 0,
       milestone: input.milestone,
       createdAt: stamp,
@@ -91,7 +93,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
     };
     mutate((current) => ({
       ...current,
-      tasks: [...current.tasks, task],
+      activities: [...current.activities, task],
     }));
     if (totalMinutes + task.estimatedMinutes <= dayMinutes)
       setSelected((current) => [
@@ -109,38 +111,42 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         },
       ]);
   };
-  const duplicateIndependent = (task: TaskRecord) => {
+  const duplicateIndependent = (task: ActivityRecord) => {
     const stamp = now();
-    const duplicate: TaskRecord = {
+    const duplicate: ActivityRecord = {
       ...task,
       id: createId("task"),
       dueDate: "",
       status: "todo",
+      activityType: "task",
       actualMinutes: 0,
       completedAt: undefined,
       createdAt: stamp,
       updatedAt: stamp,
       deletedAt: undefined,
+      archivedAt: undefined,
     };
-    mutate((current) => ({ ...current, tasks: [...current.tasks, duplicate] }));
+    mutate((current) => ({ ...current, activities: [...current.activities, duplicate] }));
   };
-  const removeIndependent = (task: TaskRecord, mode: RecurringDeleteMode = "series") => {
+  const removeIndependent = (task: ActivityRecord, mode: RecurringDeleteMode = "series") => {
     const stamp = now();
     mutate((current) => ({
       ...current,
-      tasks: deleteRecurringTasks(current.tasks, task.id, mode, stamp).tasks,
+      activities: task.archivedAt
+        ? current.activities
+        : deleteRecurringTasks(current.activities, task.id, mode, stamp).activities,
     }));
     setSelected((current) =>
       current.filter((item) => item.id !== task.id),
     );
   };
-  const updateIndependent = (task: TaskRecord, input: TaskInput) => {
+  const updateIndependent = (task: ActivityRecord, input: ActivityInput) => {
     const stamp = now();
     const estimated = input.estimatedMinutes;
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((item) =>
-        item.id === task.id
+      activities: current.activities.map((item) =>
+        item.id === task.id && !item.archivedAt
           ? {
               ...item,
               ...input,
@@ -176,9 +182,9 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       ];
     });
   };
-  const createSubtask = (parent: TaskRecord, input: TaskInput) => {
+  const createSubtask = (parent: ActivityRecord, input: ActivityInput) => {
     const stamp = now();
-    const task: TaskRecord = {
+    const task: ActivityRecord = {
       id: createId("task"),
       projectId: parent.projectId,
       parentId: parent.id,
@@ -187,17 +193,23 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
       importance: taskImportance(input),
       priority: priorityFromImportance(taskImportance(input)),
       status: "todo",
+      activityType: input.activityType ?? "task",
       actualMinutes: 0,
       completedAt: undefined,
       createdAt: stamp,
       updatedAt: stamp,
     };
-    mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
+    mutate((current) => ({ ...current, activities: [...current.activities, task] }));
   };
   const setTaskParent = (ids: string[], parentId: string | null) => {
     mutate((current) => ({
       ...current,
-      tasks: setTaskParents(current.tasks, ids, parentId, now()),
+      activities: setTaskParents(
+        current.activities,
+        ids.filter((id) => !current.activities.find((task) => task.id === id)?.archivedAt),
+        parentId,
+        now(),
+      ),
     }));
   };
   const confirm = () => {
@@ -254,7 +266,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
           <div className="grid min-h-0 grid-rows-2 border-t border-zinc-200 lg:border-l lg:border-t-0 dark:border-zinc-800">
             <ProjectTaskPool
               projects={projects}
-              tasks={tasks}
+              activities={activities}
               expanded={expanded}
               onExpanded={setExpanded}
               selectedIds={selectedIds}
@@ -264,7 +276,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
               onToggle={toggle}
             />
             <IndependentTaskPool
-              tasks={independentTasks}
+              activities={independentTasks}
               planDate={planDate}
               selectedIds={selectedIds}
               totalMinutes={totalMinutes}
@@ -299,6 +311,7 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
         onDuplicate={duplicateIndependent}
         onRemove={removeIndependent}
         onCreate={createSubtask}
+        onArchive={(task) => mutate((current) => archiveTask(current, task.id, now()))}
       />
     </div>
   );

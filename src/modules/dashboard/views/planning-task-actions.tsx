@@ -1,22 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { DocumentDuplicateIcon, PencilSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ArchiveBoxIcon, DocumentDuplicateIcon, PencilSquareIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   ContextMenu,
   ContextMenuItem,
   type MenuPosition,
 } from "@/shared/components/context-menu";
-import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
-import { taskInput } from "@/modules/hand/view-models/use-project-task-actions";
+import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
+import { activityInput } from "@/modules/hand/view-models/use-project-task-actions";
 import { TaskDialog } from "@/modules/hand/views/task-dialog";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { RecurringTaskDeleteDialog } from "@/shared/components/recurring-task-delete-dialog";
 import type { RecurringDeleteMode } from "@/shared/model/task-recurrence";
 
 export type PlanningTaskMenu = {
-  task: TaskRecord;
+  task: ActivityRecord;
   position: MenuPosition;
 } | null;
 
@@ -27,18 +27,20 @@ export function PlanningTaskActions({
   onDuplicate,
   onRemove,
   onCreate,
+  onArchive,
 }: {
   menu: PlanningTaskMenu;
   onClose: () => void;
-  onUpdate: (task: TaskRecord, input: TaskInput) => void;
-  onDuplicate: (task: TaskRecord) => void;
-  onRemove: (task: TaskRecord, mode?: RecurringDeleteMode) => void;
-  onCreate: (parent: TaskRecord, input: TaskInput) => void;
+  onUpdate: (task: ActivityRecord, input: ActivityInput) => void;
+  onDuplicate: (task: ActivityRecord) => void;
+  onRemove: (task: ActivityRecord, mode?: RecurringDeleteMode) => void;
+  onCreate: (parent: ActivityRecord, input: ActivityInput) => void;
+  onArchive?: (task: ActivityRecord) => void;
 }) {
   const { t } = useI18n();
-  const [editing, setEditing] = useState<TaskRecord | null>(null);
-  const [creatingFor, setCreatingFor] = useState<TaskRecord | null>(null);
-  const [deleting, setDeleting] = useState<TaskRecord | null>(null);
+  const [editing, setEditing] = useState<ActivityRecord | null>(null);
+  const [creatingFor, setCreatingFor] = useState<ActivityRecord | null>(null);
+  const [deleting, setDeleting] = useState<ActivityRecord | null>(null);
   return (
     <>
       {menu && (
@@ -53,6 +55,7 @@ export function PlanningTaskActions({
             {t("hand.createSubtask")}
           </ContextMenuItem>
           <ContextMenuItem
+            disabled={Boolean(menu.task.archivedAt)}
             onClick={() => {
               setEditing(menu.task);
               onClose();
@@ -71,6 +74,17 @@ export function PlanningTaskActions({
             {t("common.duplicate")}
           </ContextMenuItem>
           <ContextMenuItem
+            disabled={Boolean(menu.task.archivedAt)}
+            onClick={() => {
+              onArchive?.(menu.task);
+              onClose();
+            }}
+          >
+            <ArchiveBoxIcon className="size-4" />
+            {t("common.archive")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={Boolean(menu.task.archivedAt)}
             danger
             onClick={() => {
               const task = menu.task;
@@ -89,7 +103,7 @@ export function PlanningTaskActions({
           key={editing.id}
           open
           edit
-          initial={taskInput(editing)}
+          initial={activityInput(editing)}
           onClose={() => setEditing(null)}
           onSave={(input) => onUpdate(editing, input)}
         />

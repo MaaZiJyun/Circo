@@ -7,7 +7,7 @@ import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
 import { TaskEffortFields } from "@/shared/components/task-effort-fields";
 import { Button, Dialog, Field, Input, Select, Switch, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ProjectRecord } from "@/shared/model/entities";
+import type { ActivityType, ProjectRecord } from "@/shared/model/entities";
 import {
   estimateMinutes,
   formatLocalDateTime,
@@ -18,7 +18,7 @@ import { preprocessTask } from "@/shared/model/task-preprocessor";
 import { defaultTaskUrgency } from "@/shared/model/task-urgency";
 import { defaultTaskEffort } from "@/shared/model/task-effort";
 import { useStore } from "@/shared/view-models/store-context";
-import type { TaskInput } from "../view-models/use-hand-view-model";
+import type { ActivityInput } from "../view-models/use-hand-view-model";
 
 export function TaskDialog({
   open,
@@ -35,7 +35,7 @@ export function TaskDialog({
 }: {
   open: boolean;
   edit?: boolean;
-  initial?: TaskInput;
+  initial?: ActivityInput;
   defaultImportance?: number;
   taskId?: string;
   parentId?: string;
@@ -43,7 +43,7 @@ export function TaskDialog({
   projects?: ProjectRecord[];
   initialProjectId?: string;
   onClose: () => void;
-  onSave: (input: TaskInput, projectId?: string) => void;
+  onSave: (input: ActivityInput, projectId?: string) => void;
 }) {
   const { t } = useI18n();
   const { state } = useStore();
@@ -64,11 +64,12 @@ export function TaskDialog({
       ...defaultTaskUrgency,
       ...defaultTaskEffort,
       recurrence: null,
+      activityType: "task",
       parentId,
-    } satisfies TaskInput;
+    } satisfies ActivityInput;
   };
   const [projectId, setProjectId] = useState(initialProjectId ?? "");
-  const [input, setInput] = useState<TaskInput>(
+  const [input, setInput] = useState<ActivityInput>(
     () => initial ?? createDefaultInput(),
   );
   const updateSchedule = (field: "startDate" | "dueDate", value: string) => {
@@ -178,6 +179,21 @@ export function TaskDialog({
             </Select>
           </Field>
         )}
+        <Field label={t("hand.activityType")}>
+          <Select
+            value={input.activityType ?? "task"}
+            onChange={(event) =>
+              setInput({
+                ...input,
+                activityType: event.target.value as ActivityType,
+              })
+            }
+          >
+            <option value="task">{t("activity.task")}</option>
+            <option value="event">{t("activity.event")}</option>
+            <option value="routine">{t("activity.routine")}</option>
+          </Select>
+        </Field>
         <Field label={t("hand.taskDescription")}>
           <Textarea
             value={input.description}

@@ -27,7 +27,7 @@ function intensity(score: number) {
   return Math.min(4, Math.ceil(score / 25));
 }
 
-function buildDays(tasks: DailyTask[], year: number) {
+function buildDays(activities: DailyTask[], year: number) {
   const current = new Date();
   current.setHours(0, 0, 0, 0);
   const start = new Date(year, 0, 1);
@@ -40,7 +40,7 @@ function buildDays(tasks: DailyTask[], year: number) {
     date.setDate(start.getDate() + index);
     const hidden = date.getFullYear() !== year || date > current;
     const key = dateKey(date);
-    return { date, key, hidden, result: calculateDailyScore(tasks, key) };
+    return { date, key, hidden, result: calculateDailyScore(activities, key) };
   });
 }
 

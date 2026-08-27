@@ -1,14 +1,15 @@
 import type { AppState } from "./app-state";
 import { now } from "./factories";
 import { appendNextRecurringTask } from "./task-recurrence";
+import { isArchivedTask } from "./task-archive";
 
 export function completeTask(
   state: AppState,
   taskId: string,
   stamp = now(),
 ): AppState {
-  const source = state.tasks.find((task) => task.id === taskId);
-  if (!source) return state;
+  const source = state.activities.find((task) => task.id === taskId);
+  if (!source || isArchivedTask(source)) return state;
   const completed = {
     ...source,
     status: "done" as const,
@@ -17,15 +18,11 @@ export function completeTask(
     completedAt: source.completedAt ?? stamp,
     updatedAt: stamp,
   };
-  const nextTasks = appendNextRecurringTask(state.tasks, taskId, stamp).filter(
-    (task) => task.id !== taskId,
+  const updatedTasks = state.activities.map((task) =>
+    task.id === taskId ? completed : task,
   );
   return {
     ...state,
-    tasks: nextTasks,
-    taskHistory: [
-      ...(state.taskHistory ?? []).filter((item) => item.id !== taskId),
-      completed,
-    ],
+    activities: appendNextRecurringTask(updatedTasks, taskId, stamp),
   };
 }

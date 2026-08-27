@@ -34,7 +34,7 @@ export function seedTaskLists(stamp: string): TaskList[] {
     {
       id: "task_list_default",
       name: "All Tasks",
-      note: "All tasks",
+      note: "All activities",
       color: "#18181b",
       system: "default",
       createdAt: stamp,

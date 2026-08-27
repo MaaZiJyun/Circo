@@ -6,6 +6,7 @@ import {
   PencilSquareIcon,
   PlusIcon,
   TrashIcon,
+  ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 import {
   ContextMenu,
@@ -14,14 +15,14 @@ import {
 } from "@/shared/components/context-menu";
 import { Button, Dialog, Field, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
+import type { ProjectRecord, ActivityRecord } from "@/shared/model/entities";
 import type { useTaskLibrary } from "../view-models/use-task-library";
 import { isLockedCompletedPastTask } from "./project-task-actions";
 import { RecurringTaskDeleteDialog } from "@/shared/components/recurring-task-delete-dialog";
 import type { RecurringDeleteMode } from "@/shared/model/task-recurrence";
 
 export type TaskLibraryMenu = {
-  task: TaskRecord;
+  task: ActivityRecord;
   position: MenuPosition;
 } | null;
 
@@ -35,12 +36,12 @@ export function TaskLibraryActions({
   library: ReturnType<typeof useTaskLibrary>;
   menu: TaskLibraryMenu;
   onClose: () => void;
-  onEdit: (task: TaskRecord) => void;
-  onAddToList: (task: TaskRecord) => void;
+  onEdit: (task: ActivityRecord) => void;
+  onAddToList: (task: ActivityRecord) => void;
 }) {
   const { t } = useI18n();
-  const [assigning, setAssigning] = useState<TaskRecord | null>(null);
-  const [deleting, setDeleting] = useState<TaskRecord | null>(null);
+  const [assigning, setAssigning] = useState<ActivityRecord | null>(null);
+  const [deleting, setDeleting] = useState<ActivityRecord | null>(null);
   const task = menu?.task;
   const locked = task ? isLockedCompletedPastTask(task) : false;
   const canRemoveFromList = Boolean(
@@ -74,7 +75,7 @@ export function TaskLibraryActions({
             {t("hand.assignProject")}
           </ContextMenuItem>
           <ContextMenuItem
-            disabled={Boolean(task.projectId)}
+            disabled={Boolean(task.projectId) || locked}
             onClick={() => {
               onAddToList(task);
               onClose();
@@ -93,7 +94,12 @@ export function TaskLibraryActions({
             <TrashIcon className="size-4" />
             {t("hand.removeFromList")}
           </ContextMenuItem>
+          <ContextMenuItem disabled={Boolean(task.archivedAt)} onClick={() => { library.archiveTask(task.id); onClose(); }}>
+            <ArchiveBoxIcon className="size-4" />
+            {t("common.archive")}
+          </ContextMenuItem>
           <ContextMenuItem
+            disabled={locked}
             danger
             onClick={() => {
               const id = task.id;
@@ -137,7 +143,7 @@ function TaskAssignDialog({
   onClose,
   onAssign,
 }: {
-  task: TaskRecord;
+  task: ActivityRecord;
   projects: ProjectRecord[];
   onClose: () => void;
   onAssign: (projectId?: string) => void;

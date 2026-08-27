@@ -13,7 +13,7 @@ describe("growth metrics", () => {
   it("returns no rate when a denominator is zero", () => {
     const state = createSeedState();
     state.sessions = [];
-    state.tasks = [];
+    state.activities = [];
     const metrics = calculateMetrics(state);
     expect(metrics.effectiveRate).toBeNull();
     expect(metrics.completionRate).toBeNull();

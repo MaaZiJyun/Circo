@@ -1,7 +1,7 @@
-import type { DailyTask, TaskRecord } from "./entities";
+import type { DailyTask, ActivityRecord } from "./entities";
 import type { TaskUrgencyInputs } from "./task-urgency-types";
 
-type UrgencyTask = Pick<TaskRecord, "id" | "dueDate"> &
+type UrgencyTask = Pick<ActivityRecord, "id" | "dueDate"> &
   Partial<TaskUrgencyInputs>;
 type AnyUrgencyTask =
   | UrgencyTask
@@ -29,8 +29,8 @@ export function taskDueRange(
   return 5;
 }
 
-export function taskBlocking(taskId: string, tasks: AnyUrgencyTask[]): number {
-  const count = tasks.filter(
+export function taskBlocking(taskId: string, activities: AnyUrgencyTask[]): number {
+  const count = activities.filter(
     (task) => task.id !== taskId && (task.dependencyIds ?? []).includes(taskId),
   ).length;
   return Math.min(5, count);
@@ -38,7 +38,7 @@ export function taskBlocking(taskId: string, tasks: AnyUrgencyTask[]): number {
 
 export function taskUrgency(
   task: AnyUrgencyTask,
-  tasks: AnyUrgencyTask[],
+  activities: AnyUrgencyTask[],
   currentTime = Date.now(),
 ) {
   const targetId =
@@ -46,7 +46,7 @@ export function taskUrgency(
   const deadline = "dueDate" in task ? task.dueDate : task.dueAt;
   const deadlineScore = taskDueRange(deadline, currentTime);
   const delayLoss = score(task.delayLoss);
-  const blocking = taskBlocking(targetId, tasks);
+  const blocking = taskBlocking(targetId, activities);
   return {
     deadline: deadlineScore,
     delayLoss,

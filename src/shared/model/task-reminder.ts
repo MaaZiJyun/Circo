@@ -1,10 +1,10 @@
-import type { TaskRecord } from "./entities";
+import type { ActivityRecord } from "./entities";
 import { deadlineTime } from "./task-status";
 
 export type TaskReminderKind = "expectedStart" | "deadline";
 
 export interface TaskReminder {
-  task: TaskRecord;
+  task: ActivityRecord;
   kind: TaskReminderKind;
   notifyAt: number;
 }
@@ -12,14 +12,14 @@ export interface TaskReminder {
 const minute = 60_000;
 
 export function taskReminderKey(
-  task: TaskRecord,
+  task: ActivityRecord,
   kind: TaskReminderKind,
 ) {
   return `${kind}:${task.id}:${task.dueDate}:${task.estimatedMinutes}`;
 }
 
 export function taskReminderTime(
-  task: TaskRecord,
+  task: ActivityRecord,
   kind: TaskReminderKind,
 ) {
   const deadline = deadlineTime(task.dueDate);
@@ -29,11 +29,11 @@ export function taskReminderTime(
 }
 
 export function activeTaskReminders(
-  tasks: TaskRecord[],
+  activities: ActivityRecord[],
   currentTime: number,
   dismissed: Set<string>,
 ) {
-  return tasks
+  return activities
     .filter((task) => !task.deletedAt && task.status !== "done")
     .flatMap((task) =>
       (["expectedStart", "deadline"] as const).flatMap((kind) => {

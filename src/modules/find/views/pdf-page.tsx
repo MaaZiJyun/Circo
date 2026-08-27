@@ -42,7 +42,7 @@ export function PdfPage({
         try {
           await previousTask.promise;
         } catch {
-          // PDF.js rejects cancelled render tasks by design.
+          // PDF.js rejects cancelled render activities by design.
         }
       }
       if (!active) return;

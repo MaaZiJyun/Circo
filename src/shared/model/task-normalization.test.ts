@@ -7,7 +7,7 @@ import {
 } from "./task-normalization";
 
 describe("task normalization", () => {
-  it("migrates legacy reusable tasks into the shared task collection", () => {
+  it("migrates legacy reusable activities into the shared task collection", () => {
     const state = Object.assign(createSeedState(), {
       routineTasks: [
         {

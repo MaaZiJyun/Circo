@@ -34,7 +34,7 @@ export function useTaskLibrary() {
     [state],
   );
   const allTasks = useMemo(
-    () => (state ? activeItems(state.tasks) : []),
+    () => (state ? activeItems(state.activities) : []),
     [state],
   );
   const formalTasks = useMemo(
@@ -46,7 +46,7 @@ export function useTaskLibrary() {
     [allTasks],
   );
 
-  const tasks = useMemo(() => {
+  const activities = useMemo(() => {
     const filtered =
       activeListId === TASK_DEFAULT_LIST
         ? allTasks
@@ -113,9 +113,11 @@ export function useTaskLibrary() {
           ? { ...item, deletedAt: stamp, updatedAt: stamp }
           : item,
       ),
-      tasks: current.tasks.map((item) => ({
+      activities: current.activities.map((item) => ({
         ...item,
-        listIds: (item.listIds ?? []).filter((listId) => listId !== id),
+        listIds: item.archivedAt
+          ? item.listIds
+          : (item.listIds ?? []).filter((listId) => listId !== id),
       })),
     }));
     selectList(TASK_DEFAULT_LIST);
@@ -124,8 +126,8 @@ export function useTaskLibrary() {
     if (lists.find((item) => item.id === listId)?.system) return;
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((item) =>
-        ids.includes(item.id) &&
+      activities: current.activities.map((item) =>
+        ids.includes(item.id) && !item.archivedAt &&
         !item.projectId &&
         !(item.listIds ?? []).includes(listId)
           ? { ...item, listIds: [...(item.listIds ?? []), listId], updatedAt: now() }
@@ -137,8 +139,8 @@ export function useTaskLibrary() {
     if (selectedList?.system !== null) return;
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((item) =>
-        ids.includes(item.id)
+      activities: current.activities.map((item) =>
+        ids.includes(item.id) && !item.archivedAt
           ? {
               ...item,
               listIds: (item.listIds ?? []).filter((id) => id !== activeListId),
@@ -156,8 +158,8 @@ export function useTaskLibrary() {
     const stamp = now();
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((item) =>
-        selectedIds.includes(item.id)
+      activities: current.activities.map((item) =>
+        selectedIds.includes(item.id) && !item.archivedAt
           ? { ...item, deletedAt: stamp, updatedAt: stamp }
           : item,
       ),
@@ -171,7 +173,7 @@ export function useTaskLibrary() {
     allTasks,
     formalTasks,
     casualTasks,
-    tasks,
+    activities,
     selectedList,
     activeListId,
     selectList,

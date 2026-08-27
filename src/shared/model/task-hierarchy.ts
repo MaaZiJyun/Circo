@@ -1,13 +1,13 @@
-import type { TaskRecord } from "./entities";
+import type { ActivityRecord } from "./entities";
 
 export function setTaskParents(
-  tasks: TaskRecord[],
+  activities: ActivityRecord[],
   ids: string[],
   parentId: string | null,
   updatedAt: string,
 ) {
   const selected = new Set(ids);
-  const candidate = tasks.map((item) =>
+  const candidate = activities.map((item) =>
     selected.has(item.id) && item.id !== parentId
       ? { ...item, parentId: parentId ?? undefined, updatedAt }
       : item,
@@ -23,14 +23,14 @@ export function setTaskParents(
 function createsCycle(
   childId: string,
   parentId: string,
-  tasks: Map<string, TaskRecord>,
+  activities: Map<string, ActivityRecord>,
 ) {
   let current: string | undefined = parentId;
   const visited = new Set<string>();
   while (current && !visited.has(current)) {
     if (current === childId) return true;
     visited.add(current);
-    current = tasks.get(current)?.parentId;
+    current = activities.get(current)?.parentId;
   }
   return false;
 }

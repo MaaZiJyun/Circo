@@ -53,7 +53,7 @@ function resolveCard(
       : null;
   }
   if (reference.kind === "task") {
-    const item = state.tasks.find(
+    const item = state.activities.find(
       (value) => value.id === reference.id && !value.deletedAt,
     );
     return item

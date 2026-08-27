@@ -213,7 +213,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
-    tasks: [
+    activities: [
       {
         id: "task_scope",
         projectId: "project_arch",
@@ -230,6 +230,7 @@ export function createSeedState(): AppState {
         ...{ impact: 4, goal: 4, risk: 4, value: 4, delayLoss: 3, dependencyIds: [], complexity: 3, uncertainty: 3 },
         importance: 16,
         recurrence: null,
+        activityType: "task",
         completedAt: stamp,
         createdAt: stamp,
         updatedAt: stamp,
@@ -250,11 +251,11 @@ export function createSeedState(): AppState {
         ...{ impact: 4, goal: 4, risk: 4, value: 4, delayLoss: 3, dependencyIds: [], complexity: 3, uncertainty: 3 },
         importance: 16,
         recurrence: null,
+        activityType: "task",
         createdAt: stamp,
         updatedAt: stamp,
       },
     ],
-    taskHistory: [],
     logs: [
       {
         id: "log_1",

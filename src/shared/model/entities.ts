@@ -212,10 +212,15 @@ export interface ProjectRecord extends BaseEntity {
   tags: string[];
   score: number;
 }
-export interface TaskRecord extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
+
+export type ActivityType = "task" | "event" | "routine";
+
+export interface ActivityRecord extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
   projectId?: string;
   listIds?: string[];
   parentId?: string;
+  /** Activity classification; omitted on legacy records and treated as task. */
+  activityType?: ActivityType;
   title: string;
   description: string;
   startDate: string;
@@ -231,6 +236,8 @@ export interface TaskRecord extends BaseEntity, TaskImportanceDimensions, TaskUr
   recurrenceSourceId?: string;
   actualStartedAt?: string;
   completedAt?: string;
+  /** An archived activity is immutable and remains in the task collection. */
+  archivedAt?: string;
 }
 
 export interface DailyTask extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
@@ -246,12 +253,6 @@ export interface DailyTask extends BaseEntity, TaskImportanceDimensions, TaskUrg
   importance: number;
   sourceTaskId?: string;
   projectId?: string;
-}
-
-/** Historical snapshot of a task after it leaves the active task collection. */
-export interface TaskHistoryRecord extends TaskRecord {
-  status: "done";
-  completedAt: string;
 }
 
 export interface ProjectLog extends BaseEntity {

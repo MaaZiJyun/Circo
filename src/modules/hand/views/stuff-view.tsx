@@ -6,7 +6,7 @@ import { LibrarySortControls } from "@/shared/components/library-sort-controls";
 import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
 import { Button, EmptyState } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import {
   type TaskSort,
   useTaskLibrary,
@@ -17,7 +17,7 @@ import {
   TaskLibraryActions,
   type TaskLibraryMenu,
 } from "./task-library-actions";
-import { taskInput } from "../view-models/use-project-task-actions";
+import { activityInput } from "../view-models/use-project-task-actions";
 import { TaskDialog } from "./task-dialog";
 
 export function StuffView({
@@ -27,7 +27,7 @@ export function StuffView({
 }) {
   const { t } = useI18n();
   const [creating, setCreating] = useState(false);
-  const [editing, setEditing] = useState<TaskRecord | null>(null);
+  const [editing, setEditing] = useState<ActivityRecord | null>(null);
   const [menu, setMenu] = useState<TaskLibraryMenu>(null);
   const [addingIds, setAddingIds] = useState<string[]>([]);
   const selectionMode = library.selectedIds.length > 0;
@@ -115,7 +115,7 @@ export function StuffView({
           </>
         }
       >
-        {library.tasks.length ? (
+        {library.activities.length ? (
           <TaskLibraryTable
             library={library}
             selectionMode={selectionMode}
@@ -144,7 +144,7 @@ export function StuffView({
           open
           edit
           taskId={editing.id}
-          initial={taskInput(editing)}
+          initial={activityInput(editing)}
           onClose={() => setEditing(null)}
           onSave={(input) => library.updateTask(editing.id, input)}
         />

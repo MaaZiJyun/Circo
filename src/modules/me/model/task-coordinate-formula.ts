@@ -44,9 +44,9 @@ const timestamp = (value?: string) => {
 export function taskFormulaContext(
   task: DailyTask,
   currentTime: number,
-  tasks: DailyTask[] = [task],
+  activities: DailyTask[] = [task],
 ) {
-  const urgency = taskUrgency(task, tasks, currentTime);
+  const urgency = taskUrgency(task, activities, currentTime);
   const effort = taskEffort(task);
   return {
     date: timestamp(task.date),
@@ -72,10 +72,10 @@ export function taskCoordinatesFromFormula(
   task: DailyTask,
   formulas?: MatrixFormulaSettings,
   currentTime = Date.now(),
-  tasks: DailyTask[] = [task],
+  activities: DailyTask[] = [task],
 ): TaskCoordinates {
   const selected = resolveMatrixFormulas(formulas);
-  const variables = taskFormulaContext(task, currentTime, tasks);
+  const variables = taskFormulaContext(task, currentTime, activities);
   const calculate = (formula: string | undefined, fallback: string) => {
     try {
       return evaluateMatrixFormula(formula ?? fallback, variables);

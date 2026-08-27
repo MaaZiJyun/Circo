@@ -9,7 +9,7 @@ import {
 import { Button, ProgressBar } from "@/shared/components/ui";
 import { TaskHierarchyList } from "@/shared/components/task-hierarchy-list";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
+import type { ProjectRecord, ActivityRecord } from "@/shared/model/entities";
 import type { DailyPlanItem } from "@/shared/model/message";
 
 export const dayMinutes = 1440;
@@ -72,7 +72,7 @@ export function PlanBasket({
 
 export function ProjectTaskPool({
   projects,
-  tasks,
+  activities,
   expanded,
   onExpanded,
   onContextMenu,
@@ -80,10 +80,10 @@ export function ProjectTaskPool({
   ...pool
 }: PoolProps & {
   projects: ProjectRecord[];
-  tasks: TaskRecord[];
+  activities: ActivityRecord[];
   expanded: string[];
   onExpanded: (ids: string[]) => void;
-  onContextMenu: (task: TaskRecord, x: number, y: number) => void;
+  onContextMenu: (task: ActivityRecord, x: number, y: number) => void;
   onSetParent: (ids: string[], parentId: string | null) => void;
 }) {
   const { t } = useI18n();
@@ -92,7 +92,7 @@ export function ProjectTaskPool({
       <h3 className="mb-3 font-semibold">{t("planning.projectTasks")}</h3>
       <div className="space-y-2">
         {projects.map((project) => {
-          const projectTasks = tasks.filter(
+          const projectTasks = activities.filter(
             (task) => task.projectId === project.id,
           );
           const done = projectTasks.filter(
@@ -130,7 +130,7 @@ export function ProjectTaskPool({
               {open && (
                 <div className="border-t border-zinc-200 p-2 dark:border-zinc-800">
                   <TaskHierarchyList
-                    tasks={projectTasks}
+                    activities={projectTasks}
                     onSetParent={onSetParent}
                     renderTask={(task) => (
                       <PlanChoice
@@ -166,15 +166,15 @@ export function ProjectTaskPool({
 }
 
 export function IndependentTaskPool({
-  tasks,
+  activities,
   planDate,
   onContextMenu,
   onSetParent,
   ...pool
 }: PoolProps & {
-  tasks: TaskRecord[];
+  activities: ActivityRecord[];
   planDate: string;
-  onContextMenu: (task: TaskRecord, x: number, y: number) => void;
+  onContextMenu: (task: ActivityRecord, x: number, y: number) => void;
   onSetParent: (ids: string[], parentId: string | null) => void;
 }) {
   const { t } = useI18n();
@@ -182,7 +182,7 @@ export function IndependentTaskPool({
     <section className="min-h-0 overflow-y-auto border-t border-zinc-200 p-5 dark:border-zinc-800">
       <h3 className="mb-3 font-semibold">{t("planning.routineTasks")}</h3>
       <TaskHierarchyList
-        tasks={tasks}
+        activities={activities}
         onSetParent={onSetParent}
         renderTask={(task) => (
           <PlanChoice

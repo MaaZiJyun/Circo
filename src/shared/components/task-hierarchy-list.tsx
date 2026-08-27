@@ -1,27 +1,27 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { useI18n } from "@/shared/i18n/i18n-context";
 
 export const taskHierarchyDragType = "application/x-circo-task";
 const detachDistance = 18;
 
 export function TaskHierarchyList({
-  tasks,
+  activities,
   selectedTaskIds = [],
   onSetParent,
   onDragStart,
   renderTask,
 }: {
-  tasks: TaskRecord[];
+  activities: ActivityRecord[];
   selectedTaskIds?: string[];
   onSetParent: (ids: string[], parentId: string | null) => void;
   onDragStart?: (
-    task: TaskRecord,
+    task: ActivityRecord,
     event: React.DragEvent<HTMLDivElement>,
   ) => void;
-  renderTask: (task: TaskRecord) => React.ReactNode;
+  renderTask: (task: ActivityRecord) => React.ReactNode;
 }) {
   const { t } = useI18n();
   const [draggedTaskIds, setDraggedTaskIds] = useState<string[]>([]);
@@ -39,10 +39,10 @@ export function TaskHierarchyList({
   const draggedIdsRef = useRef<string[]>([]);
   const dropHandledRef = useRef(false);
   const taskContainersRef = useRef(new Map<string, HTMLDivElement>());
-  const { roots, children } = buildHierarchy(tasks);
+  const { roots, children } = buildHierarchy(activities);
   const rendered = new Set<string>();
 
-  if (!tasks.length) return null;
+  if (!activities.length) return null;
 
   const clearDrag = () => {
     setDraggedTaskIds([]);
@@ -55,12 +55,12 @@ export function TaskHierarchyList({
       event.dataTransfer.getData(taskHierarchyDragType) ||
       event.dataTransfer.getData("text/plain");
     try {
-      return normalizeDraggedIds(JSON.parse(value) as unknown, tasks);
+      return normalizeDraggedIds(JSON.parse(value) as unknown, activities);
     } catch {
-      return draggedTaskIds.filter((id) => tasks.some((task) => task.id === id));
+      return draggedTaskIds.filter((id) => activities.some((task) => task.id === id));
     }
   };
-  const startDrag = (task: TaskRecord, event: React.DragEvent<HTMLDivElement>) => {
+  const startDrag = (task: ActivityRecord, event: React.DragEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement | null;
     if (target?.closest("button, input, textarea, select, a")) {
       event.preventDefault();
@@ -76,11 +76,11 @@ export function TaskHierarchyList({
     event.dataTransfer.setData("text/plain", payload);
     onDragStart?.(task, event);
   };
-  const setDropTarget = (task: TaskRecord, event: React.DragEvent<HTMLDivElement>) => {
+  const setDropTarget = (task: ActivityRecord, event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     const ids = draggedTaskIds.length ? draggedTaskIds : readDraggedIds(event);
-    if (isValidParentTarget(ids, task.id, tasks)) {
+    if (isValidParentTarget(ids, task.id, activities)) {
       event.dataTransfer.dropEffect = "move";
       setDragOverTaskId(task.id);
       setJoinIndicator({
@@ -93,12 +93,12 @@ export function TaskHierarchyList({
       setJoinIndicator(null);
     }
   };
-  const dropOnTask = (task: TaskRecord, event: React.DragEvent<HTMLDivElement>) => {
+  const dropOnTask = (task: ActivityRecord, event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
     dropHandledRef.current = true;
     const ids = readDraggedIds(event).filter((id) => id !== task.id);
-    if (isValidParentTarget(ids, task.id, tasks)) onSetParent(ids, task.id);
+    if (isValidParentTarget(ids, task.id, activities)) onSetParent(ids, task.id);
     clearDrag();
   };
   const dropIntoChildren = (
@@ -121,7 +121,7 @@ export function TaskHierarchyList({
     clearDrag();
   };
   const trackDetachDistance = (
-    task: TaskRecord,
+    task: ActivityRecord,
     event: React.DragEvent<HTMLDivElement>,
   ) => {
     if ((!event.clientX && !event.clientY) || !task.parentId) return;
@@ -139,7 +139,7 @@ export function TaskHierarchyList({
         : null,
     );
   };
-  const finishDrag = (task: TaskRecord, event: React.DragEvent<HTMLDivElement>) => {
+  const finishDrag = (task: ActivityRecord, event: React.DragEvent<HTMLDivElement>) => {
     const hasPointerPosition = event.clientX !== 0 || event.clientY !== 0;
     const parentContainer = task.parentId
       ? taskContainersRef.current.get(task.parentId)
@@ -158,7 +158,7 @@ export function TaskHierarchyList({
     dropHandledRef.current = false;
     clearDrag();
   };
-  const renderNode = (task: TaskRecord): React.ReactNode => {
+  const renderNode = (task: ActivityRecord): React.ReactNode => {
     if (rendered.has(task.id)) return null;
     rendered.add(task.id);
     const nestedTasks = children.get(task.id) ?? [];
@@ -245,9 +245,9 @@ export function TaskHierarchyList({
   );
 }
 
-function normalizeDraggedIds(value: unknown, tasks: TaskRecord[]) {
+function normalizeDraggedIds(value: unknown, activities: ActivityRecord[]) {
   if (!Array.isArray(value)) return [];
-  const available = new Set(tasks.map((task) => task.id));
+  const available = new Set(activities.map((task) => task.id));
   return value.filter(
     (id): id is string => typeof id === "string" && available.has(id),
   );
@@ -256,10 +256,10 @@ function normalizeDraggedIds(value: unknown, tasks: TaskRecord[]) {
 function isValidParentTarget(
   childIds: string[],
   parentId: string,
-  tasks: TaskRecord[],
+  activities: ActivityRecord[],
 ) {
   if (!childIds.length || childIds.includes(parentId)) return false;
-  const byId = new Map(tasks.map((task) => [task.id, task]));
+  const byId = new Map(activities.map((task) => [task.id, task]));
   let current: string | undefined = parentId;
   const visited = new Set<string>();
   while (current && !visited.has(current)) {
@@ -276,26 +276,26 @@ function distanceToRect(x: number, y: number, rect: DOMRect) {
   return Math.hypot(horizontal, vertical);
 }
 
-function buildHierarchy(tasks: TaskRecord[]) {
-  const byId = new Map(tasks.map((task) => [task.id, task]));
-  const children = new Map<string, TaskRecord[]>();
-  tasks.forEach((task) => {
+function buildHierarchy(activities: ActivityRecord[]) {
+  const byId = new Map(activities.map((task) => [task.id, task]));
+  const children = new Map<string, ActivityRecord[]>();
+  activities.forEach((task) => {
     if (!task.parentId || !byId.has(task.parentId)) return;
     const siblings = children.get(task.parentId) ?? [];
     siblings.push(task);
     children.set(task.parentId, siblings);
   });
-  const roots = tasks.filter(
+  const roots = activities.filter(
     (task) => !task.parentId || !byId.has(task.parentId),
   );
   const visited = new Set<string>();
-  const markTree = (task: TaskRecord) => {
+  const markTree = (task: ActivityRecord) => {
     if (visited.has(task.id)) return;
     visited.add(task.id);
     (children.get(task.id) ?? []).forEach(markTree);
   };
   roots.forEach(markTree);
-  tasks.forEach((task) => {
+  activities.forEach((task) => {
     if (!visited.has(task.id)) roots.push(task);
   });
   return { roots, children };

@@ -57,8 +57,8 @@ function synchronizeTaskStatuses(mutate: StoreValue["mutate"]) {
   const stamp = new Date(currentTime).toISOString();
   mutate((current) => ({
     ...current,
-    tasks: current.tasks.map((task) => {
-      if (task.deletedAt) return task;
+    activities: current.activities.map((task) => {
+      if (task.deletedAt || task.archivedAt) return task;
       const status = taskStatusAt(task, currentTime);
       return status === task.status
         ? task
@@ -222,15 +222,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!state) return;
     const currentTime = Date.now();
-    const changed = state.tasks.some(
+    const changed = state.activities.some(
       (task) =>
-        !task.deletedAt && task.status !== taskStatusAt(task, currentTime),
+        !task.deletedAt && !task.archivedAt && task.status !== taskStatusAt(task, currentTime),
     );
     if (changed) {
       const timer = window.setTimeout(() => synchronizeTaskStatuses(mutate), 0);
       return () => window.clearTimeout(timer);
     }
-    const nextDeadline = state.tasks.reduce<number | undefined>((next, task) => {
+    const nextDeadline = state.activities.reduce<number | undefined>((next, task) => {
       if (task.deletedAt || task.status === "done") return next;
       const deadline = deadlineTime(task.dueDate);
       if (!Number.isFinite(deadline) || deadline <= currentTime) return next;

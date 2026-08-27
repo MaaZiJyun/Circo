@@ -12,7 +12,7 @@ const delayLossLabels = [
   "No impact",
   "Small time loss",
   "Affects some work",
-  "Blocks other tasks",
+  "Blocks other activities",
   "Major loss",
 ];
 
@@ -33,10 +33,10 @@ export function TaskUrgencyFields({
   const { t } = useI18n();
   const [choosingDependencies, setChoosingDependencies] = useState(false);
   const [draftDependencyIds, setDraftDependencyIds] = useState(dependencyIds);
-  const tasks = activeItems(state?.tasks ?? []);
-  const options = tasks.filter((task) => task.id !== taskId);
+  const activities = activeItems(state?.activities ?? []);
+  const options = activities.filter((task) => task.id !== taskId);
   const dueRange = taskDueRange(deadline);
-  const blocking = taskBlocking(taskId, tasks);
+  const blocking = taskBlocking(taskId, activities);
   return (
     <section className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
       <div className="mb-3 flex items-center justify-between gap-3">

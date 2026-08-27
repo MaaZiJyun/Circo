@@ -14,8 +14,13 @@ export function DailyTaskHistory() {
   if (!state) return null;
 
   const projects = new Map(activeItems(state.projects).map((item) => [item.id, item.name]));
-  const groups = new Map<string, typeof state.taskHistory>();
-  for (const task of activeItems(state.taskHistory ?? [])) {
+  const archivedTasks = activeItems(state.activities).filter(
+    (task): task is typeof task & { completedAt: string } =>
+      Boolean(task.archivedAt && task.completedAt),
+  );
+  const historyTasks = archivedTasks;
+  const groups = new Map<string, typeof historyTasks>();
+  for (const task of historyTasks) {
     const date = task.completedAt.slice(0, 10);
     if (date >= today()) continue;
     const group = groups.get(date) ?? [];
@@ -58,7 +63,7 @@ export function DailyTaskHistory() {
                       label={t("me.deleteHistory")}
                       onClick={() => {
                         if (window.confirm(t("common.confirmDelete"))) {
-                          softDelete("taskHistory", task.id);
+                          softDelete("activities", task.id);
                         }
                       }}
                     >

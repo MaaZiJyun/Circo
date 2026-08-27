@@ -8,6 +8,7 @@ import {
   PlusIcon,
   TrashIcon,
   XCircleIcon,
+  ArchiveBoxIcon,
 } from "@heroicons/react/24/outline";
 import {
   ContextMenu,
@@ -24,7 +25,7 @@ import {
   Tabs,
 } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { DailyTask, TaskRecord } from "@/shared/model/entities";
+import type { DailyTask, ActivityRecord } from "@/shared/model/entities";
 import { useDailyTaskCache } from "../view-models/use-daily-task-cache";
 import {
   CreateDailyTaskDialog,
@@ -43,15 +44,15 @@ export function DailyTaskList() {
     position: MenuPosition;
   } | null>(null);
   const [editing, setEditing] = useState<DailyTask | null>(null);
-  const [subtaskParent, setSubtaskParent] = useState<TaskRecord | null>(null);
+  const [subtaskParent, setSubtaskParent] = useState<ActivityRecord | null>(null);
   if (!vm) return null;
-  const openDailyTasks = vm.dailyTasks.filter((item) => !item.completed);
+  const visibleDailyTasks = vm.dailyTasks;
   const dailyTaskBySourceId = new Map(
-    openDailyTasks.flatMap((item) =>
+    visibleDailyTasks.flatMap((item) =>
       item.sourceTaskId ? [[item.sourceTaskId, item] as const] : [],
     ),
   );
-  const openSourceTasks = vm.tasks.filter((task) => dailyTaskBySourceId.has(task.id));
+  const openSourceTasks = vm.activities.filter((task) => dailyTaskBySourceId.has(task.id));
   const completed = vm.dailyTasks.filter((item) => item.completed).length;
   return (
     <>
@@ -93,14 +94,14 @@ export function DailyTaskList() {
       </div>
       {viewMode === "diagram" ? (
         <TaskQuadrant
-          tasks={openDailyTasks}
+        activities={visibleDailyTasks}
           coordinates={vm.coordinates}
           formulas={vm.profile.matrixFormulas}
         />
       ) : openSourceTasks.length ? (
         <div className="max-h-96 overflow-y-auto">
           <TaskHierarchyList
-            tasks={openSourceTasks}
+            activities={openSourceTasks}
             onSetParent={vm.setTaskParent}
             onDragStart={(task, event) => {
               const item = dailyTaskBySourceId.get(task.id);
@@ -148,7 +149,7 @@ export function DailyTaskList() {
       )}
       <RetrieveTaskDialog
         open={dialog === "retrieve"}
-        tasks={vm.tasks}
+        activities={vm.activities}
         projectName={vm.projectName}
         existingIds={vm.dailyTasks.flatMap((item) =>
           item.sourceTaskId ? [item.sourceTaskId] : [],
@@ -187,7 +188,7 @@ export function DailyTaskList() {
             disabled={!menu.task.sourceTaskId}
             onClick={() => {
               const parent = menu.task.sourceTaskId
-                ? vm.tasks.find((task) => task.id === menu.task.sourceTaskId)
+                ? vm.activities.find((task) => task.id === menu.task.sourceTaskId)
                 : undefined;
               if (parent) setSubtaskParent(parent);
               setMenu(null);
@@ -204,6 +205,16 @@ export function DailyTaskList() {
           >
             <PencilSquareIcon className="size-4" />
             {t("common.edit")}
+          </ContextMenuItem>
+          <ContextMenuItem
+            disabled={Boolean(menu.task.sourceTaskId && vm.activities.find((task) => task.id === menu.task.sourceTaskId)?.archivedAt)}
+            onClick={() => {
+              if (menu.task.sourceTaskId) vm.archiveTask(menu.task.sourceTaskId);
+              setMenu(null);
+            }}
+          >
+            <ArchiveBoxIcon className="size-4" />
+            {t("common.archive")}
           </ContextMenuItem>
           <ContextMenuItem
             danger

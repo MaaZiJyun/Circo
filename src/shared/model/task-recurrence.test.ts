@@ -18,7 +18,7 @@ describe("task recurrence", () => {
 
   it("creates one distinct next occurrence for a completed task", () => {
     const source = {
-      ...createSeedState().tasks[0],
+      ...createSeedState().activities[0],
       recurrence: { interval: 1, unit: "month" as const },
     };
     const first = appendNextRecurringTask(
@@ -38,7 +38,7 @@ describe("task recurrence", () => {
 
   it("keeps a future occurrence when deleting only this occurrence", () => {
     const source = {
-      ...createSeedState().tasks[0],
+      ...createSeedState().activities[0],
       recurrence: { interval: 1, unit: "week" as const },
     };
     const result = deleteRecurringTasks(
@@ -47,16 +47,16 @@ describe("task recurrence", () => {
       "single",
       "2026-08-13T12:00:00.000Z",
     );
-    expect(result.tasks).toHaveLength(2);
-    expect(result.tasks.find((task) => task.id === source.id)?.deletedAt).toBe(
+    expect(result.activities).toHaveLength(2);
+    expect(result.activities.find((task) => task.id === source.id)?.deletedAt).toBe(
       "2026-08-13T12:00:00.000Z",
     );
-    expect(result.tasks.some((task) => !task.deletedAt)).toBe(true);
+    expect(result.activities.some((task) => !task.deletedAt)).toBe(true);
   });
 
   it("deletes the current and all generated future occurrences for a series", () => {
     const source = {
-      ...createSeedState().tasks[0],
+      ...createSeedState().activities[0],
       recurrence: { interval: 1, unit: "week" as const },
     };
     const next = {
@@ -75,6 +75,6 @@ describe("task recurrence", () => {
       "series",
       "2026-08-13T12:00:00.000Z",
     );
-    expect(result.tasks.every((task) => task.deletedAt)).toBe(true);
+    expect(result.activities.every((task) => task.deletedAt)).toBe(true);
   });
 });

@@ -69,7 +69,7 @@ export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
   "dashboard.finishToday.question.unfinished":
     "What remains unfinished, and why?",
   "dashboard.finishToday.hint.unfinished":
-    "Which tasks remain incomplete, and why?",
+    "Which activities remain incomplete, and why?",
   "dashboard.finishToday.question.changeNextTime":
     "What should I do differently next time?",
   "dashboard.finishToday.hint.changeNextTime":
@@ -93,7 +93,7 @@ export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
   "dashboard.cancelFocus": "Cancel",
   "dashboard.assignFocusTask": "Log this time to a daily task",
   "dashboard.saveFocus": "Save time",
-  "dashboard.noDailyTasks": "There are no daily tasks to choose today.",
+  "dashboard.noDailyTasks": "There are no daily activities to choose today.",
   "dashboard.editFocusTime":
     "Edit focus time in hours:minutes:seconds.milliseconds",
   "dashboard.averageScore": "Average daily score",
@@ -102,13 +102,13 @@ export const dashboardFocusEn: Record<keyof typeof dashboardFocusZh, string> = {
   "dashboard.scoreBreakdown":
     "{completed} completed, {incomplete} incomplete, including {overdue} overdue; {actual} / {planned} minutes invested. Completion +{completionScore}, time +{timeScore}, urgency/importance +{priorityScore}; final-score discount {overdueDiscount}%.",
   "dashboard.scoreReason.empty":
-    "No tasks were added to the daily list, so the score is 0.",
+    "No activities were added to the daily list, so the score is 0.",
   "dashboard.scoreReason.excellent":
     "The plan was completed well, time investment met expectations, and urgent important work was prioritized.",
   "dashboard.scoreReason.good":
     "Completion and investment were good, with some planned or high-priority work still available to advance.",
   "dashboard.scoreReason.partial":
-    "There was useful investment, but incomplete or overdue work, insufficient time, or unfinished high-priority tasks reduced the score.",
+    "There was useful investment, but incomplete or overdue work, insufficient time, or unfinished high-priority activities reduced the score.",
   "dashboard.scoreReason.low":
-    "Few tasks and little invested time were completed, and the overdue discount may have reduced the score further; urgent important unfinished work needs attention first.",
+    "Few activities and little invested time were completed, and the overdue discount may have reduced the score further; urgent important unfinished work needs attention first.",
 };

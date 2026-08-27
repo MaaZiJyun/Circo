@@ -1,4 +1,4 @@
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { formatLocalDateTime } from "@/shared/model/factories";
 import type { GanttTaskPatch } from "../view-models/use-project-task-actions";
 
@@ -10,7 +10,7 @@ export const HEADER_HEIGHT = 44;
 
 export type GanttScale = "overall" | "month" | "week" | "day";
 export type GanttRow = {
-  task: TaskRecord;
+  task: ActivityRecord;
   start: number;
   end: number;
   depth: number;
@@ -18,7 +18,7 @@ export type GanttRow = {
 export type GanttTick = { value: number; label: string; major: boolean };
 
 export function buildGanttRows(
-  tasks: TaskRecord[],
+  activities: ActivityRecord[],
   projectStart: string,
   projectEnd: string,
 ): GanttRow[] {
@@ -27,8 +27,8 @@ export function buildGanttRows(
     fallbackStart + HOUR,
     safeDate(projectEnd, fallbackStart + DAY),
   );
-  const taskById = new Map(tasks.map((task) => [task.id, task]));
-  const depthFor = (task: TaskRecord) => {
+  const taskById = new Map(activities.map((task) => [task.id, task]));
+  const depthFor = (task: ActivityRecord) => {
     let depth = 0;
     let parentId = task.parentId;
     const visited = new Set<string>();
@@ -39,7 +39,7 @@ export function buildGanttRows(
     }
     return depth;
   };
-  return dependencyOrder(tasks).map((task) => {
+  return dependencyOrder(activities).map((task) => {
     const end = safeDate(taskDateTime(task.dueDate, true), fallbackEnd);
     const start = safeDate(
       taskDateTime(task.startDate, false),
@@ -145,11 +145,11 @@ export function stepPeriod(
 }
 
 export function createsDependencyCycle(
-  tasks: TaskRecord[],
+  activities: ActivityRecord[],
   sourceId: string,
   targetId: string,
 ) {
-  const byId = new Map(tasks.map((task) => [task.id, task]));
+  const byId = new Map(activities.map((task) => [task.id, task]));
   const visited = new Set<string>();
   const reaches = (id: string): boolean => {
     if (id === targetId) return true;
@@ -161,11 +161,11 @@ export function createsDependencyCycle(
 }
 
 export function isTaskDescendant(
-  tasks: TaskRecord[],
+  activities: ActivityRecord[],
   candidateId: string,
   ancestorId: string,
 ) {
-  const byId = new Map(tasks.map((task) => [task.id, task]));
+  const byId = new Map(activities.map((task) => [task.id, task]));
   const visited = new Set<string>();
   let current = byId.get(candidateId);
   while (current?.parentId && !visited.has(current.parentId)) {
@@ -208,12 +208,12 @@ export function formatRange(start: number, end: number, locale: string) {
   return `${formatter.format(start)} → ${formatter.format(end)}`;
 }
 
-function dependencyOrder(tasks: TaskRecord[]) {
-  const byId = new Map(tasks.map((task) => [task.id, task]));
-  const result: TaskRecord[] = [];
+function dependencyOrder(activities: ActivityRecord[]) {
+  const byId = new Map(activities.map((task) => [task.id, task]));
+  const result: ActivityRecord[] = [];
   const visited = new Set<string>();
   const visiting = new Set<string>();
-  const visit = (task: TaskRecord) => {
+  const visit = (task: ActivityRecord) => {
     if (visited.has(task.id) || visiting.has(task.id)) return;
     visiting.add(task.id);
     task.dependencyIds.forEach((id) => {
@@ -224,7 +224,7 @@ function dependencyOrder(tasks: TaskRecord[]) {
     visited.add(task.id);
     result.push(task);
   };
-  tasks.forEach(visit);
+  activities.forEach(visit);
   return result;
 }
 

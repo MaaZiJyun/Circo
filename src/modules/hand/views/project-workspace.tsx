@@ -18,7 +18,7 @@ import {
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { useHandViewModel } from "../view-models/use-hand-view-model";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { ProjectSecondarySections } from "../sections/project-secondary-sections";
 import { ProjectGantt } from "../widgets/project-gantt";
 import { isLockedCompletedPastTask } from "./project-task-actions";
@@ -37,7 +37,7 @@ export function ProjectWorkspace({
 }: {
   vm: ViewModel;
   openDialog: (dialog: DialogName, taskStartAt?: string) => void;
-  onOpenTaskMenu: (task: TaskRecord, position: { x: number; y: number }) => void;
+  onOpenTaskMenu: (task: ActivityRecord, position: { x: number; y: number }) => void;
   onEditProject: () => void;
   section: ProjectSection;
 }) {
@@ -46,7 +46,7 @@ export function ProjectWorkspace({
   const [parentDialog, setParentDialog] = useState(false);
   const [parentId, setParentId] = useState("");
   if (!vm.selected) return null;
-  const parentCandidates = vm.tasks.filter((task) => !selectedTaskIds.includes(task.id));
+  const parentCandidates = vm.activities.filter((task) => !selectedTaskIds.includes(task.id));
 
   return (
     <>
@@ -97,7 +97,7 @@ export function ProjectWorkspace({
               action={<Button variant="ghost" onClick={() => openDialog("task")}><PlusIcon className="size-4" />{t("hand.newTask")}</Button>}
             />
             <ProjectGantt
-              tasks={vm.tasks}
+              activities={vm.activities}
               startDate={vm.selected.startDate}
               endDate={vm.selected.endDate}
               onUpdateTask={vm.updateTaskFromGantt}
@@ -109,9 +109,9 @@ export function ProjectWorkspace({
                 <Button variant="ghost" onClick={() => { vm.setTaskParent(selectedTaskIds, null); setSelectedTaskIds([]); }}>{t("hand.noParent")}</Button>
               </SelectionToolbar>
             )}
-            {vm.tasks.length ? (
+            {vm.activities.length ? (
               <TaskHierarchyList
-                tasks={vm.tasks}
+                activities={vm.activities}
                 selectedTaskIds={selectedTaskIds}
                 onSetParent={vm.setTaskParent}
                 renderTask={(task) => (

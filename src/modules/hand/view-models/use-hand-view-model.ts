@@ -10,7 +10,7 @@ import { createId, now } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
 import { useProjectTaskActions } from "./use-project-task-actions";
 import { useAttachmentActions } from "./use-attachment-actions";
-export type { TaskInput } from "./use-project-task-actions";
+export type { ActivityInput } from "./use-project-task-actions";
 
 export type ProjectInput = Pick<
   ProjectRecord,
@@ -36,10 +36,10 @@ export function useHandViewModel() {
   );
   const selected =
     projects.find((item) => item.id === selectedId) ?? projects[0];
-  const tasks = useMemo(
+  const activities = useMemo(
     () =>
       state && selected
-        ? activeItems(state.tasks).filter(
+        ? activeItems(state.activities).filter(
             (item) => item.projectId === selected.id,
           )
         : [],
@@ -67,17 +67,17 @@ export function useHandViewModel() {
         : [],
     [state, selected],
   );
-  const plannedMinutes = tasks.reduce(
+  const plannedMinutes = activities.reduce(
     (total, item) => total + item.estimatedMinutes,
     0,
   );
-  const actualMinutes = tasks.reduce(
+  const actualMinutes = activities.reduce(
     (total, item) => total + item.actualMinutes,
     0,
   );
-  const progress = tasks.length
+  const progress = activities.length
     ? Math.round(
-        (tasks.filter((item) => item.status === "done").length / tasks.length) *
+        (activities.filter((item) => item.status === "done").length / activities.length) *
           100,
       )
     : 0;
@@ -233,7 +233,7 @@ export function useHandViewModel() {
     selected,
     selectedId,
     setSelectedId,
-    tasks,
+    activities,
     logs,
     attachments,
     plannedMinutes,

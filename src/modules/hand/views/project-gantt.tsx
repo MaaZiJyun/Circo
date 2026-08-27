@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { formatLocalDateTime } from "@/shared/model/factories";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import {
   DAY,
   HOUR,
@@ -47,13 +47,13 @@ type DragState = {
 type Preview = { taskId: string; start: number; end: number } | null;
 
 export function ProjectGantt({
-  tasks,
+  activities,
   startDate,
   endDate,
   onUpdateTask,
   onCreateTask,
 }: {
-  tasks: TaskRecord[];
+  activities: ActivityRecord[];
   startDate: string;
   endDate: string;
   onUpdateTask: (id: string, patch: GanttTaskPatch) => void;
@@ -72,8 +72,8 @@ export function ProjectGantt({
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   const rows = useMemo(
-    () => buildGanttRows(tasks, startDate, endDate),
-    [tasks, startDate, endDate],
+    () => buildGanttRows(activities, startDate, endDate),
+    [activities, startDate, endDate],
   );
   const overallRange = useMemo(
     () => buildOverallRange(rows, startDate, endDate),
@@ -100,7 +100,7 @@ export function ProjectGantt({
     currentTime <= range.end
       ? toX(currentTime)
       : null;
-  const selectedTask = tasks.find((task) => task.id === selectedTaskId) ?? null;
+  const selectedTask = activities.find((task) => task.id === selectedTaskId) ?? null;
 
   useEffect(() => {
     const element = scrollRef.current;
@@ -194,15 +194,15 @@ export function ProjectGantt({
       onUpdateTask(drag.taskId, schedulePatch(preview.start, preview.end));
     setPreview(null);
   };
-  const createDependency = (sourceId: string, target: TaskRecord) => {
-    const source = tasks.find((task) => task.id === sourceId);
+  const createDependency = (sourceId: string, target: ActivityRecord) => {
+    const source = activities.find((task) => task.id === sourceId);
     if (
       !source ||
       sourceId === target.id ||
       source.projectId !== target.projectId ||
-      isTaskDescendant(tasks, sourceId, target.id) ||
+      isTaskDescendant(activities, sourceId, target.id) ||
       target.dependencyIds.includes(sourceId) ||
-      createsDependencyCycle(tasks, sourceId, target.id)
+      createsDependencyCycle(activities, sourceId, target.id)
     )
       return;
     onUpdateTask(target.id, {
@@ -273,7 +273,7 @@ export function ProjectGantt({
         <TaskGanttInspector
           key={selectedTask.id}
           task={selectedTask}
-          tasks={tasks}
+          activities={activities}
           onClose={() => setSelectedTaskId(null)}
           onSave={(patch) => {
             onUpdateTask(selectedTask.id, patch);

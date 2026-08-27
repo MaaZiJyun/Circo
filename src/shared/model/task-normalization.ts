@@ -1,5 +1,5 @@
 import type { AppState } from "./app-state";
-import type { BaseEntity, TaskRecord } from "./entities";
+import type { BaseEntity, ActivityRecord } from "./entities";
 import { addDays, startDateFromDue } from "./factories";
 import { normalizeTaskImportance } from "./task-importance";
 import { normalizeTaskUrgency } from "./task-urgency";
@@ -7,7 +7,7 @@ import { normalizeTaskEffort } from "./task-effort";
 
 type LegacyRoutineTask = BaseEntity &
   Pick<
-    TaskRecord,
+    ActivityRecord,
     | "title"
     | "description"
     | "estimatedMinutes"
@@ -22,13 +22,14 @@ export function withoutLegacyRoutineTasks(state: AppState): AppState {
   return normalized;
 }
 
-export function normalizeTasks(state: AppState): TaskRecord[] {
+export function normalizeTasks(state: AppState): ActivityRecord[] {
   const legacy = (state as StateWithLegacyTasks).routineTasks ?? [];
-  const existingIds = new Set(state.tasks.map((task) => task.id));
+  const activities = state.activities ?? [];
+  const existingIds = new Set(activities.map((task) => task.id));
   const projectScore = (projectId?: string) =>
     state.projects.find((project) => project.id === projectId)?.score ?? 50;
   return [
-    ...state.tasks.map((task) => {
+    ...activities.map((task) => {
       const scores = normalizeTaskImportance(
         task,
         task.importance ?? projectScore(task.projectId),
@@ -47,11 +48,12 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
         ...normalizeTaskEffort(task),
         priority: priorityFromImportance(scores.importance),
         recurrence: task.recurrence ?? null,
+        activityType: task.activityType ?? "task",
       };
     }),
     ...legacy
       .filter((task) => !existingIds.has(task.id))
-      .map((task): TaskRecord => {
+      .map((task): ActivityRecord => {
         const dueDate = `${addDays(new Date(), 1)}T23:59`;
         return {
           ...task,
@@ -67,6 +69,7 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
           actualMinutes: 0,
           milestone: false,
           recurrence: null,
+          activityType: "task",
           listIds: [],
         };
       }),
@@ -75,6 +78,6 @@ export function normalizeTasks(state: AppState): TaskRecord[] {
 
 export function priorityFromImportance(
   importance: number,
-): TaskRecord["priority"] {
+): ActivityRecord["priority"] {
   return importance >= 15 ? "high" : importance >= 9 ? "medium" : "low";
 }

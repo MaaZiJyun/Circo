@@ -11,7 +11,7 @@ import type {
 
 import { statusLabels } from "@/shared/i18n/domain-labels";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import {
   BAR_HEIGHT,
   buildWeekendBands,
@@ -28,7 +28,7 @@ import { formatDuration, formatTimingDelta, taskTiming } from "../model/task-tim
 type Preview = { taskId: string; start: number; end: number } | null;
 type DragMode = "move" | "start" | "end";
 
-const STATUS_STYLES: Record<TaskRecord["status"], string> = {
+const STATUS_STYLES: Record<ActivityRecord["status"], string> = {
   todo: "bg-zinc-400 dark:bg-zinc-600",
   doing: "bg-blue-500 dark:bg-blue-400",
   done: "bg-emerald-500 dark:bg-emerald-400",
@@ -74,7 +74,7 @@ export function ProjectGanttCanvas({
     mode: DragMode,
   ) => void;
   onTaskClick: (taskId: string) => void;
-  onCreateDependency: (sourceId: string, target: TaskRecord) => void;
+  onCreateDependency: (sourceId: string, target: ActivityRecord) => void;
 }) {
   const { t, locale } = useI18n();
   return (
@@ -285,8 +285,8 @@ function DependencyHandle({ taskId }: { taskId: string }) {
 
 function dropDependency(
   event: DragEvent<HTMLDivElement>,
-  target: TaskRecord,
-  create: (sourceId: string, target: TaskRecord) => void,
+  target: ActivityRecord,
+  create: (sourceId: string, target: ActivityRecord) => void,
 ) {
   event.preventDefault();
   const sourceId = event.dataTransfer.getData("application/x-circo-task");

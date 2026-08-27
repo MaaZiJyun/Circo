@@ -54,13 +54,13 @@ export function buildDailySummaryMessage({
   t: Translate;
   formatNumber: FormatNumber;
 }) {
-  const tasks = dailyTasks.filter(
+  const activities = dailyTasks.filter(
     (task) => task.date === date && !task.deletedAt,
   );
   const result = calculateDailyScore(dailyTasks, date);
   const scoringTime = new Date(`${date}T23:59:59.999`).getTime();
-  const taskLines = tasks.length
-    ? tasks.map(
+  const taskLines = activities.length
+    ? activities.map(
         (task) =>
           `${task.completed ? "✓" : isOverdue(task.dueAt, false, scoringTime) ? "!" : "○"} ${task.title} · ${formatNumber(task.actualMinutes, { maximumFractionDigits: 1 })} ${t("common.minutes")}`,
       )
@@ -106,7 +106,7 @@ export function buildDailySummaryMessage({
     recipient: "futureSelf",
     deliveryMode: "scheduled",
     deliverAt,
-    references: tasks.flatMap((task) =>
+    references: activities.flatMap((task) =>
       task.sourceTaskId
         ? [{ kind: "task" as const, id: task.sourceTaskId, label: task.title }]
         : [],

@@ -19,7 +19,7 @@ import { StorageSettings } from "./storage-settings";
 import { TaskPreprocessingSettings } from "./task-preprocessing-settings";
 import { Alert, Button, Card, EmptyState, Field, Select, Tabs } from "./ui";
 
-type SettingsTab = "general" | "tasks" | "media" | "modules" | "data" | "trash";
+type SettingsTab = "general" | "activities" | "media" | "modules" | "data" | "trash";
 
 const trashCollections: CollectionName[] = [
   "cycles",
@@ -36,8 +36,7 @@ const trashCollections: CollectionName[] = [
   "annotations",
   "ideas",
   "projects",
-  "tasks",
-  "taskHistory",
+  "activities",
   "logs",
   "attachments",
   "artifacts",
@@ -106,7 +105,7 @@ export function SettingsView() {
         onChange={setTab}
         items={[
           { value: "general", label: t("settings.tabGeneral") },
-          { value: "tasks", label: t("settings.tabTasks") },
+          { value: "activities", label: t("settings.tabTasks") },
           { value: "media", label: t("settings.tabMedia") },
           { value: "modules", label: t("settings.tabModules") },
           { value: "data", label: t("settings.tabData") },
@@ -151,7 +150,7 @@ export function SettingsView() {
         </div>
       )}
 
-      {tab === "tasks" && (
+      {tab === "activities" && (
         <div className="space-y-8">
           <MatrixFormulaSettings />
           <TaskPreprocessingSettings />

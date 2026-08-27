@@ -1,4 +1,4 @@
-import type { TaskRecord, TaskRecurrence } from "./entities";
+import type { ActivityRecord, TaskRecurrence } from "./entities";
 import { createId } from "./factories";
 
 export function nextDeadline(deadline: string, recurrence: TaskRecurrence) {
@@ -34,18 +34,18 @@ function moveCalendarMonth(date: Date, months: number) {
 }
 
 export function appendNextRecurringTask(
-  tasks: TaskRecord[],
+  activities: ActivityRecord[],
   completedTaskId: string,
   stamp: string,
 ) {
-  const source = tasks.find((task) => task.id === completedTaskId);
+  const source = activities.find((task) => task.id === completedTaskId);
   if (
     !source?.recurrence ||
-    tasks.some((task) => task.recurrenceSourceId === source.id)
+    activities.some((task) => task.recurrenceSourceId === source.id)
   )
-    return tasks;
+    return activities;
   return [
-    ...tasks,
+    ...activities,
     {
       ...source,
       id: createId("task"),
@@ -64,19 +64,19 @@ export function appendNextRecurringTask(
 export type RecurringDeleteMode = "single" | "series";
 
 export function deleteRecurringTasks(
-  tasks: TaskRecord[],
+  activities: ActivityRecord[],
   taskId: string,
   mode: RecurringDeleteMode,
   stamp: string,
 ) {
-  const target = tasks.find((task) => task.id === taskId);
-  if (!target) return { tasks, deletedIds: [] as string[] };
+  const target = activities.find((task) => task.id === taskId);
+  if (!target) return { activities, deletedIds: [] as string[] };
   const deletedIds = new Set([taskId]);
   if (mode === "series") {
     let changed = true;
     while (changed) {
       changed = false;
-      tasks.forEach((task) => {
+      activities.forEach((task) => {
         if (task.recurrenceSourceId && deletedIds.has(task.recurrenceSourceId) && !deletedIds.has(task.id)) {
           deletedIds.add(task.id);
           changed = true;
@@ -85,9 +85,9 @@ export function deleteRecurringTasks(
     }
   }
   const expanded =
-    mode === "single" ? appendNextRecurringTask(tasks, taskId, stamp) : tasks;
+    mode === "single" ? appendNextRecurringTask(activities, taskId, stamp) : activities;
   return {
-    tasks: expanded.map((task) =>
+    activities: expanded.map((task) =>
       deletedIds.has(task.id)
         ? { ...task, deletedAt: stamp, updatedAt: stamp }
         : task,

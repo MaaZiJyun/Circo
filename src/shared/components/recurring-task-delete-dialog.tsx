@@ -2,7 +2,7 @@
 
 import { Button, Dialog } from "./ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { TaskRecord } from "@/shared/model/entities";
+import type { ActivityRecord } from "@/shared/model/entities";
 import type { RecurringDeleteMode } from "@/shared/model/task-recurrence";
 
 export function RecurringTaskDeleteDialog({
@@ -10,7 +10,7 @@ export function RecurringTaskDeleteDialog({
   onClose,
   onDelete,
 }: {
-  task: TaskRecord;
+  task: ActivityRecord;
   onClose: () => void;
   onDelete: (mode: RecurringDeleteMode) => void;
 }) {
