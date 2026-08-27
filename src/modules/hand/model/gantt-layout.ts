@@ -216,7 +216,7 @@ function dependencyOrder(activities: ActivityRecord[]) {
   const visit = (task: ActivityRecord) => {
     if (visited.has(task.id) || visiting.has(task.id)) return;
     visiting.add(task.id);
-    task.dependencyIds.forEach((id) => {
+    (task.dependencyIds ?? []).forEach((id) => {
       const dependency = byId.get(id);
       if (dependency) visit(dependency);
     });

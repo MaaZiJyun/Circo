@@ -34,11 +34,32 @@ export function readClearedDailyDates() {
   }
 }
 
+export function isDailyTaskDateCleared(date: string) {
+  return readClearedDailyDates().includes(date);
+}
+
 export function clearDailyTaskDate(date: string) {
   if (typeof window === "undefined") return;
   const dates = new Set(readClearedDailyDates());
   dates.add(date);
   localStorage.setItem(CLEARED_KEY, JSON.stringify([...dates]));
   writeDailyTaskIds(date, []);
+  window.dispatchEvent(new Event("circo-daily-cache-changed"));
+}
+
+/**
+ * At the end of a day, keep unfinished activities and activities whose due
+ * date is still in the future. This only changes the browser cache; it does
+ * not archive or modify the database activity.
+ */
+export function clearCompletedDueDailyTaskDate(
+  date: string,
+  idsToKeep: string[],
+) {
+  if (typeof window === "undefined") return;
+  const dates = new Set(readClearedDailyDates());
+  dates.add(date);
+  localStorage.setItem(CLEARED_KEY, JSON.stringify([...dates]));
+  writeDailyTaskIds(date, idsToKeep);
   window.dispatchEvent(new Event("circo-daily-cache-changed"));
 }

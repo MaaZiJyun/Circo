@@ -5,7 +5,12 @@ import { activeItems } from "@/shared/model/app-state";
 import type { DailyTask, ActivityRecord } from "@/shared/model/entities";
 import { createId, estimateMinutes, now, startDateFromDue, today } from "@/shared/model/factories";
 import { calculateMetrics } from "@/shared/model/metrics";
-import { readDailyTaskIds, writeDailyTaskIds } from "@/shared/model/daily-task-local-storage";
+import {
+  clearCompletedDueDailyTaskDate,
+  isDailyTaskDateCleared,
+  readDailyTaskIds,
+  writeDailyTaskIds,
+} from "@/shared/model/daily-task-local-storage";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance, taskImportanceDimensions } from "@/shared/model/task-importance";
 import { normalizeTaskFactors } from "@/shared/model/task-factors";
@@ -40,7 +45,7 @@ export function useDailyTaskCache() {
     const legacy = state?.dailyTasks
       ?.filter((item) => item.date === date && !item.deletedAt)
       .map((item) => item.sourceTaskId ?? item.id) ?? [];
-    const ids = stored.length ? stored : legacy;
+    const ids = stored.length || isDailyTaskDateCleared(date) ? stored : legacy;
     const timer = window.setTimeout(() => setTaskIds(ids), 0);
     if (ids.length && !stored.length) writeDailyTaskIds(date, ids);
     return () => window.clearTimeout(timer);
@@ -58,13 +63,25 @@ export function useDailyTaskCache() {
       const nextMidnight = new Date();
       nextMidnight.setHours(24, 0, 0, 0);
       timer = window.setTimeout(() => {
-        setDate(today());
+        const settledDate = date;
+        const nextDate = today();
+        const activitiesById = new Map(
+          (state?.activities ?? []).map((activity) => [activity.id, activity]),
+        );
+        const idsToKeep = taskIds.filter((id) => {
+          const activity = activitiesById.get(id);
+          if (!activity || activity.archivedAt) return false;
+          const dueDate = activity.dueDate.slice(0, 10);
+          return activity.status !== "done" || dueDate > settledDate;
+        });
+        clearCompletedDueDailyTaskDate(settledDate, idsToKeep);
+        setDate(nextDate);
         scheduleReset();
       }, nextMidnight.getTime() - Date.now() + 50);
     };
     scheduleReset();
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [date, state, taskIds]);
 
   const view = useMemo(() => {
     if (!state) return null;
