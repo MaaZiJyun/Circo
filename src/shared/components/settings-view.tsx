@@ -24,7 +24,7 @@ type SettingsTab = "general" | "activities" | "media" | "modules" | "data" | "tr
 const trashCollections: CollectionName[] = [
   "cycles",
   "goals",
-  "sessions",
+  "focus",
   "events",
   "sources",
   "libraryLists",

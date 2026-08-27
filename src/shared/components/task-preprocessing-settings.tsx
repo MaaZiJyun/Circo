@@ -1,18 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import {
-  PencilSquareIcon,
-  PlusIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import { createId } from "@/shared/model/factories";
+import { useEffect, useState } from "react";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import {
   defaultTaskPreprocessingRules,
   type TaskPreprocessingRule,
 } from "@/shared/model/task-preprocessor";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useStore } from "@/shared/view-models/store-context";
+import { activeItems } from "@/shared/model/app-state";
+import type { ActivityList } from "@/shared/model/entities";
 import { SectionHeader } from "./page-elements";
 import { Alert, Button, Card, Dialog, Field, Input, Textarea } from "./ui";
 
@@ -34,22 +31,21 @@ function copyRules(rules: TaskPreprocessingRule[]) {
   return rules.map(copyRule);
 }
 
-function newRule(name: string): TaskPreprocessingRule {
-  return {
-    id: createId("task-rule"),
-    name,
-    keywords: [],
-    description: "明确“{{name}}”的完成标准。",
-    estimatedMinutes: 60,
-    expectedOutput: "一个明确、可检查的完成结果。",
-    impact: 3,
-    goal: 3,
-    risk: 3,
-    value: 3,
-    delayLoss: 3,
-    complexity: 3,
-    uncertainty: 3,
-  };
+function rulesForLists(
+  lists: ActivityList[],
+  stored: TaskPreprocessingRule[],
+) {
+  const fallback = stored.find((rule) => rule.id === "generic") ?? defaultTaskPreprocessingRules.at(-1)!;
+  return lists.map((list, index) => {
+    const linked = stored.find((rule) => rule.activityListId === list.id);
+    const source = linked ?? stored[index] ?? fallback;
+    return copyRule({
+      ...source,
+      id: linked?.id ?? `${list.id}-rule`,
+      activityListId: list.id,
+      name: list.name,
+    });
+  });
 }
 
 function normalizeScore(value: number) {
@@ -78,14 +74,28 @@ function normalizeRule(rule: TaskPreprocessingRule): TaskPreprocessingRule {
 export function TaskPreprocessingSettings() {
   const { t } = useI18n();
   const { state, mutate } = useStore();
-  const [rules, setRules] = useState<TaskPreprocessingRule[]>(() =>
-    copyRules(
-      state?.profile.taskPreprocessingRules ?? defaultTaskPreprocessingRules,
-    ),
-  );
+  const activityLists = activeItems(state?.activityLists ?? []).filter((list) => !list.system);
+  const [rules, setRules] = useState<TaskPreprocessingRule[]>(() => {
+    const stored = state?.profile.taskPreprocessingRules ?? defaultTaskPreprocessingRules;
+    return rulesForLists(activityLists, stored);
+  });
   const [editing, setEditing] = useState<TaskPreprocessingRule | null>(null);
   const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    if (!state) return;
+    const stored = state.profile.taskPreprocessingRules ?? defaultTaskPreprocessingRules;
+    const nextRules = rulesForLists(activityLists, stored);
+    const currentIds = stored.map((rule) => rule.activityListId).filter(Boolean);
+    const nextIds = nextRules.map((rule) => rule.activityListId);
+    if (currentIds.length !== nextIds.length || nextIds.some((id) => !currentIds.includes(id))) {
+      mutate((current) => ({
+        ...current,
+        profile: { ...current.profile, taskPreprocessingRules: nextRules },
+      }));
+    }
+  }, [activityLists, mutate, state]);
   if (!state) return null;
+  const visibleRules = rulesForLists(activityLists, rules);
 
   const persist = (nextRules: TaskPreprocessingRule[]) => {
     setRules(copyRules(nextRules));
@@ -109,16 +119,11 @@ export function TaskPreprocessingSettings() {
     );
     setEditing(null);
   };
-  const deleteRule = (rule: TaskPreprocessingRule) => {
-    if (
-      rule.id === "generic" ||
-      !window.confirm(`${t("common.confirmDelete")}\n\n${rule.name}`)
-    ) {
-      return;
-    }
-    persist(rules.filter((item) => item.id !== rule.id));
-  };
-  const reset = () => persist(copyRules(defaultTaskPreprocessingRules));
+  const reset = () => persist(copyRules(defaultTaskPreprocessingRules).slice(0, activityLists.length).map((rule, index) => ({
+    ...rule,
+    activityListId: activityLists[index]?.id,
+    name: activityLists[index]?.name ?? rule.name,
+  })));
 
   return (
     <Card>
@@ -129,26 +134,17 @@ export function TaskPreprocessingSettings() {
             {t("settings.taskPreprocessingHint")}
           </p>
         </div>
-        <Button
-          variant="secondary"
-          onClick={() =>
-            setEditing(newRule(t("settings.taskPreprocessingNewName")))
-          }
-        >
-          <PlusIcon className="size-4" />
-          {t("settings.taskPreprocessingAdd")}
-        </Button>
       </div>
 
       <div className="mt-5 divide-y divide-zinc-200 rounded-2xl border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-800">
-        {rules.map((rule) => (
+        {visibleRules.map((rule) => (
           <div
             key={rule.id}
             className="flex items-center gap-4 px-4 py-3 first:rounded-t-2xl last:rounded-b-2xl hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
           >
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h3 className="font-medium">{rule.name}</h3>
+                <h3 className="font-medium">{activityLists.find((list) => list.id === rule.activityListId)?.name ?? rule.name}</h3>
                 <span className="text-xs text-zinc-500">
                   {rule.estimatedMinutes} min
                 </span>
@@ -167,17 +163,6 @@ export function TaskPreprocessingSettings() {
               >
                 <PencilSquareIcon className="size-4" />
                 <span className="hidden sm:inline">{t("common.edit")}</span>
-              </Button>
-              <Button
-                variant="ghost"
-                disabled={rule.id === "generic"}
-                aria-label={`${t("settings.taskPreprocessingDelete")} ${rule.name}`}
-                onClick={() => deleteRule(rule)}
-              >
-                <TrashIcon className="size-4" />
-                <span className="hidden sm:inline">
-                  {t("settings.taskPreprocessingDelete")}
-                </span>
               </Button>
             </div>
           </div>
@@ -210,6 +195,7 @@ export function TaskPreprocessingSettings() {
                   autoFocus
                   value={editing.name}
                   maxLength={100}
+                  disabled={Boolean(editing.activityListId)}
                   onChange={(event) =>
                     setEditing({ ...editing, name: event.target.value })
                   }

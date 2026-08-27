@@ -41,7 +41,7 @@ export function useDashboardViewModel() {
       activeCycle,
       goals,
       recentArtifacts,
-      sessions: activeItems(state.sessions),
+      focus: activeItems(state.focus),
       dailyTasks: [...(dailyCache?.dailyTasks ?? []), ...historyTasks],
       finishedToday: (state.messages ?? []).some(
         (message) => message.id === dailySummaryId(today()),

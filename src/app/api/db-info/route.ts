@@ -11,7 +11,7 @@ const repository = new SqliteAppRepository();
 const COLLECTION_KEYS = [
   "cycles",
   "goals",
-  "sessions",
+  "focus",
   "sources",
   "points",
   "annotations",

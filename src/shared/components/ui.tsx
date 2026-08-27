@@ -196,10 +196,12 @@ export function Tabs<T extends string>({
   value,
   onChange,
   items,
+  fullWidth = false,
 }: {
   value: T;
   onChange: (value: T) => void;
   items: { value: T; label: string }[];
+  fullWidth?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -222,7 +224,7 @@ export function Tabs<T extends string>({
   return (
     <div
       ref={containerRef}
-      className="relative inline-flex rounded-full bg-zinc-100 p-1 dark:bg-zinc-900"
+      className={`relative ${fullWidth ? "flex w-full" : "inline-flex"} rounded-full bg-zinc-100 p-1 dark:bg-zinc-900`}
       role="tablist"
     >
       <span
@@ -241,7 +243,7 @@ export function Tabs<T extends string>({
           }}
           role="tab"
           aria-selected={value === item.value}
-          className={`relative z-10 min-h-9 rounded-full px-3 text-sm font-medium transition-colors duration-200 ${focusRing} ${value === item.value ? "text-zinc-950 dark:text-zinc-50" : "text-zinc-500"}`}
+          className={`relative z-10 min-h-9 rounded-full px-3 text-center text-sm font-medium transition-colors duration-200 ${fullWidth ? "flex-1" : ""} ${focusRing} ${value === item.value ? "text-zinc-950 dark:text-zinc-50" : "text-zinc-500"}`}
           onClick={() => onChange(item.value)}
         >
           {item.label}

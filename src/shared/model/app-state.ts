@@ -19,7 +19,7 @@ import type {
   SourceRecord,
   ActivityList,
   ActivityRecord,
-  WorkSession,
+  FocusRecord,
 } from "./entities";
 import type { FutureMessage } from "./message";
 import type { TaskPreprocessingRule } from "./task-preprocessor";
@@ -31,7 +31,7 @@ export interface AppState {
   profile: UserProfile;
   cycles: Cycle[];
   goals: Goal[];
-  sessions: WorkSession[];
+  focus: FocusRecord[];
   events: EventReason[];
   sources: SourceRecord[];
   libraryLists: LibraryList[];
@@ -139,8 +139,7 @@ function isProfile(value: unknown) {
         ))) &&
     (profile.countdownTaskSlots === undefined ||
       (Array.isArray(profile.countdownTaskSlots) &&
-        profile.countdownTaskSlots.length <= 3 &&
-        profile.countdownTaskSlots.every(
+      profile.countdownTaskSlots.every(
           (taskId) => taskId === null || typeof taskId === "string",
         ))) &&
     (profile.matrixFormulas === undefined ||
@@ -209,7 +208,7 @@ function isProfile(value: unknown) {
 export function isAppState(value: unknown): value is AppState {
   if (!value || typeof value !== "object") return false;
   const item = value as Partial<AppState>;
-  const legacy = value as { tasks?: unknown; taskLists?: unknown };
+  const legacy = value as { tasks?: unknown; taskLists?: unknown; sessions?: unknown };
   return (
     item.schemaVersion === 1 &&
     typeof item.revision === "number" &&
@@ -225,6 +224,7 @@ export function isAppState(value: unknown): value is AppState {
     (item.points === undefined || Array.isArray(item.points)) &&
     Array.isArray(item.ideas) &&
     Array.isArray(item.projects) &&
+    (Array.isArray(item.focus) || Array.isArray(legacy.sessions)) &&
     (Array.isArray(item.activities) || Array.isArray(legacy.tasks)) &&
     (item.dailyTasks === undefined || Array.isArray(item.dailyTasks)) &&
     Array.isArray(item.artifacts) &&

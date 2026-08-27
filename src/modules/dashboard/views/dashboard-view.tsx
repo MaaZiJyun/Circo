@@ -13,6 +13,7 @@ import { DailyTaskList } from "@/modules/me/views/daily-task-list";
 import { FocusTimerDialog } from "./focus-timer-dialog";
 import { FinishTodayDialog } from "./finish-today-dialog";
 import { PlanningDialog } from "./planning-dialog";
+import { TimeUsageWidget } from "../widgets/time-usage-widget";
 import {
   PowerIcon,
   CalendarDaysIcon,
@@ -63,6 +64,7 @@ export function DashboardView() {
           <DailyTaskList />
         </Card>
       </div>
+      <TimeUsageWidget />
       <ContributionCalendar dailyTasks={dailyTasks} />
       {focusOpen && <FocusTimerDialog onClose={() => setFocusOpen(false)} />}
       {planningOpen && (

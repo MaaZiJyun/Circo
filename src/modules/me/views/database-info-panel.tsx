@@ -33,7 +33,7 @@ const COLLECTIONS: { key: string; label: MessageKey }[] = [
   { key: "artifacts", label: "me.dbArtifacts" },
   { key: "cycles", label: "me.dbCycles" },
   { key: "goals", label: "me.dbGoals" },
-  { key: "sessions", label: "me.dbSessions" },
+  { key: "focus", label: "me.dbSessions" },
 ];
 
 function formatBytes(bytes: number) {

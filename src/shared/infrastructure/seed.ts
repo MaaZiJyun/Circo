@@ -49,7 +49,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
-    sessions: [
+    focus: [
       {
         id: "session_1",
         cycleId: "cycle_aug",
@@ -59,6 +59,8 @@ export function createSeedState(): AppState {
         title: "架构需求梳理",
         startedAt: "2026-08-10T01:00:00.000Z",
         endedAt: "2026-08-10T02:30:00.000Z",
+        duration: 90,
+        focusOn: "task_scope",
         minutes: 90,
         effective: true,
         focus: 4,
@@ -74,6 +76,8 @@ export function createSeedState(): AppState {
         title: "阅读多模态架构论文",
         startedAt: "2026-08-09T06:00:00.000Z",
         endedAt: "2026-08-09T07:00:00.000Z",
+        duration: 60,
+        focusOn: "",
         minutes: 60,
         effective: true,
         focus: 5,

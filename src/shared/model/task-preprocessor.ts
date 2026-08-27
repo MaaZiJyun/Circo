@@ -2,6 +2,7 @@ import type { TaskImportanceDimensions } from "./task-importance-types";
 
 export interface TaskPreprocessingRule extends TaskImportanceDimensions {
   id: string;
+  activityListId?: string;
   name: string;
   keywords: string[];
   description: string;

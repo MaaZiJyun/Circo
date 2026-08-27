@@ -32,17 +32,20 @@ export interface Goal extends BaseEntity {
   status: "notStarted" | "active" | "completed";
 }
 
-export interface WorkSession extends BaseEntity {
-  cycleId: string;
+export interface FocusRecord extends BaseEntity {
+  startedAt: string;
+  endedAt: string;
+  duration: number;
+  focusOn: string;
+  /** Legacy fields retained while old focus records are migrated. */
+  cycleId?: string;
   goalId?: string;
   projectId?: string;
   taskId?: string;
   title: string;
-  startedAt: string;
-  endedAt: string;
-  minutes: number;
-  effective: boolean;
-  focus: number;
+  minutes?: number;
+  effective?: boolean;
+  focus?: number;
   output: string;
   note: string;
 }

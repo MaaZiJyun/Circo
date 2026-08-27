@@ -1,27 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  Button,
-  Switch,
-  Dialog,
-  EmptyState,
-  Field,
-  Input,
-} from "@/shared/components/ui";
+import { Dialog, EmptyState, Input } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import { TaskRecurrenceFields } from "@/shared/components/task-recurrence-fields";
-import { TaskImportanceFields } from "@/shared/components/task-importance-fields";
-import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
-import { TaskEffortFields } from "@/shared/components/task-effort-fields";
 import type { ActivityRecord } from "@/shared/model/entities";
-import { addDays, today } from "@/shared/model/factories";
-import { defaultTaskImportance, taskImportance } from "@/shared/model/task-importance";
-import { preprocessTask } from "@/shared/model/task-preprocessor";
-import { defaultTaskUrgency } from "@/shared/model/task-urgency";
-import { defaultTaskEffort } from "@/shared/model/task-effort";
-import { useStore } from "@/shared/view-models/store-context";
 import type { DailyTaskInput } from "../model/daily-task-input";
+import { TaskDialog } from "@/modules/hand/views/task-dialog";
+import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
+import { formatLocalDateTime, parseLocalDateTime } from "@/shared/model/factories";
 
 export function CreateDailyTaskDialog({
   open,
@@ -38,142 +24,31 @@ export function CreateDailyTaskDialog({
   plannedDate?: string;
   initial?: DailyTaskInput;
 }) {
-  const { t } = useI18n();
-  const { state } = useStore();
-  const [input, setInput] = useState<DailyTaskInput>(
-    initial ?? {
-      title: "",
-      description: "",
-      dueAt: `${plannedDate ?? addDays(new Date(), 1)}T23:59`,
-      estimatedMinutes: 30,
-      expectedOutput: "",
-      ...defaultTaskImportance,
-      importance: taskImportance(defaultTaskImportance),
-      ...defaultTaskUrgency,
-      ...defaultTaskEffort,
-      milestone: false,
-      recurrence: null,
-    },
-  );
-  const preprocessTitle = () => {
-    if (initial || !state || !input.title.trim()) return;
-    const values = preprocessTask(
-      input.title,
-      state.profile.taskPreprocessingRules,
-    );
-    setInput((current) => ({
-      ...current,
-      description: values.description,
-      estimatedMinutes: values.estimatedMinutes,
-      expectedOutput: values.expectedOutput,
-      impact: values.impact,
-      goal: values.goal,
-      risk: values.risk,
-      value: values.value,
-      importance: taskImportance(values),
-      delayLoss: values.delayLoss,
-      complexity: values.complexity,
-      uncertainty: values.uncertainty,
-    }));
-  };
+  const convertToActivity = (value?: DailyTaskInput): ActivityInput | undefined =>
+    value
+      ? {
+          ...value,
+          startDate: Number.isFinite(parseLocalDateTime(value.dueAt))
+            ? formatLocalDateTime(
+                parseLocalDateTime(value.dueAt) - value.estimatedMinutes * 60 * 1000,
+              )
+            : value.dueAt,
+          dueDate: value.dueAt,
+          activityType: "task",
+          parentId: undefined,
+        }
+      : undefined;
   return (
-    <Dialog
+    <TaskDialog
       open={open}
-      title={title ?? t("me.dailyCreate")}
-      closeLabel={t("common.close")}
+      initial={convertToActivity(initial)}
+      initialStartDate={initial?.dueAt ?? (plannedDate ? `${plannedDate}T09:00` : undefined)}
       onClose={onClose}
-    >
-      <div className="grid gap-4">
-        <Field label={t("me.dailyTaskName")}>
-          <Input
-            autoFocus
-            value={input.title}
-            onChange={(event) =>
-              setInput({ ...input, title: event.target.value })
-            }
-            onBlur={preprocessTitle}
-          />
-        </Field>
-        <Field label={t("me.taskDescription")}>
-          <Input
-            value={input.description}
-            onChange={(event) =>
-              setInput({ ...input, description: event.target.value })
-            }
-          />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={t("me.taskDueAt")}>
-            <Input
-              type="datetime-local"
-              min={`${plannedDate ?? today()}T00:00`}
-              max={plannedDate ? `${plannedDate}T23:59` : undefined}
-              value={input.dueAt}
-              onChange={(event) =>
-                setInput({ ...input, dueAt: event.target.value })
-              }
-            />
-          </Field>
-          <Field label={t("me.taskEstimate")}>
-            <Input
-              type="number"
-              min="1"
-              value={input.estimatedMinutes}
-              onChange={(event) =>
-                setInput({
-                  ...input,
-                  estimatedMinutes: Number(event.target.value),
-                })
-              }
-            />
-          </Field>
-        </div>
-        <Field label={t("me.taskExpectedOutput")}>
-          <Input
-            value={input.expectedOutput}
-            onChange={(event) =>
-              setInput({ ...input, expectedOutput: event.target.value })
-            }
-          />
-        </Field>
-        <TaskImportanceFields
-          value={input}
-          onChange={(dimensions) =>
-            setInput({
-              ...input,
-              ...dimensions,
-              importance: taskImportance(dimensions),
-            })
-          }
-        />
-        <TaskUrgencyFields deadline={input.dueAt} delayLoss={input.delayLoss}
-          dependencyIds={input.dependencyIds} onChange={(urgency) => setInput({ ...input, ...urgency })} />
-        <TaskEffortFields estimatedMinutes={input.estimatedMinutes} complexity={input.complexity}
-          uncertainty={input.uncertainty} onChange={(effort) => setInput({ ...input, ...effort })} />
-        <label className="flex items-center gap-2 text-sm">
-          <Switch
-            checked={input.milestone}
-            onChange={(checked) =>
-              setInput({ ...input, milestone: checked })
-            }
-          />
-          {t("hand.milestone")}
-        </label>
-        <TaskRecurrenceFields
-          value={input.recurrence}
-          onChange={(recurrence) => setInput({ ...input, recurrence })}
-        />
-        <Button
-          disabled={!input.title.trim()}
-          onClick={() => {
-            onSave(input);
-            onClose();
-          }}
-        >
-          {t(initial ? "common.save" : "common.add")}
-        </Button>
-      </div>
-    </Dialog>
+      onSave={(value) => {
+        onSave({ ...value, dueAt: value.dueDate });
+      }}
+      title={title}
+    />
   );
 }
 

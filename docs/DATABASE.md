@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | `profile`                | `UserProfile`      | 用户资料、背景音频、倒计时槽位、矩阵公式、任务预处理规则 |
 | `cycles`                 | `Cycle[]`          | 成长周期                                                 |
 | `goals`                  | `Goal[]`           | 通过 `cycleId` 关联周期                                  |
-| `sessions`               | `WorkSession[]`    | 可关联 `cycleId`、`goalId`、`projectId`、`taskId`        |
+| `focus`               | `FocusRecord[]`    | Focus 时间记录，使用 `focusOn` 关联 Activity                |
 | `events`                 | `EventReason[]`    | 复盘事件，可关联周期和项目                               |
 | `sources`                | `SourceRecord[]`   | 文献、文件/Markdown 路径、阅读状态、评价和转换状态       |
 | `libraryLists`           | `LibraryList[]`    | 文献列表，`sources.listIds` 引用                         |
@@ -92,6 +92,14 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 - Effort：`complexity`、`uncertainty`。
 - 周期任务：`recurrence`、`recurrenceSourceId`。
 
+### FocusRecord 关键字段
+
+- `id`：Focus 记录 ID。
+- `startedAt`、`endedAt`：Focus 开始和结束时间。
+- `duration`：本次 Focus 的实际时长，单位为分钟。
+- `focusOn`：本次 Focus 关联的 Activity ID。
+- Activity 的 `actualMinutes`、`actualStartedAt` 等实际投入数据，均以关联的 Focus 记录为事实来源。
+
 当前关系约定：
 
 - `parentId` 指向同一项目中的父任务。
@@ -123,7 +131,7 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | 集合         | 数量 | 集合         | 数量 |
 | ------------ | ---: | ------------ | ---: |
 | cycles       |    1 | goals        |    2 |
-| sessions     |   21 | events       |    1 |
+| focus     |   21 | events       |    1 |
 | sources      |    6 | libraryLists |    8 |
 | projectLists |    3 | activityLists |    4 |
 | ideaLists    |    2 | pointLists   |    3 |
@@ -146,7 +154,7 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 | --- | --- |
 | `projects` | 项目核心字段和完整 JSON payload |
 | `activities` | Activity 定义、排期、状态、实际时间和归档状态 |
-| `sessions` | 专注工作会话和实际投入时间 |
+| `focus` | 专注工作会话和实际投入时间 |
 
 每张核心表都保留 `payload` 字段，用于保存暂时未拆成独立列的扩展字段。应用保存时会在同一事务内更新快照和关系型表；旧快照首次读取时会自动回填关系型表。
 

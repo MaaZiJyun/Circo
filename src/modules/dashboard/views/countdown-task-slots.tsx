@@ -6,6 +6,9 @@ import { IconButton } from "@/shared/components/ui";
 import { today } from "@/shared/model/factories";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useStore } from "@/shared/view-models/store-context";
+import { addFocus } from "@/shared/model/focus";
+import type { AppState } from "@/shared/model/app-state";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { useDailyTaskCache } from "@/modules/me/view-models/use-daily-task-cache";
 import {
   cachedElapsed,
@@ -14,14 +17,11 @@ import {
   writeCountdownTimeCache,
 } from "../model/countdown-time-cache";
 
-const slotCount = 3;
 const dragType = "application/x-circo-daily-task";
+const slotStatusCacheKey = "circo.countdown-slot-status.v1";
 
 function slotsOf(value?: Array<string | null>) {
-  return Array.from(
-    { length: slotCount },
-    (_, index) => value?.[index] ?? null,
-  );
+  return (value ?? []).filter((id): id is string => Boolean(id));
 }
 
 function elapsed(minutes: number) {
@@ -39,6 +39,7 @@ export function CountdownTaskSlots() {
   const [timeCache, setTimeCache] = useState<CountdownTimeCache>({});
   const [clock, setClock] = useState<number | null>(null);
   const cacheRef = useRef<CountdownTimeCache>({});
+  const slotStatusRef = useRef<Record<string, ActivityRecord["status"]>>({});
   const slots = slotsOf(state?.profile.countdownTaskSlots);
   const currentDate = today();
   const visibleSlots = slots;
@@ -58,6 +59,19 @@ export function CountdownTaskSlots() {
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(slotStatusCacheKey);
+      if (stored) slotStatusRef.current = JSON.parse(stored);
+    } catch {
+      slotStatusRef.current = {};
+    }
+  }, []);
+
+  const saveSlotStatuses = () => {
+    window.localStorage.setItem(slotStatusCacheKey, JSON.stringify(slotStatusRef.current));
+  };
 
   useEffect(() => {
     if (!activeSlotKey) return;
@@ -109,17 +123,28 @@ export function CountdownTaskSlots() {
     const displacedMinutes = displacedId
       ? cachedElapsed(cacheRef.current[displacedId], displacedEnd) / 60
       : 0;
+    const displacedPreviousStatus = displacedId
+      ? slotStatusRef.current[displacedId] ?? "todo"
+      : "todo";
+    if (dailyTaskId !== displacedId) {
+      const entering = state.activities.find((activity) => activity.id === dailyTaskId);
+      if (entering && slotStatusRef.current[dailyTaskId] === undefined) {
+        slotStatusRef.current[dailyTaskId] = entering.status;
+      }
+      if (displacedId) delete slotStatusRef.current[displacedId];
+      saveSlotStatuses();
+    }
     mutate((current) => {
       const dailyTask = current.activities.find(
         (task) => task.id === dailyTaskId && !task.deletedAt && task.status !== "done",
       );
       if (!dailyTask) return current;
       const nextSlots = slotsOf(current.profile.countdownTaskSlots).map((id) =>
-        id === dailyTaskId ? null : id,
-      );
+        id === dailyTaskId ? "" : id,
+      ).filter(Boolean);
       const ejectedId = nextSlots[index];
       nextSlots[index] = dailyTaskId;
-      return {
+      let next: AppState = {
         ...current,
         profile: { ...current.profile, countdownTaskSlots: nextSlots },
         activities: current.activities.map((task) => {
@@ -140,12 +165,25 @@ export function CountdownTaskSlots() {
                 ...task,
                 actualMinutes: task.actualMinutes + displacedMinutes,
                 actualStartedAt: task.actualStartedAt ?? stamp,
-                status: task.status === "done" ? "done" : "todo",
+                status: displacedPreviousStatus,
                 updatedAt: stamp,
               }
             : task;
         }),
       };
+      if (displacedId && displacedMinutes > 0) {
+        const displaced = dailyTasks.find((task) => task.id === displacedId);
+        next = addFocus(next, {
+          startedAt: cacheRef.current[displacedId]?.startedAt
+            ? new Date(cacheRef.current[displacedId].startedAt).toISOString()
+            : stamp,
+          endedAt: stamp,
+          duration: displacedMinutes,
+          focusOn: displaced?.sourceTaskId ?? displacedId,
+          title: displaced?.title,
+        });
+      }
+      return next;
     });
     const nextCache = { ...cacheRef.current };
     if (displacedId) delete nextCache[displacedId];
@@ -169,11 +207,12 @@ export function CountdownTaskSlots() {
       : stampTime;
     const cachedMinutes =
       cachedElapsed(cacheRef.current[selectedId], settlementTime) / 60;
+    const selectedPreviousStatus = slotStatusRef.current[selectedId] ?? "todo";
     mutate((current) => {
       const nextSlots = slotsOf(current.profile.countdownTaskSlots);
       const dailyTaskId = nextSlots[index];
-      nextSlots[index] = null;
-      return {
+      nextSlots.splice(index, 1);
+      let next: AppState = {
         ...current,
         profile: { ...current.profile, countdownTaskSlots: nextSlots },
         activities: current.activities.map((task) =>
@@ -182,18 +221,50 @@ export function CountdownTaskSlots() {
                 ...task,
                 actualMinutes: task.actualMinutes + cachedMinutes,
                 actualStartedAt: task.actualStartedAt ?? stamp,
-                status: task.status === "done" ? "done" : "todo",
+                status: task.status === "done" ? "done" : selectedPreviousStatus,
                 updatedAt: stamp,
               }
             : task,
         ),
       };
+      if (cachedMinutes > 0) {
+        next = addFocus(next, {
+          startedAt: cacheRef.current[selectedId]?.startedAt
+            ? new Date(cacheRef.current[selectedId].startedAt).toISOString()
+            : stamp,
+          endedAt: stamp,
+          duration: cachedMinutes,
+          focusOn: selectedTask?.sourceTaskId ?? selectedId,
+          title: selectedTask?.title,
+        });
+      }
+      return next;
     });
     releaseCache(selectedId);
+    delete slotStatusRef.current[selectedId];
+    saveSlotStatuses();
   };
 
   return (
-    <div className="grid gap-2 sm:grid-cols-3">
+    <div
+      className="grid min-h-20 gap-2 sm:grid-cols-3"
+      onDragOver={(event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "move";
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        const id =
+          event.dataTransfer.getData(dragType) ||
+          event.dataTransfer.getData("text/plain");
+        if (id) assign(visibleSlots.length, id);
+      }}
+    >
+      {!visibleSlots.length && (
+        <p className="col-span-full rounded-xl border border-dashed border-zinc-300 p-5 text-center text-xs text-zinc-400 dark:border-zinc-700">
+          {t("dashboard.countdown.slotEmpty")}
+        </p>
+      )}
       {visibleSlots.map((taskId, index) => {
         const task = dailyTasks.find((item) => item.id === taskId);
         return (

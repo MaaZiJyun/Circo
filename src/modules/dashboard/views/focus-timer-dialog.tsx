@@ -7,11 +7,12 @@ import {
   StopIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import { Button, Dialog } from "@/shared/components/ui";
+import { Button, Dialog, Field, Input, Tabs } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { DailyTask, WorkSession } from "@/shared/model/entities";
-import { createId, now, today } from "@/shared/model/factories";
+import type { DailyTask } from "@/shared/model/entities";
+import { formatLocalDateTime, now, today } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
+import { addFocus } from "@/shared/model/focus";
 import { useDailyTaskCache } from "@/modules/me/view-models/use-daily-task-cache";
 
 function timerText(milliseconds: number) {
@@ -25,20 +26,6 @@ function timerText(milliseconds: number) {
     .concat(`.${String(millis).padStart(3, "0")}`);
 }
 
-function parseTimerText(value: string) {
-  const match = value
-    .trim()
-    .match(/^(\d{1,3}):([0-5]\d):([0-5]\d)\.(\d{1,3})$/);
-  if (!match) return null;
-  const milliseconds = Number(match[4].padEnd(3, "0"));
-  return (
-    Number(match[1]) * 3_600_000 +
-    Number(match[2]) * 60_000 +
-    Number(match[3]) * 1000 +
-    milliseconds
-  );
-}
-
 export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
   const { state, mutate } = useStore();
@@ -47,8 +34,10 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
   const [running, setRunning] = useState(false);
   const [started, setStarted] = useState(false);
   const [stopped, setStopped] = useState(false);
-  const [editingTime, setEditingTime] = useState(false);
-  const [timeDraft, setTimeDraft] = useState("");
+  const [mode, setMode] = useState<"online" | "offline">("online");
+  const [offlineStart, setOfflineStart] = useState("");
+  const [offlineEnd, setOfflineEnd] = useState("");
+  const [offlineDuration, setOfflineDuration] = useState("");
   const [taskId, setTaskId] = useState("");
   const startedAt = useRef("");
   const accumulated = useRef(0);
@@ -98,54 +87,23 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
     setRunning(false);
     setStopped(true);
   };
-  const finishTimeEdit = () => {
-    const parsed = parseTimerText(timeDraft);
-    if (parsed !== null) {
-      accumulated.current = parsed;
-      setElapsed(parsed);
-    }
-    setEditingTime(false);
-  };
   const save = () => {
     const task = activities.find((item) => item.id === taskId);
-    const cycle =
-      state.cycles.find(
-        (item) => !item.deletedAt && item.status === "active",
-      ) ?? state.cycles.find((item) => !item.deletedAt);
     if (!task) return;
     const stamp = now();
-    const minutes = accumulated.current / 60_000;
-    const session: WorkSession | null = cycle
-      ? {
-          id: createId("session"),
-          cycleId: cycle.id,
-          projectId: task.projectId,
-          taskId: task.sourceTaskId,
-          title: task.title,
-          startedAt: startedAt.current || stamp,
-          endedAt: stamp,
-          minutes,
-          effective: true,
-          focus: 4,
-          output: task.expectedOutput,
-          note: "",
-          createdAt: stamp,
-          updatedAt: stamp,
-        }
-      : null;
-    mutate((current) => ({
-      ...current,
-      sessions: session ? [...current.sessions, session] : current.sessions,
-      activities: current.activities.map((item) =>
-        item.id === task.sourceTaskId && !item.archivedAt
-          ? {
-              ...item,
-              actualMinutes: (item.actualMinutes ?? 0) + minutes,
-              actualStartedAt: item.actualStartedAt ?? session?.startedAt ?? stamp,
-              updatedAt: stamp,
-            }
-          : item,
-      ),
+    const minutes = mode === "offline"
+      ? Math.max(0, Number(offlineDuration) || 0)
+      : accumulated.current / 60_000;
+    const focusStartedAt = mode === "offline" ? offlineStart : (startedAt.current || stamp);
+    const focusEndedAt = mode === "offline" ? offlineEnd : stamp;
+    if (!focusStartedAt || !focusEndedAt || minutes <= 0) return;
+    mutate((current) => addFocus(current, {
+      startedAt: focusStartedAt,
+      endedAt: focusEndedAt,
+      duration: minutes,
+      focusOn: task.sourceTaskId ?? task.id,
+      title: task.title,
+      output: task.expectedOutput,
     }));
     onClose();
   };
@@ -157,39 +115,27 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
       onClose={onClose}
     >
       <div className="grid justify-items-center gap-6">
+        <Tabs
+          value={mode}
+          onChange={(nextMode) => {
+            setMode(nextMode);
+            if (nextMode === "offline" && !offlineStart) {
+              const start = Date.now();
+              setOfflineStart(formatLocalDateTime(start));
+              setOfflineEnd(formatLocalDateTime(start + 60 * 60 * 1000));
+              setOfflineDuration("60");
+            }
+          }}
+          fullWidth
+          items={[
+            { value: "online", label: t("dashboard.focusOnline") },
+            { value: "offline", label: t("dashboard.focusOffline") },
+          ]}
+        />
+        {mode === "online" ? (
         <div className="grid size-64 place-items-center rounded-full border-[10px] border-zinc-100 shadow-inner dark:border-zinc-900">
           <div className="text-center">
-            {editingTime ? (
-              <input
-                autoFocus
-                aria-label={t("dashboard.editFocusTime")}
-                value={timeDraft}
-                className="w-52 border-b border-zinc-300 bg-transparent text-center font-mono text-3xl font-semibold tabular-nums outline-none dark:border-zinc-700"
-                onFocus={(event) => event.currentTarget.select()}
-                onChange={(event) => setTimeDraft(event.target.value)}
-                onBlur={finishTimeEdit}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") event.currentTarget.blur();
-                  if (event.key === "Escape") {
-                    setTimeDraft(timerText(elapsed));
-                    event.currentTarget.blur();
-                  }
-                }}
-              />
-            ) : (
-              <button
-                type="button"
-                disabled={!stopped}
-                title={stopped ? t("dashboard.editFocusTime") : undefined}
-                className={`font-mono text-3xl font-semibold tabular-nums ${stopped ? "rounded-md underline decoration-dotted underline-offset-4" : "cursor-default"}`}
-                onClick={() => {
-                  setTimeDraft(timerText(elapsed));
-                  setEditingTime(true);
-                }}
-              >
-                {timerText(elapsed)}
-              </button>
-            )}
+            <p className="font-mono text-3xl font-semibold tabular-nums">{timerText(elapsed)}</p>
             <p className="mt-2 text-xs text-zinc-500">
               {t(
                 stopped
@@ -203,7 +149,22 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
             </p>
           </div>
         </div>
-        {!stopped ? (
+        ) : (
+          <div className="grid w-full gap-4 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t("dashboard.focusStart")}>
+                <Input type="datetime-local" value={offlineStart} onChange={(event) => setOfflineStart(event.target.value)} />
+              </Field>
+              <Field label={t("dashboard.focusEnd")}>
+                <Input type="datetime-local" value={offlineEnd} onChange={(event) => setOfflineEnd(event.target.value)} />
+              </Field>
+            </div>
+            <Field label={t("dashboard.focusDuration")}>
+              <Input type="number" min="0" step="1" value={offlineDuration} onChange={(event) => setOfflineDuration(event.target.value)} />
+            </Field>
+          </div>
+        )}
+        {mode === "online" && !stopped ? (
           <div className="flex flex-wrap justify-center gap-2">
             <Button variant="secondary" onClick={running ? pause : resume}>
               {running ? (
@@ -228,10 +189,12 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
               {t("dashboard.cancelFocus")}
             </Button>
           </div>
+        ) : mode === "online" ? (
+          <TaskAssignment activities={activities} taskId={taskId} onChange={setTaskId} />
         ) : (
           <TaskAssignment activities={activities} taskId={taskId} onChange={setTaskId} />
         )}
-        {stopped && (
+        {(stopped || mode === "offline") && (
           <div className="flex justify-center gap-2">
             <Button disabled={!taskId || elapsed <= 0} onClick={save}>
               {t("dashboard.saveFocus")}

@@ -5,7 +5,7 @@ import { TaskRecurrenceFields } from "@/shared/components/task-recurrence-fields
 import { TaskImportanceFields } from "@/shared/components/task-importance-fields";
 import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
 import { TaskEffortFields } from "@/shared/components/task-effort-fields";
-import { Button, Dialog, Field, Input, Select, Switch, Textarea } from "@/shared/components/ui";
+import { Button, Dialog, Field, Input, Select, Switch, Tabs, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ActivityType, ProjectRecord } from "@/shared/model/entities";
 import {
@@ -30,6 +30,7 @@ export function TaskDialog({
   initialStartDate,
   projects,
   initialProjectId,
+  title,
   onClose,
   onSave,
 }: {
@@ -42,6 +43,7 @@ export function TaskDialog({
   initialStartDate?: string;
   projects?: ProjectRecord[];
   initialProjectId?: string;
+  title?: string;
   onClose: () => void;
   onSave: (input: ActivityInput, projectId?: string) => void;
 }) {
@@ -72,6 +74,7 @@ export function TaskDialog({
   const [input, setInput] = useState<ActivityInput>(
     () => initial ?? createDefaultInput(),
   );
+  const [showMore, setShowMore] = useState(false);
   const updateSchedule = (field: "startDate" | "dueDate", value: string) => {
     setInput((current) => {
       if (field === "startDate") {
@@ -149,7 +152,7 @@ export function TaskDialog({
   return (
     <Dialog
       open={open}
-      title={t(edit ? "hand.editTask" : "hand.newTask")}
+      title={title ?? t(edit ? "hand.editTask" : "hand.newTask")}
       closeLabel={t("common.close")}
       onClose={onClose}
     >
@@ -180,26 +183,14 @@ export function TaskDialog({
           </Field>
         )}
         <Field label={t("hand.activityType")}>
-          <Select
+          <Tabs
             value={input.activityType ?? "task"}
-            onChange={(event) =>
-              setInput({
-                ...input,
-                activityType: event.target.value as ActivityType,
-              })
-            }
-          >
-            <option value="task">{t("activity.task")}</option>
-            <option value="event">{t("activity.event")}</option>
-            <option value="routine">{t("activity.routine")}</option>
-          </Select>
-        </Field>
-        <Field label={t("hand.taskDescription")}>
-          <Textarea
-            value={input.description}
-            onChange={(event) =>
-              setInput({ ...input, description: event.target.value })
-            }
+            onChange={(activityType) => setInput({ ...input, activityType })}
+            fullWidth
+            items={(["task", "event", "routine"] as ActivityType[]).map((type) => ({
+              value: type,
+              label: t(`activity.${type}` as `activity.${ActivityType}`),
+            }))}
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
@@ -235,33 +226,34 @@ export function TaskDialog({
             }
           />
         </Field>
-        <label className="flex items-center gap-2 text-sm">
-          <Switch
-            checked={input.milestone}
-            onChange={(checked) =>
-              setInput({ ...input, milestone: checked })
-            }
-          />
-          {t("hand.milestone")}
-        </label>
-        <TaskImportanceFields
-          value={input}
-          onChange={(dimensions) =>
-            setInput({
-              ...input,
-              ...dimensions,
-              importance: taskImportance(dimensions),
-            })
-          }
-        />
-        <TaskUrgencyFields taskId={taskId} deadline={input.dueDate} delayLoss={input.delayLoss}
-          dependencyIds={input.dependencyIds} onChange={(urgency) => setInput({ ...input, ...urgency })} />
-        <TaskEffortFields estimatedMinutes={input.estimatedMinutes} complexity={input.complexity}
-          uncertainty={input.uncertainty} onChange={(effort) => setInput({ ...input, ...effort })} />
-        <TaskRecurrenceFields
-          value={input.recurrence}
-          onChange={(recurrence) => setInput({ ...input, recurrence })}
-        />
+        <Button variant="secondary" onClick={() => setShowMore((value) => !value)}>
+          {showMore ? t("hand.collapseMore") : t("hand.more")}
+        </Button>
+        {showMore && (
+          <div className="grid gap-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
+            <label className="flex items-center gap-2 text-sm">
+              <Switch
+                checked={input.milestone}
+                onChange={(checked) => setInput({ ...input, milestone: checked })}
+              />
+              {t("hand.milestone")}
+            </label>
+            <TaskImportanceFields
+              value={input}
+              onChange={(dimensions) =>
+                setInput({ ...input, ...dimensions, importance: taskImportance(dimensions) })
+              }
+            />
+            <TaskUrgencyFields taskId={taskId} deadline={input.dueDate} delayLoss={input.delayLoss}
+              dependencyIds={input.dependencyIds} onChange={(urgency) => setInput({ ...input, ...urgency })} />
+            <TaskEffortFields estimatedMinutes={input.estimatedMinutes} complexity={input.complexity}
+              uncertainty={input.uncertainty} onChange={(effort) => setInput({ ...input, ...effort })} />
+            <TaskRecurrenceFields
+              value={input.recurrence}
+              onChange={(recurrence) => setInput({ ...input, recurrence })}
+            />
+          </div>
+        )}
         <Button onClick={submit}>{t("common.save")}</Button>
       </div>
     </Dialog>
