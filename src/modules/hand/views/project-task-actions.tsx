@@ -10,6 +10,8 @@ import { useHandViewModel } from "../view-models/use-hand-view-model";
 import { TaskDialog } from "./hand-dialogs";
 import { TaskMoveDialog } from "./task-move-dialog";
 import { today } from "@/shared/model/factories";
+import { RecurringTaskDeleteDialog } from "@/shared/components/recurring-task-delete-dialog";
+import type { RecurringDeleteMode } from "@/shared/model/task-recurrence";
 
 export type TaskMenu = { task: TaskRecord; position: MenuPosition } | null;
 export const isLockedCompletedPastTask = (task: TaskRecord) =>
@@ -27,6 +29,7 @@ export function ProjectTaskActions({
   const { t } = useI18n();
   const [editing, setEditing] = useState<TaskRecord | null>(null);
   const [moving, setMoving] = useState<TaskRecord | null>(null);
+  const [deleting, setDeleting] = useState<TaskRecord | null>(null);
   const locked = menu ? isLockedCompletedPastTask(menu.task) : false;
   return (
     <>
@@ -47,7 +50,8 @@ export function ProjectTaskActions({
           <ContextMenuItem danger onClick={() => {
             const task = menu.task;
             onClose();
-            if (window.confirm(t("common.confirmDelete"))) vm.deleteTask(task.id);
+            if (task.recurrence) setDeleting(task);
+            else if (window.confirm(t("common.confirmDelete"))) vm.deleteTask(task.id);
           }}>
             <TrashIcon className="size-4" />{t("common.delete")}
           </ContextMenuItem>
@@ -62,6 +66,16 @@ export function ProjectTaskActions({
         <TaskMoveDialog key={`move-task-${moving.id}`} task={moving} projects={vm.projects}
           onClose={() => setMoving(null)}
           onMove={(projectId) => vm.moveTask(moving.id, projectId)} />
+      )}
+      {deleting && (
+        <RecurringTaskDeleteDialog
+          task={deleting}
+          onClose={() => setDeleting(null)}
+          onDelete={(mode: RecurringDeleteMode) => {
+            vm.deleteTask(deleting.id, mode);
+            setDeleting(null);
+          }}
+        />
       )}
     </>
   );

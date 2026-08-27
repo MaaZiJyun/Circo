@@ -18,7 +18,7 @@ const COLLECTION_KEYS = [
   "ideas",
   "projects",
   "tasks",
-  "dailyTasks",
+  "taskHistory",
   "logs",
   "attachments",
   "artifacts",
@@ -40,8 +40,9 @@ export async function GET() {
       : 0;
 
     let journalMode = "unknown";
-    let tables: string[] = [];
-    let rowCount = 0;
+  let tables: string[] = [];
+  let rowCount = 0;
+  const tableRowCounts: Record<string, number> = {};
 
     try {
       const database = new Database(databasePath, { readonly: true });
@@ -53,11 +54,14 @@ export async function GET() {
           )
           .all() as { name: string }[]
       ).map((row) => row.name);
-      rowCount = (
-        database
-          .prepare("SELECT COUNT(*) AS count FROM app_snapshots")
-          .get() as { count: number }
-      ).count;
+      for (const table of tables) {
+        const escaped = table.replaceAll('"', '""');
+        const count = database
+          .prepare('SELECT COUNT(*) AS count FROM "' + escaped + '"')
+          .get() as { count: number };
+        tableRowCounts[table] = count.count;
+        rowCount += count.count;
+      }
       database.close();
     } catch {
       // Metadata is best-effort; never fail the whole response because of it.
@@ -80,6 +84,7 @@ export async function GET() {
       revision: state.revision,
       updatedAt: state.updatedAt,
       collections,
+      tableRowCounts,
     });
   } catch (error) {
     const message =

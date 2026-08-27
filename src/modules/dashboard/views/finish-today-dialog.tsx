@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { buildDailySummaryMessage } from "@/modules/dashboard/model/daily-summary-message";
 import { Button, Dialog, Field, Textarea } from "@/shared/components/ui";
-import { clearDailyCacheDate } from "@/shared/model/daily-cache";
+import { clearDailyTaskDate } from "@/shared/model/daily-task-local-storage";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { MessageKey } from "@/shared/i18n/zh";
 import { now, today } from "@/shared/model/factories";
 import type { DailyReviewAnswers } from "@/shared/model/message";
+import type { DailyTask } from "@/shared/model/entities";
 import { useStore } from "@/shared/view-models/store-context";
+import { useDailyTaskCache } from "@/modules/me/view-models/use-daily-task-cache";
 
 const questions: Array<{
   key: keyof DailyReviewAnswers;
@@ -65,10 +67,11 @@ export function FinishTodayDialog({
 }) {
   const { t, formatNumber } = useI18n();
   const { state, mutate } = useStore();
+  const dailyCache = useDailyTaskCache();
   const [answers, setAnswers] = useState(emptyAnswers);
   const complete = questions.every(({ key }) => answers[key].trim());
   const submit = () => {
-    if (!state || !complete) return;
+    if (!state || !dailyCache || !complete) return;
     const stamp = now();
     const review = questions.reduce(
       (current, { key }) => ({
@@ -77,8 +80,17 @@ export function FinishTodayDialog({
       }),
       emptyAnswers(),
     );
+    const completedToday: DailyTask[] = (state.taskHistory ?? [])
+      .filter((task) => task.completedAt.slice(0, 10) === today())
+      .map((task) => ({
+        ...task,
+        date: today(),
+        dueAt: task.dueDate,
+        completed: true,
+        sourceTaskId: task.id,
+      }));
     const { message, result } = buildDailySummaryMessage({
-      dailyTasks: state.dailyTasks,
+      dailyTasks: [...dailyCache.dailyTasks, ...completedToday],
       date: today(),
       stamp,
       deliverAt: stamp,
@@ -90,10 +102,11 @@ export function FinishTodayDialog({
       current.messages.some((item) => item.id === message.id)
         ? current
         : {
-            ...clearDailyCacheDate(current, today()),
+            ...current,
             messages: [...current.messages, message],
           },
     );
+    clearDailyTaskDate(today());
     window.dispatchEvent(new Event("circo-message-delivered"));
     onFinished(result.score);
   };

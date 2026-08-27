@@ -248,6 +248,12 @@ export interface DailyTask extends BaseEntity, TaskImportanceDimensions, TaskUrg
   projectId?: string;
 }
 
+/** Historical snapshot of a task after it leaves the active task collection. */
+export interface TaskHistoryRecord extends TaskRecord {
+  status: "done";
+  completedAt: string;
+}
+
 export interface ProjectLog extends BaseEntity {
   projectId: string;
   taskId?: string;

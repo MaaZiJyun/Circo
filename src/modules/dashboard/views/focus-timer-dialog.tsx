@@ -8,11 +8,11 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { Button, Dialog } from "@/shared/components/ui";
-import { isDailyCacheCleared } from "@/shared/model/daily-cache";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { DailyTask, WorkSession } from "@/shared/model/entities";
 import { createId, now, today } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
+import { useDailyTaskCache } from "@/modules/me/view-models/use-daily-task-cache";
 
 function timerText(milliseconds: number) {
   const hours = Math.floor(milliseconds / 3_600_000);
@@ -42,6 +42,7 @@ function parseTimerText(value: string) {
 export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
   const { state, mutate } = useStore();
+  const dailyCache = useDailyTaskCache();
   const [elapsed, setElapsed] = useState(0);
   const [running, setRunning] = useState(false);
   const [started, setStarted] = useState(false);
@@ -71,9 +72,9 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
     return () => window.cancelAnimationFrame(frame);
   }, [running, stopped]);
 
-  if (!state) return null;
+  if (!state || !dailyCache) return null;
   const currentDate = today();
-  const tasks = state.dailyTasks.filter((task) => task.date === currentDate && !task.deletedAt && !isDailyCacheCleared(state, currentDate));
+  const tasks = dailyCache.dailyTasks.filter((task) => task.date === currentDate && !task.deletedAt);
   const pause = () => {
     if (segmentStart.current !== null)
       accumulated.current += performance.now() - segmentStart.current;
@@ -135,27 +136,16 @@ export function FocusTimerDialog({ onClose }: { onClose: () => void }) {
     mutate((current) => ({
       ...current,
       sessions: session ? [...current.sessions, session] : current.sessions,
-      dailyTasks: current.dailyTasks.map((item) =>
-        item.id === task.id
+      tasks: current.tasks.map((item) =>
+        item.id === task.sourceTaskId
           ? {
               ...item,
               actualMinutes: (item.actualMinutes ?? 0) + minutes,
+              actualStartedAt: item.actualStartedAt ?? session?.startedAt ?? stamp,
               updatedAt: stamp,
             }
           : item,
       ),
-      tasks: task.sourceTaskId
-        ? current.tasks.map((item) =>
-            item.id === task.sourceTaskId
-              ? {
-                  ...item,
-                  actualMinutes: (item.actualMinutes ?? 0) + minutes,
-                  actualStartedAt: item.actualStartedAt ?? session?.startedAt ?? stamp,
-                  updatedAt: stamp,
-                }
-              : item,
-          )
-        : current.tasks,
     }));
     onClose();
   };

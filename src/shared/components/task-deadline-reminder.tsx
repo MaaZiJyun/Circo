@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { CheckIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { activeItems } from "@/shared/model/app-state";
-import { now, today } from "@/shared/model/factories";
-import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
+import { now } from "@/shared/model/factories";
+import { completeTask } from "@/shared/model/task-history";
 import { deadlineTime } from "@/shared/model/task-status";
 import {
   activeTaskReminders,
@@ -43,25 +43,7 @@ export function TaskDeadlineReminder() {
     dismiss();
     const stamp = now();
     mutate((current) => {
-      const tasks = current.tasks.map((item) =>
-        item.id === task.id
-          ? { ...item, status: "done" as const, completedAt: stamp, updatedAt: stamp }
-          : item,
-      );
-      return {
-        ...current,
-        tasks: appendNextRecurringTask(tasks, task.id, stamp),
-        dailyTasks: current.dailyTasks.map((item) =>
-          item.sourceTaskId === task.id && item.date === today()
-            ? {
-                ...item,
-                completed: true,
-                completedAt: stamp,
-                updatedAt: stamp,
-              }
-            : item,
-        ),
-      };
+      return completeTask(current, task.id, stamp);
     });
   };
 

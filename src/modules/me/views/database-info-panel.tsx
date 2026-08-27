@@ -17,6 +17,7 @@ type DbInfo = {
   revision: number;
   updatedAt: string;
   collections: Record<string, number>;
+  tableRowCounts?: Record<string, number>;
 };
 
 const COLLECTIONS: { key: string; label: MessageKey }[] = [
@@ -24,7 +25,7 @@ const COLLECTIONS: { key: string; label: MessageKey }[] = [
   { key: "ideas", label: "me.dbIdeas" },
   { key: "projects", label: "me.dbProjects" },
   { key: "tasks", label: "me.dbTasks" },
-  { key: "dailyTasks", label: "me.dbDailyTasks" },
+  { key: "taskHistory", label: "me.dbHistory" },
   { key: "messages", label: "me.dbMessages" },
   { key: "logs", label: "me.dbLogs" },
   { key: "attachments", label: "me.dbAttachments" },
@@ -128,6 +129,24 @@ export function DatabaseInfoPanel() {
               </p>
             </div>
           ))}
+        </div>
+      </Card>
+      <Card className="shadow-sm">
+        <SectionHeader title={t("me.dbTablesTitle")} />
+        <div className="grid gap-2 sm:grid-cols-2">
+          {info.tables
+            .filter((table) => table !== "sqlite_sequence")
+            .map((table) => (
+              <div
+                key={table}
+                className="flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-2 text-sm dark:bg-zinc-900/60"
+              >
+                <code className="text-xs">{table}</code>
+                <span className="tabular-nums text-zinc-500">
+                  {formatNumber(info.tableRowCounts?.[table] ?? 0)}
+                </span>
+              </div>
+            ))}
         </div>
       </Card>
     </div>

@@ -1,147 +1,104 @@
 "use client";
+
 import { useEffect, useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
 import type { DailyTask, TaskRecord } from "@/shared/model/entities";
 import { createId, estimateMinutes, now, startDateFromDue, today } from "@/shared/model/factories";
 import { calculateMetrics } from "@/shared/model/metrics";
-import { isDailyCacheCleared } from "@/shared/model/daily-cache";
+import { readDailyTaskIds, writeDailyTaskIds } from "@/shared/model/daily-task-local-storage";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance, taskImportanceDimensions } from "@/shared/model/task-importance";
 import { normalizeTaskFactors } from "@/shared/model/task-factors";
-import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
-import { dailyTaskStatusAt, isOverdue } from "@/shared/model/task-status";
+import { dailyTaskStatusAt } from "@/shared/model/task-status";
+import { completeTask } from "@/shared/model/task-history";
 import { useStore } from "@/shared/view-models/store-context";
 import { taskCoordinatesFromFormula } from "../model/task-coordinate-formula";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
 import type { DailyTaskInput } from "../model/daily-task-input";
 import type { TaskInput } from "@/modules/hand/view-models/use-hand-view-model";
+
+function taskAsDaily(task: TaskRecord, date: string): DailyTask {
+  return {
+    ...task,
+    id: task.id,
+    date,
+    completed: task.status === "done",
+    dueAt: task.dueDate.length === 10 ? task.dueDate + "T23:59" : task.dueDate,
+    sourceTaskId: task.id,
+    projectId: task.projectId,
+  };
+}
+
 export function useDailyTaskCache() {
-  const { state, mutate, softDelete } = useStore();
+  const { state, mutate } = useStore();
   const [date, setDate] = useState(today());
+  const [taskIds, setTaskIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const stored = readDailyTaskIds(date);
+    const legacy = state?.dailyTasks
+      ?.filter((item) => item.date === date && !item.deletedAt)
+      .map((item) => item.sourceTaskId ?? item.id) ?? [];
+    const ids = stored.length ? stored : legacy;
+    const timer = window.setTimeout(() => setTaskIds(ids), 0);
+    if (ids.length && !stored.length) writeDailyTaskIds(date, ids);
+    return () => window.clearTimeout(timer);
+  }, [date, state]);
+
+  useEffect(() => {
+    const refresh = () => setTaskIds(readDailyTaskIds(date));
+    window.addEventListener("circo-daily-cache-changed", refresh);
+    return () => window.removeEventListener("circo-daily-cache-changed", refresh);
+  }, [date]);
+
   useEffect(() => {
     let timer = 0;
     const scheduleReset = () => {
       const nextMidnight = new Date();
       nextMidnight.setHours(24, 0, 0, 0);
-      timer = window.setTimeout(
-        () => {
-          setDate(today());
-          scheduleReset();
-        },
-        nextMidnight.getTime() - Date.now() + 50,
-      );
+      timer = window.setTimeout(() => {
+        setDate(today());
+        scheduleReset();
+      }, nextMidnight.getTime() - Date.now() + 50);
     };
     scheduleReset();
     return () => window.clearTimeout(timer);
   }, []);
+
   const view = useMemo(() => {
     if (!state) return null;
-    const projects = activeItems(state.projects);
     const tasks = activeItems(state.tasks);
     const taskById = new Map(tasks.map((task) => [task.id, task]));
-    const dailyTaskItems = activeItems(state.dailyTasks)
-      .filter((item) => item.date === date && !isDailyCacheCleared(state, date))
-      .map((item) => {
-        const source = item.sourceTaskId
-          ? taskById.get(item.sourceTaskId)
-          : undefined;
-        if (!source) return item;
-        return {
-          ...item,
-          title: source.title,
-          description: source.description,
-          completed: source.projectId
-            ? source.status === "done"
-            : item.completed,
-          completedAt: source.projectId ? source.completedAt : item.completedAt,
-          dueAt:
-            source.projectId
-              ? source.dueDate.length === 10
-                ? `${source.dueDate}T23:59`
-                : source.dueDate
-              : item.dueAt,
-          estimatedMinutes: source.estimatedMinutes,
-          expectedOutput: source.expectedOutput,
-          importance: source.importance,
-          ...taskImportanceDimensions(source),
-          ...normalizeTaskFactors(source),
-          projectId: source.projectId,
-        };
-      });
+    const dailyTasks = taskIds
+      .map((id) => taskById.get(id))
+      .filter((task): task is TaskRecord => Boolean(task))
+      .map((task) => taskAsDaily(task, date));
     const currentTime = Date.parse(date);
-    const dailyTasks = dailyTaskItems.slice().sort((a, b) => {
-      const priorityA = taskCoordinatesFromFormula(
-        a,
-        state.profile.matrixFormulas,
-        currentTime,
-        dailyTaskItems,
-      ).priority;
-      const priorityB = taskCoordinatesFromFormula(
-        b,
-        state.profile.matrixFormulas,
-        currentTime,
-        dailyTaskItems,
-      ).priority;
+    const sorted = dailyTasks.slice().sort((a, b) => {
+      const priorityA = taskCoordinatesFromFormula(a, state.profile.matrixFormulas, currentTime, dailyTasks).priority;
+      const priorityB = taskCoordinatesFromFormula(b, state.profile.matrixFormulas, currentTime, dailyTasks).priority;
       return priorityB - priorityA || a.createdAt.localeCompare(b.createdAt);
     });
-    return { projects, tasks, dailyTasks, profile: state.profile, metrics: calculateMetrics(state) };
-  }, [date, state]);
-  const add = (
-    input: DailyTaskInput & Pick<DailyTask, "sourceTaskId" | "projectId">,
-  ) => {
-    if (!input.title.trim()) return;
-    const stamp = now();
-    const source = input.sourceTaskId
-      ? view?.tasks.find((task) => task.id === input.sourceTaskId)
-      : undefined;
-    const item: DailyTask = {
-      id: createId("daily_task"),
-      date,
-      title: input.title.trim(),
-      description: input.description,
-      completed: source?.projectId ? source.status === "done" : false,
-      completedAt: source?.projectId ? source.completedAt : undefined,
-      dueAt: input.dueAt,
-      estimatedMinutes: input.estimatedMinutes,
-      actualMinutes: 0,
-      expectedOutput: input.expectedOutput,
-      importance: taskImportance(input),
-      ...taskImportanceDimensions(input),
-      ...normalizeTaskFactors(input),
-      sourceTaskId: input.sourceTaskId,
-      projectId: input.projectId,
-      createdAt: stamp,
-      updatedAt: stamp,
+    return {
+      projects: activeItems(state.projects),
+      tasks,
+      dailyTasks: sorted,
+      profile: state.profile,
+      metrics: calculateMetrics(state),
     };
-    mutate((current) => ({
-      ...current,
-      dailyTasks: [...current.dailyTasks, item],
-    }));
+  }, [date, state, taskIds]);
+
+  const saveIds = (next: string[]) => {
+    const unique = [...new Set(next)];
+    setTaskIds(unique);
+    writeDailyTaskIds(date, unique);
   };
+
   const retrieve = (task: TaskRecord) => {
-    if (task.status === "done" || view?.dailyTasks.some((item) => item.sourceTaskId === task.id)) return;
-    add({
-      title: task.title,
-      description: task.description,
-      dueAt: task.projectId
-        ? task.dueDate.length === 10
-          ? `${task.dueDate}T23:59`
-          : task.dueDate
-        : `${date}T${task.dueDate.split("T")[1] ?? "23:59"}`,
-      estimatedMinutes: task.estimatedMinutes,
-      expectedOutput: task.expectedOutput,
-      importance:
-        task.importance ??
-        view?.projects.find((item) => item.id === task.projectId)?.score ??
-        50,
-      ...taskImportanceDimensions(task),
-      ...normalizeTaskFactors(task),
-      sourceTaskId: task.id,
-      projectId: task.projectId,
-      milestone: task.milestone,
-      recurrence: task.recurrence,
-    });
+    if (task.status === "done" || taskIds.includes(task.id)) return;
+    saveIds([...taskIds, task.id]);
   };
+
   const addIndependent = (input: DailyTaskInput) => {
     if (!input.title.trim()) return;
     const stamp = now();
@@ -164,29 +121,10 @@ export function useDailyTaskCache() {
       createdAt: stamp,
       updatedAt: stamp,
     };
-    const dailyTask: DailyTask = {
-      id: createId("daily_task"),
-      date,
-      title: source.title,
-      description: source.description,
-      completed: false,
-      dueAt: source.dueDate,
-      estimatedMinutes: source.estimatedMinutes,
-      actualMinutes: 0,
-      expectedOutput: source.expectedOutput,
-      importance: source.importance,
-      ...taskImportanceDimensions(source),
-      ...normalizeTaskFactors(source),
-      sourceTaskId: source.id,
-      createdAt: stamp,
-      updatedAt: stamp,
-    };
-    mutate((current) => ({
-      ...current,
-      tasks: [...current.tasks, source],
-      dailyTasks: [...current.dailyTasks, dailyTask],
-    }));
+    mutate((current) => ({ ...current, tasks: [...current.tasks, source] }));
+    saveIds([...taskIds, source.id]);
   };
+
   const addSubtask = (parent: TaskRecord, input: TaskInput) => {
     const stamp = now();
     const task: TaskRecord = {
@@ -204,116 +142,72 @@ export function useDailyTaskCache() {
       updatedAt: stamp,
     };
     mutate((current) => ({ ...current, tasks: [...current.tasks, task] }));
+    saveIds([...taskIds, task.id]);
   };
-  const setTaskParent = (ids: string[], parentId: string | null) => {
-    mutate((current) => ({
-      ...current,
-      tasks: setTaskParents(current.tasks, ids, parentId, now()),
-    }));
-  };
+
+  const setTaskParent = (ids: string[], parentId: string | null) =>
+    mutate((current) => ({ ...current, tasks: setTaskParents(current.tasks, ids, parentId, now()) }));
+
   const setCompleted = (item: DailyTask, completed: boolean) => {
-    if (item.completed === completed) return;
-    const sourceStatus: TaskRecord["status"] = completed
-      ? "done"
-      : isOverdue(item.dueAt, false)
-        ? "overdue"
-        : "todo";
+    if (item.completed === completed || !item.sourceTaskId) return;
     const stamp = now();
+    if (completed) {
+      mutate((current) => completeTask(current, item.sourceTaskId!, stamp));
+      saveIds(taskIds.filter((id) => id !== item.sourceTaskId));
+      return;
+    }
     mutate((current) => {
-      const tasks = item.sourceTaskId
-        ? current.tasks.map((task) =>
-            task.id === item.sourceTaskId
-              ? {
-                  ...task,
-                  status: sourceStatus,
-                  completedAt: completed ? stamp : undefined,
-                  updatedAt: stamp,
-                }
-              : task,
-          )
-        : current.tasks;
-      const nextTasks =
-        completed && item.sourceTaskId
-          ? appendNextRecurringTask(tasks, item.sourceTaskId, stamp)
-          : tasks;
+      const history = (current.taskHistory ?? []).find((task) => task.id === item.sourceTaskId);
+      if (!history) return current;
       return {
         ...current,
-        tasks: nextTasks,
-        dailyTasks: current.dailyTasks.map((task) =>
-          task.id === item.id
-            ? {
-                ...task,
-                completed,
-                completedAt: completed ? stamp : undefined,
-                updatedAt: stamp,
-              }
-            : task,
-        ),
+        tasks: [...current.tasks, { ...history, status: "todo" as const, completedAt: undefined, updatedAt: stamp }],
+        taskHistory: current.taskHistory.filter((task) => task.id !== history.id),
       };
     });
   };
+
   const updateTask = (item: DailyTask, input: DailyTaskInput) => {
-    if (!input.title.trim()) return;
+    if (!input.title.trim() || !item.sourceTaskId) return;
     const stamp = now();
     mutate((current) => ({
       ...current,
-      tasks: item.sourceTaskId
-        ? current.tasks.map((task) =>
-            task.id === item.sourceTaskId
-              ? {
-                  ...task,
-                  title: input.title.trim(),
-                  description: input.description,
-                  startDate: startDateFromDue(input.dueAt, input.estimatedMinutes),
-                  dueDate: input.dueAt,
-                  estimatedMinutes: input.estimatedMinutes,
-                  expectedOutput: input.expectedOutput,
-                  importance: taskImportance(input),
-                  ...taskImportanceDimensions(input),
-                  ...normalizeTaskFactors(input),
-                  priority: priorityFromImportance(taskImportance(input)),
-                  milestone: input.milestone,
-                  recurrence: input.recurrence,
-                  updatedAt: stamp,
-                }
-              : task,
-          )
-        : current.tasks,
-      dailyTasks: current.dailyTasks.map((task) =>
-        task.id === item.id
+      tasks: current.tasks.map((task) =>
+        task.id === item.sourceTaskId
           ? {
               ...task,
               title: input.title.trim(),
               description: input.description,
-              dueAt: input.dueAt,
+              startDate: startDateFromDue(input.dueAt, input.estimatedMinutes),
+              dueDate: input.dueAt,
               estimatedMinutes: input.estimatedMinutes,
               expectedOutput: input.expectedOutput,
               importance: taskImportance(input),
               ...taskImportanceDimensions(input),
               ...normalizeTaskFactors(input),
+              priority: priorityFromImportance(taskImportance(input)),
+              milestone: input.milestone,
+              recurrence: input.recurrence,
               updatedAt: stamp,
             }
           : task,
       ),
     }));
   };
-  const inputFor = (item: DailyTask): DailyTaskInput => {
-    const source = item.sourceTaskId
-      ? view?.tasks.find((task) => task.id === item.sourceTaskId)
-      : undefined;
-    return {
-      title: item.title,
-      description: item.description,
-      dueAt: item.dueAt,
-      estimatedMinutes: item.estimatedMinutes,
-      expectedOutput: item.expectedOutput,
-      importance: item.importance,
-      ...taskImportanceDimensions(item),
-      ...normalizeTaskFactors(source ?? item),
-      milestone: source?.milestone ?? false,
-      recurrence: source?.recurrence ?? null,
-    };
-  };
+
+  const inputFor = (item: DailyTask): DailyTaskInput => ({
+    title: item.title,
+    description: item.description,
+    dueAt: item.dueAt,
+    estimatedMinutes: item.estimatedMinutes,
+    expectedOutput: item.expectedOutput,
+    importance: item.importance,
+    ...taskImportanceDimensions(item),
+    ...normalizeTaskFactors(item),
+    milestone: false,
+    recurrence: null,
+  });
+
   if (!view) return null;
   return {
     ...view,
@@ -325,18 +219,9 @@ export function useDailyTaskCache() {
     toggle: (item: DailyTask) => setCompleted(item, !item.completed),
     updateTask,
     inputFor,
-    statusFor: (item: DailyTask): TaskRecord["status"] => {
-      const deadlineStatus = dailyTaskStatusAt(item);
-      if (deadlineStatus !== "todo") return deadlineStatus;
-      return item.sourceTaskId &&
-        view.tasks.find((task) => task.id === item.sourceTaskId)?.status ===
-          "doing"
-        ? "doing"
-        : "todo";
-    },
-    deleteTask: (id: string) => softDelete("dailyTasks", id),
-    projectName: (id?: string) =>
-      view.projects.find((item) => item.id === id)?.name ?? "",
+    statusFor: (item: DailyTask): TaskRecord["status"] => dailyTaskStatusAt(item),
+    deleteTask: (id: string) => saveIds(taskIds.filter((item) => item !== id)),
+    projectName: (id?: string) => view.projects.find((project) => project.id === id)?.name ?? "",
     coordinates: (item: DailyTask) => taskCoordinatesFromFormula(item, state?.profile.matrixFormulas, Date.now(), view.dailyTasks),
   };
 }

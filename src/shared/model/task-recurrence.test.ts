@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createSeedState } from "@/shared/infrastructure/seed";
-import { appendNextRecurringTask, nextDeadline } from "./task-recurrence";
+import {
+  appendNextRecurringTask,
+  deleteRecurringTasks,
+  nextDeadline,
+} from "./task-recurrence";
 
 describe("task recurrence", () => {
   it("advances deadlines while preserving the local deadline time", () => {
@@ -30,5 +34,47 @@ describe("task recurrence", () => {
     });
     expect(next?.id).not.toBe(source.id);
     expect(appendNextRecurringTask(first, source.id, "later")).toHaveLength(2);
+  });
+
+  it("keeps a future occurrence when deleting only this occurrence", () => {
+    const source = {
+      ...createSeedState().tasks[0],
+      recurrence: { interval: 1, unit: "week" as const },
+    };
+    const result = deleteRecurringTasks(
+      [source],
+      source.id,
+      "single",
+      "2026-08-13T12:00:00.000Z",
+    );
+    expect(result.tasks).toHaveLength(2);
+    expect(result.tasks.find((task) => task.id === source.id)?.deletedAt).toBe(
+      "2026-08-13T12:00:00.000Z",
+    );
+    expect(result.tasks.some((task) => !task.deletedAt)).toBe(true);
+  });
+
+  it("deletes the current and all generated future occurrences for a series", () => {
+    const source = {
+      ...createSeedState().tasks[0],
+      recurrence: { interval: 1, unit: "week" as const },
+    };
+    const next = {
+      ...source,
+      id: "next",
+      recurrenceSourceId: source.id,
+    };
+    const future = {
+      ...next,
+      id: "future",
+      recurrenceSourceId: next.id,
+    };
+    const result = deleteRecurringTasks(
+      [source, next, future],
+      source.id,
+      "series",
+      "2026-08-13T12:00:00.000Z",
+    );
+    expect(result.tasks.every((task) => task.deletedAt)).toBe(true);
   });
 });

@@ -3,11 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import { IconButton } from "@/shared/components/ui";
-import { activeItems } from "@/shared/model/app-state";
-import { isDailyCacheCleared } from "@/shared/model/daily-cache";
 import { today } from "@/shared/model/factories";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { useStore } from "@/shared/view-models/store-context";
+import { useDailyTaskCache } from "@/modules/me/view-models/use-daily-task-cache";
 import {
   cachedElapsed,
   readCountdownTimeCache,
@@ -35,20 +34,15 @@ function elapsed(minutes: number) {
 export function CountdownTaskSlots() {
   const { t } = useI18n();
   const { state, mutate } = useStore();
+  const dailyCache = useDailyTaskCache();
   const [dragOver, setDragOver] = useState<number | null>(null);
   const [timeCache, setTimeCache] = useState<CountdownTimeCache>({});
   const [clock, setClock] = useState<number | null>(null);
   const cacheRef = useRef<CountdownTimeCache>({});
   const slots = slotsOf(state?.profile.countdownTaskSlots);
   const currentDate = today();
-  const cacheCleared = state ? isDailyCacheCleared(state, currentDate) : false;
-  const visibleSlots = cacheCleared ? slotsOf() : slots;
-  const dailyTasks = activeItems(state?.dailyTasks ?? []).filter(
-    (task) =>
-      task.date === currentDate &&
-      state !== null &&
-      !isDailyCacheCleared(state, currentDate),
-  );
+  const visibleSlots = slots;
+  const dailyTasks = dailyCache?.dailyTasks.filter((task) => task.date === currentDate) ?? [];
   const activeSlotKey = visibleSlots
     .filter((id): id is string => {
       const task = dailyTasks.find((item) => item.id === id);
@@ -92,7 +86,7 @@ export function CountdownTaskSlots() {
     };
   }, [activeSlotKey]);
 
-  if (!state) return null;
+  if (!state || !dailyCache) return null;
   const releaseCache = (dailyTaskId: string) => {
     const next = { ...cacheRef.current };
     delete next[dailyTaskId];
@@ -116,8 +110,8 @@ export function CountdownTaskSlots() {
       ? cachedElapsed(cacheRef.current[displacedId], displacedEnd) / 60
       : 0;
     mutate((current) => {
-      const dailyTask = current.dailyTasks.find(
-        (task) => task.id === dailyTaskId && !task.deletedAt && !task.completed,
+      const dailyTask = current.tasks.find(
+        (task) => task.id === dailyTaskId && !task.deletedAt && task.status !== "done",
       );
       if (!dailyTask) return current;
       const nextSlots = slotsOf(current.profile.countdownTaskSlots).map((id) =>
@@ -125,35 +119,23 @@ export function CountdownTaskSlots() {
       );
       const ejectedId = nextSlots[index];
       nextSlots[index] = dailyTaskId;
-      const ejectedSourceId = current.dailyTasks.find(
-        (task) => task.id === ejectedId,
-      )?.sourceTaskId;
       return {
         ...current,
         profile: { ...current.profile, countdownTaskSlots: nextSlots },
-        dailyTasks: current.dailyTasks.map((task) =>
-          task.id === ejectedId
-            ? {
-                ...task,
-                actualMinutes: task.actualMinutes + displacedMinutes,
-                updatedAt: stamp,
-              }
-            : task,
-        ),
         tasks: current.tasks.map((task) => {
-          if (task.id === dailyTask.sourceTaskId)
+          if (task.id === dailyTask.id)
             return task.status === "done"
               ? task
               : {
                   ...task,
                   actualMinutes:
                     task.actualMinutes +
-                    (task.id === ejectedSourceId ? displacedMinutes : 0),
+                    (task.id === ejectedId ? displacedMinutes : 0),
                   status: "doing",
                   actualStartedAt: task.actualStartedAt ?? stamp,
                   updatedAt: stamp,
                 };
-          return task.id === ejectedSourceId
+          return task.id === ejectedId
             ? {
                 ...task,
                 actualMinutes: task.actualMinutes + displacedMinutes,
@@ -191,23 +173,11 @@ export function CountdownTaskSlots() {
       const nextSlots = slotsOf(current.profile.countdownTaskSlots);
       const dailyTaskId = nextSlots[index];
       nextSlots[index] = null;
-      const sourceTaskId = current.dailyTasks.find(
-        (task) => task.id === dailyTaskId,
-      )?.sourceTaskId;
       return {
         ...current,
         profile: { ...current.profile, countdownTaskSlots: nextSlots },
-        dailyTasks: current.dailyTasks.map((task) =>
-          task.id === dailyTaskId
-            ? {
-                ...task,
-                actualMinutes: task.actualMinutes + cachedMinutes,
-                updatedAt: stamp,
-              }
-            : task,
-        ),
         tasks: current.tasks.map((task) =>
-          task.id === sourceTaskId
+          task.id === dailyTaskId
             ? {
                 ...task,
                 actualMinutes: task.actualMinutes + cachedMinutes,

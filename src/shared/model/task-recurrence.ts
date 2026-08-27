@@ -52,10 +52,46 @@ export function appendNextRecurringTask(
       dueDate: nextDeadline(source.dueDate, source.recurrence),
       status: "todo" as const,
       actualMinutes: 0,
+      actualStartedAt: undefined,
       completedAt: undefined,
       recurrenceSourceId: source.id,
       createdAt: stamp,
       updatedAt: stamp,
     },
   ];
+}
+
+export type RecurringDeleteMode = "single" | "series";
+
+export function deleteRecurringTasks(
+  tasks: TaskRecord[],
+  taskId: string,
+  mode: RecurringDeleteMode,
+  stamp: string,
+) {
+  const target = tasks.find((task) => task.id === taskId);
+  if (!target) return { tasks, deletedIds: [] as string[] };
+  const deletedIds = new Set([taskId]);
+  if (mode === "series") {
+    let changed = true;
+    while (changed) {
+      changed = false;
+      tasks.forEach((task) => {
+        if (task.recurrenceSourceId && deletedIds.has(task.recurrenceSourceId) && !deletedIds.has(task.id)) {
+          deletedIds.add(task.id);
+          changed = true;
+        }
+      });
+    }
+  }
+  const expanded =
+    mode === "single" ? appendNextRecurringTask(tasks, taskId, stamp) : tasks;
+  return {
+    tasks: expanded.map((task) =>
+      deletedIds.has(task.id)
+        ? { ...task, deletedAt: stamp, updatedAt: stamp }
+        : task,
+    ),
+    deletedIds: [...deletedIds],
+  };
 }

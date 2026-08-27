@@ -37,7 +37,7 @@ const trashCollections: CollectionName[] = [
   "ideas",
   "projects",
   "tasks",
-  "dailyTasks",
+  "taskHistory",
   "logs",
   "attachments",
   "artifacts",

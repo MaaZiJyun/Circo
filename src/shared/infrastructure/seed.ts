@@ -254,7 +254,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
-    dailyTasks: [],
+    taskHistory: [],
     logs: [
       {
         id: "log_1",

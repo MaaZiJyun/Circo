@@ -17,6 +17,8 @@ import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
 import type { useTaskLibrary } from "../view-models/use-task-library";
 import { isLockedCompletedPastTask } from "./project-task-actions";
+import { RecurringTaskDeleteDialog } from "@/shared/components/recurring-task-delete-dialog";
+import type { RecurringDeleteMode } from "@/shared/model/task-recurrence";
 
 export type TaskLibraryMenu = {
   task: TaskRecord;
@@ -38,6 +40,7 @@ export function TaskLibraryActions({
 }) {
   const { t } = useI18n();
   const [assigning, setAssigning] = useState<TaskRecord | null>(null);
+  const [deleting, setDeleting] = useState<TaskRecord | null>(null);
   const task = menu?.task;
   const locked = task ? isLockedCompletedPastTask(task) : false;
   const canRemoveFromList = Boolean(
@@ -95,7 +98,8 @@ export function TaskLibraryActions({
             onClick={() => {
               const id = task.id;
               onClose();
-              if (window.confirm(t("common.confirmDelete")))
+              if (task.recurrence) setDeleting(task);
+              else if (window.confirm(t("common.confirmDelete")))
                 library.deleteTask(id);
             }}
           >
@@ -111,6 +115,16 @@ export function TaskLibraryActions({
           projects={library.projects}
           onClose={() => setAssigning(null)}
           onAssign={(projectId) => library.moveTask(assigning.id, projectId)}
+        />
+      )}
+      {deleting && (
+        <RecurringTaskDeleteDialog
+          task={deleting}
+          onClose={() => setDeleting(null)}
+          onDelete={(mode: RecurringDeleteMode) => {
+            library.deleteTask(deleting.id, mode);
+            setDeleting(null);
+          }}
         />
       )}
     </>

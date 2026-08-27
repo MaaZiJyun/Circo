@@ -19,6 +19,7 @@ import type {
   SourceRecord,
   TaskList,
   TaskRecord,
+  TaskHistoryRecord,
   WorkSession,
 } from "./entities";
 import type { FutureMessage } from "./message";
@@ -44,8 +45,9 @@ export interface AppState {
   ideas: Idea[];
   projects: ProjectRecord[];
   tasks: TaskRecord[];
-  dailyTasks: DailyTask[];
-  dailyCacheClearedDates?: string[];
+  taskHistory: TaskHistoryRecord[];
+  /** @deprecated Read only during migration; daily selections live in browser storage. */
+  dailyTasks?: DailyTask[];
   logs: ProjectLog[];
   attachments: Attachment[];
   artifacts: Artifact[];
@@ -60,7 +62,7 @@ export type CollectionName = Exclude<
   | "revision"
   | "updatedAt"
   | "profile"
-  | "dailyCacheClearedDates"
+  | "dailyTasks"
 >;
 
 export interface UserProfile {
@@ -224,6 +226,7 @@ export function isAppState(value: unknown): value is AppState {
     (item.points === undefined || Array.isArray(item.points)) &&
     Array.isArray(item.ideas) &&
     Array.isArray(item.projects) &&
+    (item.taskHistory === undefined || Array.isArray(item.taskHistory)) &&
     (item.dailyTasks === undefined || Array.isArray(item.dailyTasks)) &&
     Array.isArray(item.artifacts) &&
     Array.isArray(item.aiJobs) &&

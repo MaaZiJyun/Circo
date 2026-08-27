@@ -95,8 +95,9 @@ export async function GET() {
     const config = getStorageConfig();
     const dataDirectory = config.storageDirectory;
     const state = await repository.load();
+    const backupState = { ...state, dailyTasks: undefined };
     const zip = new AdmZip();
-    zip.addFile("circo.json", Buffer.from(JSON.stringify(state, null, 2)));
+    zip.addFile("circo.json", Buffer.from(JSON.stringify(backupState, null, 2)));
     zip.addFile(
       "manifest.json",
       Buffer.from(

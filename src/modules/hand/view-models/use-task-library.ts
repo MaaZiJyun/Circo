@@ -161,11 +161,6 @@ export function useTaskLibrary() {
           ? { ...item, deletedAt: stamp, updatedAt: stamp }
           : item,
       ),
-      dailyTasks: current.dailyTasks.map((item) =>
-        item.sourceTaskId && selectedIds.includes(item.sourceTaskId)
-          ? { ...item, deletedAt: stamp, updatedAt: stamp }
-          : item,
-      ),
     }));
     setSelectedIds([]);
   };

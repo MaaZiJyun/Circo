@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";
 import type { AppRepository, AppState } from "@/shared/model/app-state";
+import type { TaskRecord } from "@/shared/model/entities";
 import { isAppState } from "@/shared/model/app-state";
 import { getStorageConfig } from "./storage-config";
 import { createSeedState } from "./seed";
@@ -11,6 +12,8 @@ import { normalizeBackgroundAudio } from "@/shared/model/background-audio";
 import { normalizeTaskImportance } from "@/shared/model/task-importance";
 import { normalizeTaskFactors } from "@/shared/model/task-factors";
 import { normalizeTasks, withoutLegacyRoutineTasks } from "@/shared/model/task-normalization";
+import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
+import { priorityFromImportance } from "@/shared/model/task-normalization";
 const systemLists = [
   {
     id: "library_default",
@@ -104,8 +107,109 @@ function openDatabase(databasePath: string) {
       payload TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+    CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      status TEXT NOT NULL,
+      start_date TEXT,
+      end_date TEXT,
+      score REAL,
+      deleted_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      payload TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS tasks (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      parent_id TEXT,
+      title TEXT NOT NULL,
+      status TEXT NOT NULL,
+      start_date TEXT,
+      due_date TEXT,
+      estimated_minutes REAL NOT NULL DEFAULT 0,
+      actual_minutes REAL NOT NULL DEFAULT 0,
+      actual_started_at TEXT,
+      completed_at TEXT,
+      deleted_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      payload TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS task_history (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      title TEXT NOT NULL,
+      start_date TEXT,
+      due_date TEXT,
+      estimated_minutes REAL NOT NULL DEFAULT 0,
+      actual_minutes REAL NOT NULL DEFAULT 0,
+      actual_started_at TEXT,
+      completed_at TEXT NOT NULL,
+      deleted_at TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      payload TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      cycle_id TEXT,
+      goal_id TEXT,
+      project_id TEXT,
+      task_id TEXT,
+      title TEXT NOT NULL,
+      started_at TEXT NOT NULL,
+      ended_at TEXT NOT NULL,
+      minutes REAL NOT NULL DEFAULT 0,
+      effective INTEGER NOT NULL DEFAULT 0,
+      payload TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_tasks_project_id ON tasks(project_id);
+    CREATE INDEX IF NOT EXISTS idx_tasks_status_due_date ON tasks(status, due_date);
+    CREATE INDEX IF NOT EXISTS idx_task_history_completed_at ON task_history(completed_at);
+    CREATE INDEX IF NOT EXISTS idx_sessions_task_id ON sessions(task_id);
   `);
   return database;
+}
+
+function syncRelationalTables(database: Database.Database, state: AppState) {
+  database.exec("DELETE FROM projects; DELETE FROM tasks; DELETE FROM task_history; DELETE FROM sessions;");
+  const projectInsert = database.prepare(`
+    INSERT INTO projects
+      (id, name, status, start_date, end_date, score, deleted_at, created_at, updated_at, payload)
+    VALUES
+      (@id, @name, @status, @startDate, @endDate, @score, @deletedAt, @createdAt, @updatedAt, @payload)
+  `);
+  for (const project of state.projects) {
+    projectInsert.run({ id: project.id, name: project.name, status: project.status, startDate: project.startDate, endDate: project.endDate, score: project.score, deletedAt: project.deletedAt ?? null, createdAt: project.createdAt, updatedAt: project.updatedAt, payload: JSON.stringify(project) });
+  }
+  const taskInsert = database.prepare(`
+    INSERT INTO tasks
+      (id, project_id, parent_id, title, status, start_date, due_date, estimated_minutes, actual_minutes, actual_started_at, completed_at, deleted_at, created_at, updated_at, payload)
+    VALUES
+      (@id, @projectId, @parentId, @title, @status, @startDate, @dueDate, @estimatedMinutes, @actualMinutes, @actualStartedAt, @completedAt, @deletedAt, @createdAt, @updatedAt, @payload)
+  `);
+  for (const task of state.tasks) {
+    taskInsert.run({ id: task.id, projectId: task.projectId ?? null, parentId: task.parentId ?? null, title: task.title, status: task.status, startDate: task.startDate, dueDate: task.dueDate, estimatedMinutes: task.estimatedMinutes, actualMinutes: task.actualMinutes, actualStartedAt: task.actualStartedAt ?? null, completedAt: task.completedAt ?? null, deletedAt: task.deletedAt ?? null, createdAt: task.createdAt, updatedAt: task.updatedAt, payload: JSON.stringify(task) });
+  }
+  const historyInsert = database.prepare(`
+    INSERT INTO task_history
+      (id, project_id, title, start_date, due_date, estimated_minutes, actual_minutes, actual_started_at, completed_at, deleted_at, created_at, updated_at, payload)
+    VALUES
+      (@id, @projectId, @title, @startDate, @dueDate, @estimatedMinutes, @actualMinutes, @actualStartedAt, @completedAt, @deletedAt, @createdAt, @updatedAt, @payload)
+  `);
+  for (const task of state.taskHistory ?? []) {
+    historyInsert.run({ id: task.id, projectId: task.projectId ?? null, title: task.title, startDate: task.startDate, dueDate: task.dueDate, estimatedMinutes: task.estimatedMinutes, actualMinutes: task.actualMinutes, actualStartedAt: task.actualStartedAt ?? null, completedAt: task.completedAt, deletedAt: task.deletedAt ?? null, createdAt: task.createdAt, updatedAt: task.updatedAt, payload: JSON.stringify(task) });
+  }
+  const sessionInsert = database.prepare(`
+    INSERT INTO sessions
+      (id, cycle_id, goal_id, project_id, task_id, title, started_at, ended_at, minutes, effective, payload)
+    VALUES
+      (@id, @cycleId, @goalId, @projectId, @taskId, @title, @startedAt, @endedAt, @minutes, @effective, @payload)
+  `);
+  for (const session of state.sessions) {
+    sessionInsert.run({ id: session.id, cycleId: session.cycleId, goalId: session.goalId ?? null, projectId: session.projectId ?? null, taskId: session.taskId ?? null, title: session.title, startedAt: session.startedAt, endedAt: session.endedAt, minutes: session.minutes, effective: session.effective ? 1 : 0, payload: JSON.stringify(session) });
+  }
 }
 function readSnapshot(database: Database.Database): AppState | null {
   const row = database
@@ -132,6 +236,62 @@ function normalizeState(state: AppState): AppState {
   const systemTaskListIds = new Set(systemTaskLists.map((item) => item.id));
   const systemIdeaListIds = new Set(systemIdeaLists.map((item) => item.id));
   const systemPointListIds = new Set(systemPointLists.map((item) => item.id));
+  let normalizedTasks = normalizeTasks(state);
+  const legacyDailyTasks = (state.dailyTasks ?? []).map((item) => ({
+    ...item,
+    description: item.description ?? "",
+    dueAt: item.dueAt ?? item.date + "T23:59",
+    estimatedMinutes: item.estimatedMinutes ?? 30,
+    actualMinutes: item.actualMinutes ?? 0,
+    expectedOutput: item.expectedOutput ?? "",
+    ...normalizeTaskImportance(item, item.importance ?? 50),
+    ...normalizeTaskFactors(item),
+  }));
+  for (const item of legacyDailyTasks) {
+    if (item.sourceTaskId || normalizedTasks.some((task) => task.id === item.id)) continue;
+    normalizedTasks.push({
+      id: item.id,
+      title: item.title,
+      description: item.description,
+      startDate: item.dueAt,
+      dueDate: item.dueAt,
+      priority: priorityFromImportance(item.importance),
+      status: item.completed ? "done" : "todo",
+      estimatedMinutes: item.estimatedMinutes,
+      actualMinutes: item.actualMinutes,
+      milestone: false,
+      expectedOutput: item.expectedOutput,
+      importance: item.importance,
+      impact: item.impact,
+      goal: item.goal,
+      risk: item.risk,
+      value: item.value,
+      delayLoss: item.delayLoss,
+      dependencyIds: [],
+      complexity: item.complexity,
+      uncertainty: item.uncertainty,
+      recurrence: null,
+      projectId: item.projectId,
+      completedAt: item.completedAt,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    } as TaskRecord);
+  }
+  const migratedHistory = [...(state.taskHistory ?? [])];
+  for (const task of normalizedTasks.filter((item) => item.status === "done")) {
+    if (!migratedHistory.some((item) => item.id === task.id)) {
+      migratedHistory.push({
+        ...task,
+        status: "done",
+        completedAt: task.completedAt ?? task.updatedAt ?? stamp,
+      });
+    }
+    normalizedTasks = appendNextRecurringTask(
+      normalizedTasks,
+      task.id,
+      task.completedAt ?? task.updatedAt ?? stamp,
+    ).filter((item) => item.id !== task.id);
+  }
   return {
     ...withoutLegacyRoutineTasks(state),
     profile: {
@@ -247,8 +407,13 @@ function normalizeState(state: AppState): AppState {
       ...normalizeTaskImportance(item, item.importance ?? 50),
       ...normalizeTaskFactors(item),
     })),
-    dailyCacheClearedDates: state.dailyCacheClearedDates ?? [],
-    tasks: normalizeTasks(state),
+    tasks: normalizedTasks,
+    taskHistory: migratedHistory.map((item) => ({
+      ...item,
+      status: "done" as const,
+      completedAt: item.completedAt ?? item.updatedAt,
+      actualMinutes: item.actualMinutes ?? 0,
+    })),
     logs: Array.from(
       new Map(state.logs.map((item) => [item.id, item])).values(),
     ).map((item) => ({
@@ -276,6 +441,7 @@ function writeSnapshot(database: Database.Database, state: AppState): AppState {
     revision: (current?.revision ?? 0) + 1,
     updatedAt: new Date().toISOString(),
   };
+  const persisted = { ...saved, dailyTasks: undefined };
   database
     .prepare(
       `
@@ -291,9 +457,10 @@ function writeSnapshot(database: Database.Database, state: AppState): AppState {
     .run({
       schemaVersion: saved.schemaVersion,
       revision: saved.revision,
-      payload: JSON.stringify(saved),
+      payload: JSON.stringify(persisted),
       updatedAt: saved.updatedAt,
     });
+  syncRelationalTables(database, saved);
   return saved;
 }
 
@@ -308,7 +475,10 @@ export class SqliteAppRepository implements AppRepository {
     const database = this.open();
     try {
       const state = readSnapshot(database);
-      if (state) return state;
+      if (state) {
+        database.transaction(() => syncRelationalTables(database, state))();
+        return state;
+      }
       return database.transaction(() =>
         writeSnapshot(database, createSeedState()),
       )();

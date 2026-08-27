@@ -14,6 +14,7 @@ import { addDays, createId, now, startDateFromDue } from "@/shared/model/factori
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance } from "@/shared/model/task-importance";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
+import { deleteRecurringTasks, type RecurringDeleteMode } from "@/shared/model/task-recurrence";
 import { useStore } from "@/shared/view-models/store-context";
 import {
   dayMinutes,
@@ -123,15 +124,11 @@ export function PlanningDialog({ onClose }: { onClose: () => void }) {
     };
     mutate((current) => ({ ...current, tasks: [...current.tasks, duplicate] }));
   };
-  const removeIndependent = (task: TaskRecord) => {
+  const removeIndependent = (task: TaskRecord, mode: RecurringDeleteMode = "series") => {
     const stamp = now();
     mutate((current) => ({
       ...current,
-      tasks: current.tasks.map((item) =>
-        item.id === task.id
-          ? { ...item, deletedAt: stamp, updatedAt: stamp }
-          : item,
-      ),
+      tasks: deleteRecurringTasks(current.tasks, task.id, mode, stamp).tasks,
     }));
     setSelected((current) =>
       current.filter((item) => item.id !== task.id),

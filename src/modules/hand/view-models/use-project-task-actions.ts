@@ -3,10 +3,14 @@
 import type { ProjectRecord, TaskRecord } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
 import { today } from "@/shared/model/factories";
-import { appendNextRecurringTask } from "@/shared/model/task-recurrence";
+import {
+  deleteRecurringTasks,
+  type RecurringDeleteMode,
+} from "@/shared/model/task-recurrence";
 import { priorityFromImportance } from "@/shared/model/task-normalization";
 import { taskImportance } from "@/shared/model/task-importance";
 import { setTaskParents } from "@/shared/model/task-hierarchy";
+import { completeTask } from "@/shared/model/task-history";
 import { useStore } from "@/shared/view-models/store-context";
 
 export type TaskInput = Pick<
@@ -152,22 +156,15 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
             }
           : item,
       );
+      if (status === "done") {
+        const completed = completeTask({ ...current, tasks }, task.id, stamp);
+        return {
+          ...completed,
+        };
+      }
       return {
         ...current,
-        tasks:
-          status === "done"
-            ? appendNextRecurringTask(tasks, task.id, stamp)
-            : tasks,
-        dailyTasks: current.dailyTasks.map((item) =>
-          item.sourceTaskId === task.id && item.date === today()
-            ? {
-                ...item,
-                completed: status === "done",
-                completedAt: status === "done" ? stamp : undefined,
-                updatedAt: stamp,
-              }
-            : item,
-        ),
+        tasks,
       };
     });
   };
@@ -207,23 +204,16 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
           ? { ...task, ...patch, actualStartedAt, completedAt, updatedAt: stamp }
           : task,
       );
+      if (nextStatus === "done") {
+        const completed = completeTask({ ...current, tasks: updatedTasks }, id, stamp);
+        return {
+          ...completed,
+        };
+      }
 
       return {
         ...current,
-        tasks:
-          previous.status !== "done" && nextStatus === "done"
-            ? appendNextRecurringTask(updatedTasks, id, stamp)
-            : updatedTasks,
-        dailyTasks: current.dailyTasks.map((task) =>
-          task.sourceTaskId === id && task.date === today()
-            ? {
-                ...task,
-                completed: nextStatus === "done",
-                completedAt: nextStatus === "done" ? completedAt : undefined,
-                updatedAt: stamp,
-              }
-            : task,
-        ),
+        tasks: updatedTasks,
       };
     });
   };
@@ -236,29 +226,17 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
           ? { ...item, projectId, updatedAt: stamp }
           : item,
       ),
-      dailyTasks: current.dailyTasks.map((item) =>
-        item.sourceTaskId === id &&
-        !current.tasks.some(
-          (task) => task.id === id && isLockedCompletedPastTask(task),
-        )
-          ? { ...item, projectId, updatedAt: stamp }
-          : item,
-      ),
     }));
   };
-  const deleteTask = (id: string) => {
+  const deleteTask = (id: string, mode: RecurringDeleteMode = "series") => {
     const stamp = now();
-    mutate((current) => ({
-      ...current,
-      tasks: current.tasks.map((item) =>
-        item.id === id ? { ...item, deletedAt: stamp, updatedAt: stamp } : item,
-      ),
-      dailyTasks: current.dailyTasks.map((item) =>
-        item.sourceTaskId === id
-          ? { ...item, deletedAt: stamp, updatedAt: stamp }
-          : item,
-      ),
-    }));
+    mutate((current) => {
+      const result = deleteRecurringTasks(current.tasks, id, mode, stamp);
+      return {
+        ...current,
+        tasks: result.tasks,
+      };
+    });
   };
   const setTaskParent = (ids: string[], parentId: string | null) =>
     mutate((current) => {

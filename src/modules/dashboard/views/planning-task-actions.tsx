@@ -12,6 +12,8 @@ import { taskInput } from "@/modules/hand/view-models/use-project-task-actions";
 import { TaskDialog } from "@/modules/hand/views/task-dialog";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { TaskRecord } from "@/shared/model/entities";
+import { RecurringTaskDeleteDialog } from "@/shared/components/recurring-task-delete-dialog";
+import type { RecurringDeleteMode } from "@/shared/model/task-recurrence";
 
 export type PlanningTaskMenu = {
   task: TaskRecord;
@@ -30,12 +32,13 @@ export function PlanningTaskActions({
   onClose: () => void;
   onUpdate: (task: TaskRecord, input: TaskInput) => void;
   onDuplicate: (task: TaskRecord) => void;
-  onRemove: (task: TaskRecord) => void;
+  onRemove: (task: TaskRecord, mode?: RecurringDeleteMode) => void;
   onCreate: (parent: TaskRecord, input: TaskInput) => void;
 }) {
   const { t } = useI18n();
   const [editing, setEditing] = useState<TaskRecord | null>(null);
   const [creatingFor, setCreatingFor] = useState<TaskRecord | null>(null);
+  const [deleting, setDeleting] = useState<TaskRecord | null>(null);
   return (
     <>
       {menu && (
@@ -72,7 +75,8 @@ export function PlanningTaskActions({
             onClick={() => {
               const task = menu.task;
               onClose();
-              if (window.confirm(t("common.confirmDelete"))) onRemove(task);
+              if (task.recurrence) setDeleting(task);
+              else if (window.confirm(t("common.confirmDelete"))) onRemove(task);
             }}
           >
             <TrashIcon className="size-4" />
@@ -97,6 +101,16 @@ export function PlanningTaskActions({
           parentId={creatingFor.id}
           onClose={() => setCreatingFor(null)}
           onSave={(input) => onCreate(creatingFor, input)}
+        />
+      )}
+      {deleting && (
+        <RecurringTaskDeleteDialog
+          task={deleting}
+          onClose={() => setDeleting(null)}
+          onDelete={(mode) => {
+            onRemove(deleting, mode);
+            setDeleting(null);
+          }}
         />
       )}
     </>

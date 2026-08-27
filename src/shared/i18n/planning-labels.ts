@@ -22,6 +22,9 @@ export const planningZh = {
   "task.recurrence.week": "周",
   "task.recurrence.month": "月",
   "task.recurrence.year": "年",
+  "task.recurrence.deleteTitle": "删除周期任务",
+  "task.recurrence.deleteSingle": "仅删除本次",
+  "task.recurrence.deleteSeries": "删除本次及未来",
 } as const;
 
 export const planningEn: Record<keyof typeof planningZh, string> = {
@@ -49,4 +52,7 @@ export const planningEn: Record<keyof typeof planningZh, string> = {
   "task.recurrence.week": "Week",
   "task.recurrence.month": "Month",
   "task.recurrence.year": "Year",
+  "task.recurrence.deleteTitle": "Delete recurring task",
+  "task.recurrence.deleteSingle": "Delete this occurrence",
+  "task.recurrence.deleteSeries": "Delete this and future occurrences",
 };

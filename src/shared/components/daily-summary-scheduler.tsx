@@ -8,6 +8,8 @@ import {
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { now } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
+import { useDailyTaskCache } from "@/modules/me/view-models/use-daily-task-cache";
+import type { DailyTask } from "@/shared/model/entities";
 
 function dateKey(date: Date) {
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -32,13 +34,22 @@ function nextSummaryTime(current: Date) {
 export function DailySummaryScheduler() {
   const { t, formatNumber } = useI18n();
   const { state, mutate } = useStore();
+  const dailyCache = useDailyTaskCache();
 
   useEffect(() => {
     if (!state) return;
     const current = new Date();
     const dueDate = latestDueDate(current);
     const existing = new Set((state.messages ?? []).map((item) => item.id));
-    const historicalDates = state.dailyTasks
+    const historicalTasks: DailyTask[] = (state.taskHistory ?? []).map((task) => ({
+      ...task,
+      date: task.completedAt.slice(0, 10),
+      dueAt: task.dueDate,
+      completed: true,
+      sourceTaskId: task.id,
+    }));
+    const allDailyTasks = [...(dailyCache?.dailyTasks ?? []), ...historicalTasks];
+    const historicalDates = historicalTasks
       .filter((task) => task.date <= dueDate)
       .map((task) => task.date);
     const dates = [...new Set([...historicalDates, dueDate])]
@@ -49,7 +60,7 @@ export function DailySummaryScheduler() {
       const generated = dates.map(
         (date) =>
           buildDailySummaryMessage({
-            dailyTasks: state.dailyTasks,
+            dailyTasks: allDailyTasks,
             date,
             stamp,
             t,
@@ -71,7 +82,7 @@ export function DailySummaryScheduler() {
       window.clearTimeout(timer);
       window.removeEventListener("circo-daily-summary", refresh);
     };
-  }, [formatNumber, mutate, state, t]);
+  }, [dailyCache, formatNumber, mutate, state, t]);
 
   return null;
 }
