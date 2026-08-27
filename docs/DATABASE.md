@@ -1,6 +1,6 @@
 # Circo 数据库现状
 
-> 更新时间：2026-08-25（Asia/Shanghai）  
+> 更新时间：2026-08-27（Asia/Shanghai）
 > 本文记录当前代码和本地数据库的实际实现。数据库结构或 `AppState` 变化时，应同步更新本文。
 
 ## 1. 总览
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 
 | 集合                     | 数据类型           | 主要关系和用途                                           |
 | ------------------------ | ------------------ | -------------------------------------------------------- |
-| `profile`                | `UserProfile`      | 用户资料、背景音频、倒计时槽位、矩阵公式、任务预处理规则 |
+| `profile`                | `UserProfile`      | 用户资料、背景音频、倒计时槽位、矩阵公式、Activity 预处理规则 |
 | `cycles`                 | `Cycle[]`          | 成长周期                                                 |
 | `goals`                  | `Goal[]`           | 通过 `cycleId` 关联周期                                  |
 | `focus`               | `FocusRecord[]`    | Focus 时间记录，使用 `focusOn` 关联 Activity                |
@@ -106,9 +106,30 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 - `dependencyIds` 保存当前任务的前置任务 ID，即 Finish-to-Start 的 source task。
 - 应用层负责防止自身依赖、循环依赖、跨项目依赖及将自己的子任务设为前置任务。
 - Done 任务在 Gantt 中按 100% 进度显示。
-- 完成不会把任务移出 `activities`；每日缓存结算时，仅结算清单中的已完成任务自动写入 `archivedAt`。未完成、未结算以及其他 Activity 不会自动归档；手动归档后记录只读。
+- 完成不会把 Activity 移出 `activities`；Finish Today 结算时，仅当天清单中的已完成 Activity 自动写入 `archivedAt`。未完成、未结算以及其他 Activity 不会自动归档；手动归档后记录只读。
 
-## 4. 当前本地数据库快照
+## 4. 每日 Activity Cache
+
+每日清单不是数据库集合，而是浏览器 `localStorage` 中按日期保存的 Activity ID：
+
+| Key | 内容 |
+| --- | --- |
+| `circo.daily-task-ids.v1` | `{ "YYYY-MM-DD": ["activityId", ...] }` |
+| `circo.daily-task-cleared.v1` | 已完成自动清理或 Finish Today 结算过的日期数组 |
+| `circo-countdown-task-time` | Countdown 当前槽位的计时锚点和累计秒数；与每日清单独立 |
+
+每天跨过当地时间 23:59 后，客户端会清理刚结束日期的 daily Activity cache：
+
+- 移除已完成且 `dueDate <= 当天` 的 Activity ID。
+- 保留未完成的 Activity，即使其截止日期已经到达或逾期。
+- 保留截止日期晚于当天的已完成 Activity。
+- 不修改 SQLite，不设置 `archivedAt`，不删除 Activity 本身。
+
+因此，“自动清理 cache”和“Finish Today 结算”是两个不同操作。Finish Today 除了清空当天 cache，还会生成 Daily Summary，并将当天 cache 中已完成的 Activity 归档；自动清理只清理符合条件的 cache ID，不会归档。
+
+如果旧版本 `AppState` 中仍有 `dailyTasks`，首次读取时会将其兼容为浏览器 localStorage 中的日期 Activity ID；已标记为清理的日期不会再次从旧字段恢复。
+
+## 5. 当前本地数据库快照
 
 以下数据采集于 2026-08-25 14:30–14:36（Asia/Shanghai），用于记录当时状态，并非固定配置。
 
@@ -144,9 +165,9 @@ CREATE TABLE IF NOT EXISTS app_snapshots (
 
 补充状态：当前 active activities 为 37、回收站 activities 为 12、active projects 为 4、active sources 为 6。
 
-## 5. 读写流程
+## 6. 读写流程
 
-### 5.1 SQLite 关系型核心表
+### 6.1 SQLite 关系型核心表
 
 当前 SQLite 使用关系型核心表承载可查询数据，同时保留 `app_snapshots` 作为完整状态兼容和备份快照：
 
@@ -175,7 +196,7 @@ React StoreContext
 
 任务截止状态会在客户端加载和最近截止时间到达时自动同步；非 Done 且超过截止时间的任务可变为 Overdue。
 
-## 6. 兼容与规范化
+## 7. 兼容与规范化
 
 当前没有独立 SQL migration 文件。旧数据兼容主要由 `normalizeState()` 在读取时完成，包括：
 
@@ -195,7 +216,7 @@ React StoreContext
 2. 增加明确、可测试的逐版本迁移函数。
 3. 同步更新 `isAppState`、seed、备份恢复和本文档。
 
-## 7. 文件系统数据
+## 8. 文件系统数据
 
 SQLite 主要保存元数据和路径；较大的二进制或 Markdown 内容位于 `storageDirectory`。默认目录为 `data/`。
 

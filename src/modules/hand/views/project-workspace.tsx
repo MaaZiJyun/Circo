@@ -97,7 +97,7 @@ export function ProjectWorkspace({
               action={<Button variant="ghost" onClick={() => openDialog("task")}><PlusIcon className="size-4" />{t("hand.newTask")}</Button>}
             />
             <ProjectGantt
-              activities={vm.activities}
+              activities={vm.ganttActivities}
               startDate={vm.selected.startDate}
               endDate={vm.selected.endDate}
               onUpdateTask={vm.updateTaskFromGantt}

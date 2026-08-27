@@ -36,14 +36,18 @@ export function useHandViewModel() {
   );
   const selected =
     projects.find((item) => item.id === selectedId) ?? projects[0];
-  const activities = useMemo(
+  const projectActivities = useMemo(
     () =>
       state && selected
         ? activeItems(state.activities).filter(
-            (item) => item.projectId === selected.id && !item.archivedAt,
+            (item) => item.projectId === selected.id,
           )
         : [],
     [state, selected],
+  );
+  const activities = useMemo(
+    () => projectActivities.filter((item) => !item.archivedAt),
+    [projectActivities],
   );
   const logs = useMemo(
     () =>
@@ -234,6 +238,7 @@ export function useHandViewModel() {
     selectedId,
     setSelectedId,
     activities,
+    ganttActivities: projectActivities,
     logs,
     attachments,
     plannedMinutes,

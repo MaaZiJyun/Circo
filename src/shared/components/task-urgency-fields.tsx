@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
+import type { ActivityRecord } from "@/shared/model/entities";
 import { taskBlocking, taskDueRange } from "@/shared/model/task-urgency";
 import { useStore } from "@/shared/view-models/store-context";
 import { useI18n } from "@/shared/i18n/i18n-context";
@@ -21,19 +22,21 @@ export function TaskUrgencyFields({
   deadline,
   delayLoss,
   dependencyIds,
+  dependencyActivities,
   onChange,
 }: {
   taskId?: string;
   deadline: string;
   delayLoss: number;
   dependencyIds: string[];
+  dependencyActivities?: ActivityRecord[];
   onChange: (value: { delayLoss: number; dependencyIds: string[] }) => void;
 }) {
   const { state } = useStore();
   const { t } = useI18n();
   const [choosingDependencies, setChoosingDependencies] = useState(false);
   const [draftDependencyIds, setDraftDependencyIds] = useState(dependencyIds);
-  const activities = activeItems(state?.activities ?? []);
+  const activities = dependencyActivities ?? activeItems(state?.activities ?? []);
   const options = activities.filter((task) => task.id !== taskId);
   const dueRange = taskDueRange(deadline);
   const blocking = taskBlocking(taskId, activities);

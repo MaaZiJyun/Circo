@@ -12,6 +12,7 @@ import {
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { formatLocalDateTime } from "@/shared/model/factories";
 import type { ActivityRecord } from "@/shared/model/entities";
+import { TaskDialog } from "./task-dialog";
 import {
   DAY,
   HOUR,
@@ -34,7 +35,7 @@ import { useCurrentTime } from "../view-models/use-current-time";
 import { ProjectGanttCanvas } from "../widgets/project-gantt-canvas";
 import { ProjectGanttHeader } from "../widgets/project-gantt-header";
 import { ProjectGanttTitles } from "../widgets/project-gantt-titles";
-import { TaskGanttInspector } from "../widgets/task-gantt-inspector";
+import { activityInput } from "../view-models/use-project-task-actions";
 
 type DragMode = "move" | "start" | "end";
 type DragState = {
@@ -270,13 +271,20 @@ export function ProjectGantt({
         </span>
       </footer>
       {selectedTask && (
-        <TaskGanttInspector
-          key={selectedTask.id}
-          task={selectedTask}
-          activities={activities}
+        <TaskDialog
+          key={`gantt-edit-${selectedTask.id}`}
+          open
+          edit
+          taskId={selectedTask.id}
+          initial={activityInput(selectedTask)}
+          dependencyActivities={activities.filter(
+            (candidate) =>
+              candidate.id !== selectedTask.id &&
+              !isTaskDescendant(activities, candidate.id, selectedTask.id),
+          )}
           onClose={() => setSelectedTaskId(null)}
-          onSave={(patch) => {
-            onUpdateTask(selectedTask.id, patch);
+          onSave={(input) => {
+            onUpdateTask(selectedTask.id, input);
             setSelectedTaskId(null);
           }}
         />

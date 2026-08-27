@@ -199,9 +199,18 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
         (patch.actualMinutes ?? previous.actualMinutes) > 0
           ? previous.actualStartedAt ?? stamp
           : previous.actualStartedAt);
+      const nextImportance = taskImportance({ ...previous, ...patch });
       const updatedTasks = current.activities.map((task) =>
         task.id === id
-          ? { ...task, ...patch, actualStartedAt, completedAt, updatedAt: stamp }
+          ? {
+              ...task,
+              ...patch,
+              importance: nextImportance,
+              priority: priorityFromImportance(nextImportance),
+              actualStartedAt,
+              completedAt,
+              updatedAt: stamp,
+            }
           : task,
       );
       if (nextStatus === "done") {

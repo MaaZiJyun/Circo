@@ -7,7 +7,7 @@ import { TaskUrgencyFields } from "@/shared/components/task-urgency-fields";
 import { TaskEffortFields } from "@/shared/components/task-effort-fields";
 import { Button, Dialog, Field, Input, Select, Switch, Tabs, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ActivityType, ProjectRecord } from "@/shared/model/entities";
+import type { ActivityRecord, ActivityType, ProjectRecord } from "@/shared/model/entities";
 import {
   estimateMinutes,
   formatLocalDateTime,
@@ -29,6 +29,7 @@ export function TaskDialog({
   parentId,
   initialStartDate,
   projects,
+  dependencyActivities,
   initialProjectId,
   title,
   onClose,
@@ -42,6 +43,7 @@ export function TaskDialog({
   parentId?: string;
   initialStartDate?: string;
   projects?: ProjectRecord[];
+  dependencyActivities?: ActivityRecord[];
   initialProjectId?: string;
   title?: string;
   onClose: () => void;
@@ -245,6 +247,7 @@ export function TaskDialog({
               }
             />
             <TaskUrgencyFields taskId={taskId} deadline={input.dueDate} delayLoss={input.delayLoss}
+              dependencyActivities={dependencyActivities}
               dependencyIds={input.dependencyIds} onChange={(urgency) => setInput({ ...input, ...urgency })} />
             <TaskEffortFields estimatedMinutes={input.estimatedMinutes} complexity={input.complexity}
               uncertainty={input.uncertainty} onChange={(effort) => setInput({ ...input, ...effort })} />
