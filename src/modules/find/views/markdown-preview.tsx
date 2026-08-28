@@ -10,8 +10,14 @@ type MarkdownBlock =
   | { kind: "line"; value: string; key: number }
   | { kind: "math"; value: string; key: number }
   | { kind: "code"; value: string; language: string; key: number }
-  | { kind: "table"; rows: string[][]; key: number }
+  | { kind: "table"; rows: MarkdownTableCell[][]; key: number }
   | { kind: "card"; reference: MarkdownCardReference; key: number };
+
+interface MarkdownTableCell {
+  value: string;
+  rowSpan: number;
+  colSpan: number;
+}
 
 export function MarkdownPreview({ content }: { content: string }) {
   return (
@@ -62,7 +68,9 @@ function MarkdownLine({ line }: { line: string }) {
           : "text-lg font-semibold";
     return <h2 className={className}>{inlineMarkdown(heading[2])}</h2>;
   }
-  const image = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
+  const image = line.match(
+    /^\s*!\[([^\]]*)\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)\s*$/,
+  );
   if (image)
     return (
       // Extracted images have intrinsic dimensions unavailable in Markdown.
@@ -94,7 +102,7 @@ function MarkdownLine({ line }: { line: string }) {
   );
 }
 
-function MarkdownTable({ rows }: { rows: string[][] }) {
+function MarkdownTable({ rows }: { rows: MarkdownTableCell[][] }) {
   const [header, ...body] = rows;
   return (
     <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
@@ -104,9 +112,11 @@ function MarkdownTable({ rows }: { rows: string[][] }) {
             {header.map((cell, index) => (
               <th
                 key={index}
+                rowSpan={cell.rowSpan > 1 ? cell.rowSpan : undefined}
+                colSpan={cell.colSpan > 1 ? cell.colSpan : undefined}
                 className="border-r border-zinc-200 px-3 py-2 font-semibold last:border-r-0 dark:border-zinc-700"
               >
-                {inlineMarkdown(cell)}
+                {inlineMarkdown(cell.value)}
               </th>
             ))}
           </tr>
@@ -117,12 +127,14 @@ function MarkdownTable({ rows }: { rows: string[][] }) {
               key={rowIndex}
               className="border-t border-zinc-200 dark:border-zinc-700"
             >
-              {header.map((_, cellIndex) => (
+              {row.map((cell, cellIndex) => (
                 <td
                   key={cellIndex}
-                  className="border-r border-zinc-200 px-3 py-2 align-top last:border-r-0 dark:border-zinc-700"
+                  rowSpan={cell.rowSpan > 1 ? cell.rowSpan : undefined}
+                  colSpan={cell.colSpan > 1 ? cell.colSpan : undefined}
+                  className="whitespace-pre-wrap border-r border-zinc-200 px-3 py-2 align-top last:border-r-0 dark:border-zinc-700"
                 >
-                  {inlineMarkdown(row[cellIndex] ?? "")}
+                  {inlineMarkdown(cell.value)}
                 </td>
               ))}
             </tr>
@@ -232,14 +244,28 @@ function markdownBlocks(content: string): MarkdownBlock[] {
     }
     if (isTableRow(lines[index]) && isTableSeparator(lines[index + 1] ?? "")) {
       const start = index;
-      const rows = [tableCells(lines[index])];
+      const rows = [tableCells(lines[index]).map(markdownTableCell)];
       index += 1;
       while (index + 1 < lines.length && isTableRow(lines[index + 1])) {
         index += 1;
-        rows.push(tableCells(lines[index]));
+        rows.push(tableCells(lines[index]).map(markdownTableCell));
       }
       blocks.push({ kind: "table", rows, key: start });
       continue;
+    }
+    if (/^<table\b/i.test(trimmed)) {
+      const start = index;
+      let html = lines[index];
+      while (!/<\/table>\s*$/i.test(html) && index + 1 < lines.length) {
+        index += 1;
+        html += `\n${lines[index]}`;
+      }
+      const rows = htmlTableRows(html);
+      if (rows.length) {
+        blocks.push({ kind: "table", rows, key: start });
+        continue;
+      }
+      index = start;
     }
     const opening = trimmed.startsWith("$$")
       ? "$$"
@@ -285,4 +311,60 @@ function tableCells(line: string) {
     .slice(1, -1)
     .split(/(?<!\\)\|/)
     .map((cell) => cell.trim().replaceAll("\\|", "|"));
+}
+
+function markdownTableCell(value: string): MarkdownTableCell {
+  return { value, rowSpan: 1, colSpan: 1 };
+}
+
+function htmlTableRows(html: string): MarkdownTableCell[][] {
+  return [...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)]
+    .map((row) =>
+      [...row[1].matchAll(/<(?:td|th)\b([^>]*)>([\s\S]*?)<\/(?:td|th)>/gi)].map(
+        (cell) => ({
+          value: htmlCellText(cell[2]),
+          rowSpan: htmlSpan(cell[1], "rowspan"),
+          colSpan: htmlSpan(cell[1], "colspan"),
+        }),
+      ),
+    )
+    .filter((row) => row.length > 0);
+}
+
+function htmlSpan(attributes: string, name: "rowspan" | "colspan") {
+  const value = attributes.match(
+    new RegExp(`\\b${name}\\s*=\\s*["']?(\\d+)`, "i"),
+  )?.[1];
+  return Math.max(1, Number(value) || 1);
+}
+
+function htmlCellText(value: string) {
+  return decodeHtmlEntities(
+    value
+      .replace(/<br\s*\/?\s*>/gi, "\n")
+      .replace(/<[^>]*>/g, "")
+      .replace(/[ \t]*\n[ \t]*/g, "\n")
+      .trim(),
+  );
+}
+
+function decodeHtmlEntities(value: string) {
+  const named: Record<string, string> = {
+    amp: "&",
+    apos: "'",
+    gt: ">",
+    lt: "<",
+    nbsp: "\u00a0",
+    quot: '"',
+  };
+  return value.replace(
+    /&(#x[\da-f]+|#\d+|[a-z]+);/gi,
+    (entity, code: string) => {
+      if (code.startsWith("#x"))
+        return String.fromCodePoint(Number.parseInt(code.slice(2), 16));
+      if (code.startsWith("#"))
+        return String.fromCodePoint(Number.parseInt(code.slice(1), 10));
+      return named[code.toLowerCase()] ?? entity;
+    },
+  );
 }

@@ -4,6 +4,14 @@ import { getStoragePath } from "@/shared/infrastructure/storage-config";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+const imageContentTypes: Record<string, string> = {
+  ".gif": "image/gif",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+};
+
 export async function GET(
   _request: Request,
   context: { params: Promise<{ directory: string; image: string }> },
@@ -13,7 +21,7 @@ export async function GET(
     !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(
       directory,
     ) ||
-    !/^\d+-\d+\.png$/i.test(image)
+    !/^\d+(?:-\d+)*\.(?:gif|jpe?g|png|webp)$/i.test(image)
   )
     return Response.json({ error: "Invalid image path." }, { status: 400 });
   try {
@@ -24,7 +32,10 @@ export async function GET(
       headers: {
         "Cache-Control": "private, max-age=31536000, immutable",
         "Content-Disposition": "inline",
-        "Content-Type": "image/png",
+        "Content-Type":
+          imageContentTypes[
+            image.slice(image.lastIndexOf(".")).toLowerCase()
+          ] ?? "application/octet-stream",
       },
     });
   } catch {

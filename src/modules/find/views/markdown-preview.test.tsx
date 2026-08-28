@@ -36,6 +36,32 @@ describe("MarkdownPreview", () => {
     expect(html).toContain("<strong>95</strong>");
   });
 
+  it("renders MinerU HTML tables instead of exposing their markup", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownPreview
+        content={
+          '<table><tr><td rowspan="2">Name</td><td>Speed</td></tr><tr><td>7.8</td></tr></table>'
+        }
+      />,
+    );
+
+    expect(html).toContain("<table");
+    expect(html).toContain('<th rowSpan="2"');
+    expect(html).toContain("<td");
+    expect(html).not.toContain("&lt;table&gt;");
+  });
+
+  it("renders MinerU images with Markdown hard-break spaces", () => {
+    const html = renderToStaticMarkup(
+      <MarkdownPreview content="![](/api/markdown-assets/example/1.jpg)  " />,
+    );
+
+    expect(html).toContain(
+      '<img src="/api/markdown-assets/example/1.jpg" alt=""',
+    );
+    expect(html).not.toContain("![](");
+  });
+
   it("renders fenced code without interpreting its Markdown", () => {
     const html = renderToStaticMarkup(
       <MarkdownPreview
