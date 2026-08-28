@@ -79,7 +79,13 @@ export function ActiveLiteratureReader({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(previousFiles),
     });
-    return converted.content ?? "";
+    return {
+      content: converted.content ?? "",
+      warning:
+        converted.conversionStatus === "degraded"
+          ? converted.conversionMessage
+          : undefined,
+    };
   };
   return (
     <LiteratureReader

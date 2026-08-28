@@ -83,14 +83,20 @@ export function InteractivePdfViewer({
         if (active) setPages(loadedPages);
       })
       .catch((cause: unknown) => {
-        if (active)
-          setError(cause instanceof Error ? cause.message : "PDF load failed.");
+        if (active) {
+          const message = cause instanceof Error ? cause.message : "";
+          setError(
+            /^(load failed|failed to fetch)$/i.test(message.trim())
+              ? t("find.pdfLoadFailed")
+              : message || t("find.pdfLoadFailed"),
+          );
+        }
       });
     return () => {
       active = false;
       void document?.destroy();
     };
-  }, [url]);
+  }, [t, url]);
   const readTextSelection = () => {
     const selection = window.getSelection();
     const text = selection?.toString().trim() ?? "";

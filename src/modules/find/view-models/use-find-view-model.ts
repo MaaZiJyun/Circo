@@ -15,19 +15,12 @@ import type {
 } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
+import {
+  conversionRequestError,
+  uploadSourceFile,
+} from "../model/source-file-upload";
 
 const assistant = new LocalAssistant();
-
-interface ConversionResult {
-  content?: string;
-  pages?: number;
-  fileToken?: string;
-  filePath?: string;
-  markdownToken?: string;
-  markdownPath?: string;
-  conversionError?: string;
-  error?: string;
-}
 
 export type AnnotationInput = Pick<
   Annotation,
@@ -110,28 +103,12 @@ export function useFindViewModel() {
     setSelectedId(id);
     setBusy("import");
     try {
-      const form = new FormData();
-      form.set("file", file);
-      const response = await fetch("/api/convert", {
-        method: "POST",
-        body: form,
-      });
-      const result = (await response.json()) as ConversionResult;
-      if (!response.ok) throw new Error(result.error || "Conversion failed.");
-      updateSource(id, {
-        content: result.content ?? "",
-        fileToken: result.fileToken ?? "",
-        filePath: result.filePath ?? "",
-        markdownToken: result.markdownToken ?? "",
-        markdownPath: result.markdownPath ?? "",
-        conversionStatus: result.conversionError ? "failed" : "ready",
-        conversionMessage: result.conversionError ?? String(result.pages ?? 0),
-      });
+      updateSource(id, await uploadSourceFile(file));
     } catch (error) {
       updateSource(id, {
         conversionStatus: "failed",
         conversionMessage:
-          error instanceof Error ? error.message : "Conversion failed.",
+          conversionRequestError(error),
       });
     } finally {
       setBusy(null);

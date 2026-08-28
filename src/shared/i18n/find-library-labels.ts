@@ -61,6 +61,7 @@ export const findLibraryZh = {
   "find.cardType.message": "消息",
   "find.cardType.note": "笔记",
   "find.pdfReference": "原 PDF 排版",
+  "find.pdfLoadFailed": "无法加载原 PDF：文件请求中断或后台服务已退出。请重新打开文献；若问题持续，请检查文件是否仍存在。",
   "find.originalUnavailable": "原文件不可用",
   "find.citation": "Citation",
   "find.citationHint":
@@ -215,6 +216,7 @@ export const findLibraryEn: Record<keyof typeof findLibraryZh, string> = {
   "find.cardType.message": "Message",
   "find.cardType.note": "Note",
   "find.pdfReference": "Original PDF layout",
+  "find.pdfLoadFailed": "Unable to load the original PDF because the file request was interrupted or the background service stopped. Reopen the literature and verify that the file still exists.",
   "find.originalUnavailable": "Original file unavailable",
   "find.citation": "Citation",
   "find.citationHint":

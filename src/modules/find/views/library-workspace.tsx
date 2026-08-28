@@ -2,7 +2,7 @@
 
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { LibrarySortControls } from "@/shared/components/library-sort-controls";
-import { Button } from "@/shared/components/ui";
+import { Alert, Button } from "@/shared/components/ui";
 import { TableLibraryWorkspace } from "@/shared/components/table-library-workspace";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { SourceRecord } from "@/shared/model/entities";
@@ -43,6 +43,11 @@ export function LibraryWorkspace({
       ? t(`find.list.${library.selectedList.system}`)
       : library.selectedList?.name
   } · ${library.sources.length}`;
+  const conversionNotice = library.sources.find(
+    (source) =>
+      source.conversionStatus === "degraded" ||
+      source.conversionStatus === "failed",
+  );
   return (
     <TableLibraryWorkspace
       title={title}
@@ -126,6 +131,17 @@ export function LibraryWorkspace({
     >
       {operationError && (
         <p className="mb-3 text-sm text-red-600">{operationError}</p>
+      )}
+      {conversionNotice && (
+        <Alert
+          tone={
+            conversionNotice.conversionStatus === "degraded"
+              ? "warning"
+              : "danger"
+          }
+        >
+          {conversionNotice.title}: {conversionNotice.conversionMessage}
+        </Alert>
       )}
       <LiteratureTable
         library={library}

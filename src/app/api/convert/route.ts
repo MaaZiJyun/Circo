@@ -9,6 +9,49 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const maxUploadSize = 200 * 1024 * 1024;
+type ConversionPayload = {
+  content: string;
+  pages: number;
+  fileToken: string;
+  filePath: string;
+  markdownToken: string;
+  markdownPath: string;
+  degraded?: boolean;
+  conversionWarning?: string;
+  conversionDiagnostic?: string;
+  conversionError?: string;
+};
+type ConversionJob =
+  | { status: "processing" }
+  | { status: "complete"; result: ConversionPayload };
+
+const conversionJobs = new Map<string, ConversionJob>();
+const conversionJobRetentionMs = 60 * 60 * 1000;
+
+function completeJob(jobId: string, result: ConversionPayload) {
+  conversionJobs.set(jobId, { status: "complete", result });
+  const cleanup = setTimeout(
+    () => conversionJobs.delete(jobId),
+    conversionJobRetentionMs,
+  );
+  cleanup.unref();
+}
+
+export async function GET(request: Request) {
+  const jobId = new URL(request.url).searchParams.get("jobId") ?? "";
+  if (!/^[a-f0-9-]+$/i.test(jobId))
+    return Response.json({ error: "Invalid conversion job." }, { status: 422 });
+  const job = conversionJobs.get(jobId);
+  if (!job)
+    return Response.json(
+      { error: "Conversion job was not found or has expired." },
+      { status: 404 },
+    );
+  if (job.status === "processing")
+    return Response.json({ jobId, status: job.status }, { status: 202 });
+  return Response.json({ jobId, status: job.status, ...job.result });
+}
+
 export async function POST(request: Request) {
   try {
     const form = await request.formData();
@@ -59,49 +102,86 @@ export async function POST(request: Request) {
     const temporaryDirectory = await fs.mkdtemp(
       path.join(os.tmpdir(), "circo-mineru-"),
     );
-    try {
-      const result = await convertPdfWithMineru(
-        path.join(/* turbopackIgnore: true */ directory, fileToken),
-        temporaryDirectory,
-        markdownDirectory,
-        identifier,
-      );
-      await fs.writeFile(
-        path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
-        result.content,
-        "utf8",
-      );
-      return Response.json({
-        content: result.content,
-        pages: result.pages,
-        fileToken,
-        filePath,
-        markdownToken,
-        markdownPath,
-      });
-    } catch (error) {
-      const conversionError =
-        error instanceof Error ? error.message : "Conversion failed.";
-      await fs.writeFile(
-        path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
-        `<!-- PDF conversion failed: ${conversionError.replaceAll("--", "—")} -->\n`,
-        "utf8",
-      );
-      return Response.json({
-        content: "",
-        pages: 0,
-        fileToken,
-        filePath,
-        markdownToken,
-        markdownPath,
-        conversionError,
-      });
-    } finally {
-      await fs.rm(temporaryDirectory, { recursive: true, force: true });
-    }
+    const jobId = randomUUID();
+    conversionJobs.set(jobId, { status: "processing" });
+    void convertPdfJob({
+      jobId,
+      identifier,
+      inputPath: path.join(/* turbopackIgnore: true */ directory, fileToken),
+      temporaryDirectory,
+      markdownDirectory,
+      markdownToken,
+      base: { fileToken, filePath, markdownToken, markdownPath },
+    });
+    return Response.json({ jobId, status: "processing" }, { status: 202 });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Conversion failed.";
     return Response.json({ error: message }, { status: 400 });
+  }
+}
+
+async function convertPdfJob({
+  jobId,
+  identifier,
+  inputPath,
+  temporaryDirectory,
+  markdownDirectory,
+  markdownToken,
+  base,
+}: {
+  jobId: string;
+  identifier: string;
+  inputPath: string;
+  temporaryDirectory: string;
+  markdownDirectory: string;
+  markdownToken: string;
+  base: Pick<
+    ConversionPayload,
+    "fileToken" | "filePath" | "markdownToken" | "markdownPath"
+  >;
+}) {
+  try {
+    const result = await convertPdfWithMineru(
+      inputPath,
+      temporaryDirectory,
+      markdownDirectory,
+      identifier,
+    );
+    await fs.writeFile(
+      path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
+      result.content,
+      "utf8",
+    );
+    if (result.degraded)
+      console.warn("PDF conversion completed in degraded mode", {
+        identifier,
+        diagnostic: result.diagnostic,
+      });
+    completeJob(jobId, {
+      ...base,
+      content: result.content,
+      pages: result.pages,
+      degraded: result.degraded,
+      conversionWarning: result.warning,
+      conversionDiagnostic: result.diagnostic,
+    });
+  } catch (error) {
+    const conversionError =
+      error instanceof Error ? error.message : "Conversion failed.";
+    console.error("PDF conversion failed", { identifier, conversionError });
+    await fs.writeFile(
+      path.join(/* turbopackIgnore: true */ markdownDirectory, markdownToken),
+      `<!-- PDF conversion failed: ${conversionError.replaceAll("--", "—")} -->\n`,
+      "utf8",
+    );
+    completeJob(jobId, {
+      ...base,
+      content: "",
+      pages: 0,
+      conversionError,
+    });
+  } finally {
+    await fs.rm(temporaryDirectory, { recursive: true, force: true });
   }
 }

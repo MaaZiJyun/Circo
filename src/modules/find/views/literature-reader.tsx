@@ -6,7 +6,7 @@ import {
   ChevronDownIcon,
   EyeIcon,
 } from "@heroicons/react/24/outline";
-import { Button } from "@/shared/components/ui";
+import { Alert, Button } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import { completeReading } from "../model/reading-record";
 import { LiteratureDetailsPanel } from "./literature-details-panel";
@@ -45,6 +45,9 @@ export function LiteratureReader({
   const [dirty, setDirty] = useState(false);
   const [noteDirty, setNoteDirty] = useState(false);
   const [error, setError] = useState("");
+  const [conversionNotice, setConversionNotice] = useState(
+    source.conversionStatus === "degraded" ? source.conversionMessage : "",
+  );
   const [showDetails, setShowDetails] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [capture, setCapture] = useState<PointCapture | null>(null);
@@ -93,9 +96,11 @@ export function LiteratureReader({
   const convert = async () => {
     setConverting(true);
     setError("");
+    setConversionNotice("");
     try {
       const converted = await onConvert();
-      setContent(converted);
+      setContent(converted.content);
+      setConversionNotice(converted.warning ?? "");
       setDirty(false);
       setViewerKind("md");
       setViewerMode("view");
@@ -165,6 +170,9 @@ export function LiteratureReader({
         </div>
       </header>
       {error && <p className="text-sm text-red-600">{error}</p>}
+      {conversionNotice && (
+        <Alert tone="warning">{conversionNotice}</Alert>
+      )}
       {showDetails && (
         <LiteratureDetailsPanel
           source={source}

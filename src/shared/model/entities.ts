@@ -90,7 +90,7 @@ export interface SourceRecord extends BaseEntity {
   readingCompletedAt?: string;
   studyDurationMinutes: number;
   readingReview: LiteratureReview;
-  conversionStatus: "ready" | "processing" | "failed";
+  conversionStatus: "ready" | "processing" | "degraded" | "failed";
   conversionMessage: string;
 }
 

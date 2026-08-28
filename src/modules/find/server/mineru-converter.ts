@@ -9,6 +9,13 @@ const markdownImage = /(!\[[^\]]*\]\()([^)\s]+)([^)]*\))/g;
 export interface MineruConversionResult {
   content: string;
   pages: number;
+  degraded: boolean;
+  warning?: string;
+  diagnostic?: string;
+}
+
+interface MineruRunOptions {
+  formula: boolean;
 }
 
 function mineruCommand() {
@@ -33,7 +40,15 @@ async function mineruEnvironment(outputPath: string) {
     throw new Error(
       "MinerU module is not configured. Choose a Circo modules directory in Settings.",
     );
-  if (!configured.command) return { command, env: process.env };
+  const stableEnvironment = {
+    ...process.env,
+    // Formula recognition can terminate MinerU's local API when many pages
+    // are analyzed in one window. A one-page window retains formulas while
+    // keeping the MFR model's memory use bounded.
+    MINERU_PROCESSING_WINDOW_SIZE:
+      process.env.MINERU_PROCESSING_WINDOW_SIZE?.trim() || "1",
+  };
+  if (!configured.command) return { command, env: stableEnvironment };
   try {
     await fs.access(configured.command);
     await fs.access(
@@ -56,14 +71,18 @@ async function mineruEnvironment(outputPath: string) {
   return {
     command,
     env: {
-      ...process.env,
+      ...stableEnvironment,
       MINERU_MODEL_SOURCE: "local",
       MINERU_TOOLS_CONFIG_JSON: configPath,
     },
   };
 }
 
-async function runMineru(inputPath: string, outputPath: string) {
+async function runMineru(
+  inputPath: string,
+  outputPath: string,
+  options: MineruRunOptions,
+) {
   const execution = await mineruEnvironment(outputPath);
   return new Promise<void>((resolve, reject) => {
     const child = spawn(/* turbopackIgnore: true */
@@ -77,6 +96,8 @@ async function runMineru(inputPath: string, outputPath: string) {
         "auto",
         "-b",
         "pipeline",
+        "-f",
+        String(options.formula),
       ],
       { env: execution.env, stdio: ["ignore", "ignore", "pipe"] },
     );
@@ -112,6 +133,16 @@ async function runMineru(inputPath: string, outputPath: string) {
         );
     });
   });
+}
+
+function diagnosticMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return message
+    .replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "")
+    .replace(/\r/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(-2_000);
 }
 
 function localAssetPath(source: string) {
@@ -188,8 +219,45 @@ export async function convertPdfWithMineru(
   identifier: string,
 ): Promise<MineruConversionResult> {
   await fs.mkdir(temporaryOutputPath, { recursive: true });
-  await runMineru(inputPath, temporaryOutputPath);
-  const outputFiles = await filesBelow(temporaryOutputPath);
+  const formulaOutputPath = path.join(temporaryOutputPath, "formula");
+  try {
+    await fs.mkdir(formulaOutputPath, { recursive: true });
+    await runMineru(inputPath, formulaOutputPath, { formula: true });
+    return await readMineruResult(
+      formulaOutputPath,
+      markdownDirectory,
+      identifier,
+    );
+  } catch (formulaError) {
+    const diagnostic = diagnosticMessage(formulaError);
+    const fallbackOutputPath = path.join(temporaryOutputPath, "fallback");
+    try {
+      await fs.mkdir(fallbackOutputPath, { recursive: true });
+      await runMineru(inputPath, fallbackOutputPath, { formula: false });
+      return {
+        ...(await readMineruResult(
+          fallbackOutputPath,
+          markdownDirectory,
+          identifier,
+        )),
+        degraded: true,
+        warning: "公式识别失败，已降级转换。Markdown 已生成，但公式可能以普通文本或图片呈现。",
+        diagnostic,
+      };
+    } catch (fallbackError) {
+      throw new Error(
+        `MinerU formula conversion failed: ${diagnostic}\nFallback conversion also failed: ${diagnosticMessage(fallbackError)}`,
+      );
+    }
+  }
+}
+
+async function readMineruResult(
+  outputPath: string,
+  markdownDirectory: string,
+  identifier: string,
+): Promise<MineruConversionResult> {
+  const outputFiles = await filesBelow(outputPath);
   const markdownFiles = outputFiles.filter((file) =>
     file.toLowerCase().endsWith(".md"),
   );
@@ -205,5 +273,9 @@ export async function convertPdfWithMineru(
     path.join(markdownDirectory, identifier),
     identifier,
   );
-  return { content, pages: await pageCount(outputFiles) };
+  return {
+    content,
+    pages: await pageCount(outputFiles),
+    degraded: false,
+  };
 }
