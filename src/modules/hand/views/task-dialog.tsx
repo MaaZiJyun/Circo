@@ -37,6 +37,7 @@ export function TaskDialog({
   dependencyActivities,
   initialConditions,
   readOnly = false,
+  immutable = false,
   onConditionToggle,
   initialProjectId,
   title,
@@ -54,6 +55,7 @@ export function TaskDialog({
   dependencyActivities?: ActivityRecord[];
   initialConditions?: ActivityConditionDraft[];
   readOnly?: boolean;
+  immutable?: boolean;
   onConditionToggle?: (id: string, satisfied: boolean) => void;
   initialProjectId?: string;
   title?: string;
@@ -101,9 +103,9 @@ export function TaskDialog({
   const [conditions, setConditions] = useState<ActivityConditionDraft[]>(
     () => initialConditions ?? [],
   );
-  const [editingMode, setEditingMode] = useState(!readOnly);
+  const [editingMode, setEditingMode] = useState(!readOnly && !immutable);
   const [showMore, setShowMore] = useState(false);
-  const canEdit = !readOnly || editingMode;
+  const canEdit = !immutable && (!readOnly || editingMode);
   const updateSchedule = (field: "startDate" | "dueDate", value: string) => {
     setInput((current) => {
       if (field === "startDate") {
@@ -183,7 +185,7 @@ export function TaskDialog({
       onClose={onClose}
     >
       <div className="grid gap-4">
-        {readOnly && !editingMode && (
+        {readOnly && !immutable && !editingMode && (
           <div className="flex justify-end">
             <Button type="button" variant="secondary" onClick={() => setEditingMode(true)}>
               {t("common.edit")}
@@ -276,7 +278,7 @@ export function TaskDialog({
         <ActivityConditionChecklist
           conditions={conditions}
           editable={canEdit}
-          allowToggle={readOnly || !edit}
+          allowToggle={!immutable && (readOnly || !edit)}
           onChange={(id, condition) =>
             setConditions((current) =>
               current.map((item) =>

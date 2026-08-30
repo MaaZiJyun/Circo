@@ -9,15 +9,12 @@ import { activityInput } from "../view-models/use-project-task-actions";
 import { useHandViewModel } from "../view-models/use-hand-view-model";
 import { TaskDialog } from "./hand-dialogs";
 import { TaskMoveDialog } from "./task-move-dialog";
-import { today } from "@/shared/model/factories";
 import { isArchivedTask } from "@/shared/model/task-archive";
 import { RecurringTaskDeleteDialog } from "@/shared/components/recurring-task-delete-dialog";
 import type { RecurringDeleteMode } from "@/shared/model/task-recurrence";
 import { ArchiveBoxIcon } from "@heroicons/react/24/outline";
 
 export type TaskMenu = { task: ActivityRecord; position: MenuPosition } | null;
-export const isLockedCompletedPastTask = (task: ActivityRecord) =>
-  isArchivedTask(task) || (task.status === "done" && task.dueDate.slice(0, 10) < today());
 
 export function ProjectTaskActions({
   vm, menu, onClose,
@@ -32,7 +29,7 @@ export function ProjectTaskActions({
   const [editing, setEditing] = useState<ActivityRecord | null>(null);
   const [moving, setMoving] = useState<ActivityRecord | null>(null);
   const [deleting, setDeleting] = useState<ActivityRecord | null>(null);
-  const locked = menu ? isLockedCompletedPastTask(menu.task) : false;
+  const locked = menu ? isArchivedTask(menu.task) : false;
   return (
     <>
       {menu && (

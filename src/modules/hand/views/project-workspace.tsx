@@ -21,7 +21,7 @@ import type { useHandViewModel } from "../view-models/use-hand-view-model";
 import type { ActivityRecord } from "@/shared/model/entities";
 import { ProjectSecondarySections } from "../sections/project-secondary-sections";
 import { ProjectGantt } from "../widgets/project-gantt";
-import { isLockedCompletedPastTask } from "./project-task-actions";
+import { isArchivedTask } from "@/shared/model/task-archive";
 import { TaskRow } from "@/shared/components/task-row";
 import { TaskDialog } from "./task-dialog";
 import { activityInput } from "../view-models/use-project-task-actions";
@@ -132,7 +132,7 @@ export function ProjectWorkspace({
                     actualMinutes={task.actualMinutes}
                     expectedOutput={task.expectedOutput}
                     milestone={task.milestone}
-                    toggleDisabled={isLockedCompletedPastTask(task)}
+                    toggleDisabled={isArchivedTask(task)}
                     onToggle={() => vm.advanceTask(task)}
                     onClick={() => setInspectingTask(task)}
                     deadlineInline

@@ -17,7 +17,7 @@ import { Button, Dialog, Field, Select } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
 import type { ProjectRecord, ActivityRecord } from "@/shared/model/entities";
 import type { useTaskLibrary } from "../view-models/use-task-library";
-import { isLockedCompletedPastTask } from "./project-task-actions";
+import { isArchivedTask } from "@/shared/model/task-archive";
 import { RecurringTaskDeleteDialog } from "@/shared/components/recurring-task-delete-dialog";
 import type { RecurringDeleteMode } from "@/shared/model/task-recurrence";
 
@@ -43,7 +43,7 @@ export function TaskLibraryActions({
   const [assigning, setAssigning] = useState<ActivityRecord | null>(null);
   const [deleting, setDeleting] = useState<ActivityRecord | null>(null);
   const task = menu?.task;
-  const locked = task ? isLockedCompletedPastTask(task) : false;
+  const locked = task ? isArchivedTask(task) : false;
   const canRemoveFromList = Boolean(
     task &&
       !task.projectId &&

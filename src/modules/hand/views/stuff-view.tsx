@@ -163,6 +163,7 @@ export function StuffView({
           open
           edit
           readOnly
+          immutable={Boolean(inspecting.archivedAt)}
           taskId={inspecting.id}
           initial={activityInput(inspecting)}
           initialConditions={library.activityConditions.filter(

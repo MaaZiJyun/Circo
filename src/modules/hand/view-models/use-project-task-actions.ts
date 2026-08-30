@@ -192,52 +192,66 @@ export function useProjectTaskActions(selected?: ProjectRecord) {
     input: ActivityInput,
     conditionDrafts?: ActivityConditionDraft[],
   ) =>
-    mutate((current) => ({
-      ...current,
-      activities: current.activities.map((item) =>
-        item.id === id && !item.archivedAt
+    mutate((current) => {
+      const task = current.activities.find((item) => item.id === id);
+      if (!task || task.archivedAt) return current;
+      const stamp = now();
+      return {
+        ...current,
+        activities: current.activities.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...input,
+                estimatedMinutes: input.estimatedMinutes,
+                importance: taskImportance(input),
+                priority: priorityFromImportance(taskImportance(input)),
+                updatedAt: stamp,
+              }
+            : item,
+        ),
+        ...(conditionDrafts
           ? {
-              ...item,
-              ...input,
-              estimatedMinutes: input.estimatedMinutes,
-              importance: taskImportance(input),
-              priority: priorityFromImportance(taskImportance(input)),
-              updatedAt: now(),
+              activityConditions: replaceActivityConditions(
+                current.activityConditions,
+                id,
+                conditionDrafts,
+              ),
             }
-          : item,
-      ),
-      ...(conditionDrafts
-        ? {
-            activityConditions: replaceActivityConditions(
-              current.activityConditions,
-              id,
-              conditionDrafts,
-            ),
-          }
-        : {}),
-    }));
+          : {}),
+      };
+    });
   const toggleActivityCondition = (id: string, satisfied: boolean) =>
-    mutate((current) => ({
-      ...current,
-      activityConditions: setActivityConditionSatisfied(
-        current.activityConditions,
-        id,
-        satisfied,
-        now(),
-      ),
-    }));
+    mutate((current) => {
+      const condition = current.activityConditions.find((item) => item.id === id);
+      const task = current.activities.find((item) => item.id === condition?.activityId);
+      if (!condition || !task || task.archivedAt) return current;
+      return {
+        ...current,
+        activityConditions: setActivityConditionSatisfied(
+          current.activityConditions,
+          id,
+          satisfied,
+          now(),
+        ),
+      };
+    });
   const updateActivityConditions = (
     activityId: string,
     conditionDrafts: ActivityConditionDraft[],
   ) =>
-    mutate((current) => ({
-      ...current,
-      activityConditions: replaceActivityConditions(
-        current.activityConditions,
-        activityId,
-        conditionDrafts,
-      ),
-    }));
+    mutate((current) => {
+      const task = current.activities.find((item) => item.id === activityId);
+      if (!task || task.archivedAt) return current;
+      return {
+        ...current,
+        activityConditions: replaceActivityConditions(
+          current.activityConditions,
+          activityId,
+          conditionDrafts,
+        ),
+      };
+    });
   const updateTaskFromGantt = (id: string, patch: GanttTaskPatch) => {
     const stamp = now();
     mutate((current) => {
