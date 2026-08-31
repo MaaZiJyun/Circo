@@ -16,6 +16,7 @@ export function CreateDailyTaskDialog({
   onSave,
   title,
   plannedDate,
+  taskId,
   initial,
   initialConditions,
 }: {
@@ -24,6 +25,7 @@ export function CreateDailyTaskDialog({
   onSave: (input: DailyTaskInput, conditions?: ActivityConditionDraft[]) => void;
   title?: string;
   plannedDate?: string;
+  taskId?: string;
   initial?: DailyTaskInput;
   initialConditions?: ActivityConditionDraft[];
 }) {
@@ -44,6 +46,8 @@ export function CreateDailyTaskDialog({
   return (
     <TaskDialog
       open={open}
+      edit={Boolean(taskId)}
+      taskId={taskId}
       initial={convertToActivity(initial)}
       initialConditions={initialConditions}
       initialStartDate={initial?.dueAt ?? (plannedDate ? `${plannedDate}T09:00` : undefined)}

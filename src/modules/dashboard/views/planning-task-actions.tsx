@@ -115,6 +115,7 @@ export function PlanningTaskActions({
           key={editing.id}
           open
           edit
+          taskId={editing.id}
           initial={activityInput(editing)}
           initialConditions={activityConditions.filter(
             (item) => item.activityId === editing.id,

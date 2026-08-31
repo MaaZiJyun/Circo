@@ -8,10 +8,14 @@ import { TaskEffortFields } from "@/shared/components/task-effort-fields";
 import {
   ActivityConditionChecklist,
 } from "@/shared/components/activity-condition-checklist";
+import {
+  ActivityFocusEditor,
+  validActivityFocus,
+} from "@/shared/components/activity-focus-editor";
 import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
 import { Button, Dialog, Field, Input, Select, Switch, Tabs } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ActivityRecord, ActivityType, ProjectRecord } from "@/shared/model/entities";
+import type { ActivityRecord, ActivityType, FocusRecord, ProjectRecord } from "@/shared/model/entities";
 import {
   estimateMinutes,
   createId,
@@ -22,6 +26,7 @@ import { normalizeTaskImportance, taskImportance } from "@/shared/model/task-imp
 import { preprocessTask } from "@/shared/model/task-preprocessor";
 import { defaultTaskUrgency } from "@/shared/model/task-urgency";
 import { defaultTaskEffort } from "@/shared/model/task-effort";
+import { replaceActivityFocus } from "@/shared/model/focus";
 import { useStore } from "@/shared/view-models/store-context";
 import type { ActivityInput } from "../view-models/use-hand-view-model";
 
@@ -67,7 +72,7 @@ export function TaskDialog({
   ) => void;
 }) {
   const { t } = useI18n();
-  const { state } = useStore();
+  const { state, mutate } = useStore();
   const createDefaultInput = () => {
     const current = parseLocalDateTime(initialStartDate ?? "");
     const defaultStart = Number.isFinite(current) ? current : Date.now();
@@ -102,6 +107,13 @@ export function TaskDialog({
   });
   const [conditions, setConditions] = useState<ActivityConditionDraft[]>(
     () => initialConditions ?? [],
+  );
+  const [focusRecords, setFocusRecords] = useState<FocusRecord[]>(() =>
+    taskId
+      ? (state?.focus ?? []).filter(
+          (record) => record.focusOn === taskId && !record.deletedAt,
+        )
+      : [],
   );
   const [editingMode, setEditingMode] = useState(!readOnly && !immutable);
   const [showMore, setShowMore] = useState(false);
@@ -161,7 +173,7 @@ export function TaskDialog({
     });
   };
   const submit = () => {
-    if (!canEdit || !input.title.trim()) return;
+    if (!canEdit || !input.title.trim() || !validActivityFocus(focusRecords)) return;
     const derivedMinutes = estimateMinutes(input.startDate, input.dueDate);
     onSave(
       {
@@ -174,6 +186,7 @@ export function TaskDialog({
       projectId || undefined,
       conditions,
     );
+    if (taskId) mutate((current) => replaceActivityFocus(current, taskId, focusRecords));
     onClose();
     setInput(createDefaultInput());
   };
@@ -275,6 +288,17 @@ export function TaskDialog({
           </div>
         )}
         </fieldset>
+        {edit && taskId && (
+          <ActivityFocusEditor
+            records={focusRecords}
+            editable={canEdit}
+            activityId={taskId}
+            activityTitle={input.title}
+            expectedOutput={input.expectedOutput}
+            defaultStartedAt={input.startDate}
+            onChange={setFocusRecords}
+          />
+        )}
         <ActivityConditionChecklist
           conditions={conditions}
           editable={canEdit}
@@ -309,7 +333,11 @@ export function TaskDialog({
             setConditions((current) => current.filter((item) => item.id !== id))
           }
         />
-        {canEdit && <Button onClick={submit}>{t("common.save")}</Button>}
+        {canEdit && (
+          <Button disabled={!input.title.trim() || !validActivityFocus(focusRecords)} onClick={submit}>
+            {t("common.save")}
+          </Button>
+        )}
       </div>
     </Dialog>
   );

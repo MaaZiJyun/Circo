@@ -236,6 +236,7 @@ export function DailyTaskList() {
           key={editing.id}
           open
           title={t("common.edit")}
+          taskId={editing.sourceTaskId ?? editing.id}
           initial={vm.inputFor(editing)}
           initialConditions={vm.activityConditions.filter(
             (item) => item.activityId === editing.sourceTaskId,
