@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useLayoutEffect, useRef, useState } from "react";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -13,20 +13,33 @@ import { focusRing, IconButton } from "./controls";
 export {
   Button,
   Card,
+  Checkbox,
   Field,
   IconButton,
   Input,
   Select,
+  Switch,
   Textarea,
 } from "./controls";
 
 export function Badge({
   children,
   tone = "neutral",
+  variant = "outline",
+  color,
 }: {
   children: React.ReactNode;
   tone?: "neutral" | "info" | "success" | "warning" | "danger";
+  variant?: "outline" | "solid";
+  color?: string;
 }) {
+  if (variant === "solid") {
+    return (
+      <span className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+        {children}
+      </span>
+    );
+  }
   const styles = {
     neutral:
       "border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300",
@@ -40,7 +53,8 @@ export function Badge({
   };
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${styles[tone]}`}
+      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2 py-0.5 text-xs font-medium ${color ? "" : styles[tone]}`}
+      style={color ? { borderColor: color, color } : undefined}
     >
       {children}
     </span>
@@ -86,16 +100,20 @@ export function Dialog({
   open,
   title,
   closeLabel,
+  size = "md",
   onClose,
   children,
 }: {
   open: boolean;
   title: string;
   closeLabel: string;
+  size?: "md" | "lg" | "xl";
   onClose: () => void;
   children: React.ReactNode;
 }) {
   if (!open) return null;
+  const maxWidth =
+    size === "xl" ? "max-w-6xl" : size === "lg" ? "max-w-4xl" : "max-w-xl";
   return (
     <div
       className="fixed inset-0 z-50 grid cursor-pointer place-items-center bg-black/55 p-4"
@@ -106,7 +124,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="max-h-[90vh] w-full max-w-xl cursor-default overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 text-zinc-950 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50"
+        className={`max-h-[90vh] w-full ${maxWidth} cursor-default overflow-y-auto rounded-2xl bg-white p-6 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50`}
       >
         <header className="mb-5 flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold">{title}</h2>
@@ -142,9 +160,9 @@ export function EmptyState({
   );
 }
 
-export function LoadingState({ label }: { label: string }) {
+export function LoadingState({ label, className = "" }: { label: string; className?: string }) {
   return (
-    <div className="flex h-dvh items-center justify-center gap-3 overflow-y-auto text-sm text-zinc-500">
+    <div className={`flex h-dvh items-center justify-center gap-3 overflow-y-auto text-sm text-zinc-500 ${className}`}>
       <span className="size-4 animate-spin rounded-full border-2 border-zinc-300 border-t-zinc-950 dark:border-zinc-700 dark:border-t-zinc-50" />
       {label}
     </div>
@@ -156,13 +174,13 @@ export function ProgressBar({
   label,
 }: {
   value: number;
-  label: string;
+  label?: string;
 }) {
   return (
     <div className="grid gap-2">
       <div className="flex justify-between text-xs text-zinc-500">
-        <span>{label}</span>
-        <span>{value}%</span>
+        {label && <span>{label}</span>}
+        {label && <span>{value}%</span>}
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
         <div
@@ -178,22 +196,54 @@ export function Tabs<T extends string>({
   value,
   onChange,
   items,
+  fullWidth = false,
 }: {
   value: T;
   onChange: (value: T) => void;
   items: { value: T; label: string }[];
+  fullWidth?: boolean;
 }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [indicator, setIndicator] = useState({ left: 0, width: 0 });
+  useLayoutEffect(() => {
+    const updateIndicator = () => {
+      const container = containerRef.current;
+      const button = buttonRefs.current[value];
+      if (!container || !button) return;
+      setIndicator({ left: button.offsetLeft, width: button.offsetWidth });
+    };
+    updateIndicator();
+    const observer =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(updateIndicator);
+    if (observer && containerRef.current) observer.observe(containerRef.current);
+    return () => observer?.disconnect();
+  }, [items, value]);
   return (
     <div
-      className="flex gap-1 rounded-xl bg-zinc-100 p-1 dark:bg-zinc-900"
+      ref={containerRef}
+      className={`relative ${fullWidth ? "flex w-full" : "inline-flex"} rounded-full bg-zinc-100 p-1 dark:bg-zinc-900`}
       role="tablist"
     >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-1 rounded-full bg-white shadow-sm transition-[width,transform] duration-300 ease-out dark:bg-zinc-800"
+        style={{
+          width: indicator.width,
+          transform: `translateX(${indicator.left - 4}px)`,
+        }}
+      />
       {items.map((item) => (
         <button
           key={item.value}
+          ref={(button) => {
+            buttonRefs.current[item.value] = button;
+          }}
           role="tab"
           aria-selected={value === item.value}
-          className={`min-h-9 flex-1 rounded-lg px-3 text-sm font-medium ${focusRing} ${value === item.value ? "bg-white text-zinc-950 dark:bg-zinc-800 dark:text-zinc-50" : "text-zinc-500"}`}
+          className={`relative z-10 min-h-9 rounded-full px-3 text-center text-sm font-medium transition-colors duration-200 ${fullWidth ? "flex-1" : ""} ${focusRing} ${value === item.value ? "text-zinc-950 dark:text-zinc-50" : "text-zinc-500"}`}
           onClick={() => onChange(item.value)}
         >
           {item.label}
@@ -205,17 +255,46 @@ export function Tabs<T extends string>({
 
 export function DescriptionList({
   items,
+  variant = "row",
+  divided = false,
+  tabular = false,
+  columns = 1,
 }: {
   items: { label: string; value: React.ReactNode }[];
+  variant?: "row" | "stacked";
+  divided?: boolean;
+  tabular?: boolean;
+  columns?: 1 | 2;
 }) {
+  const stacked = variant === "stacked";
+  const containerClass = stacked
+    ? `grid gap-4 ${columns === 2 ? "sm:grid-cols-2" : ""}`
+    : divided
+      ? "divide-y divide-zinc-100 dark:divide-zinc-900"
+      : "grid gap-3";
   return (
-    <dl className="grid gap-3">
+    <dl className={containerClass}>
       {items.map((item) => (
         <Fragment key={item.label}>
-          <div className="flex items-start justify-between gap-4 text-sm">
-            <dt className="text-zinc-500">{item.label}</dt>
-            <dd className="text-right font-medium">{item.value}</dd>
-          </div>
+          {stacked ? (
+            <div>
+              <dt className="text-xs text-zinc-500">{item.label}</dt>
+              <dd className="mt-1 whitespace-pre-wrap text-sm leading-6">
+                {item.value}
+              </dd>
+            </div>
+          ) : (
+            <div
+              className={`flex items-baseline justify-between gap-4 text-sm ${divided ? "py-2.5" : ""}`}
+            >
+              <dt className="shrink-0 text-zinc-500">{item.label}</dt>
+              <dd
+                className={`min-w-0 break-all text-right font-medium ${tabular ? "tabular-nums" : ""}`}
+              >
+                {item.value}
+              </dd>
+            </div>
+          )}
         </Fragment>
       ))}
     </dl>

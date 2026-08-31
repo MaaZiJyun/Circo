@@ -1,236 +1,260 @@
 "use client";
 
-import { useState } from "react";
-import {
-  ArrowRightIcon,
-  BeakerIcon,
-  PlusIcon,
-  SparklesIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import { PageHeader, SectionHeader } from "@/shared/components/page-elements";
-import {
-  Alert,
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  Field,
-  IconButton,
-  Input,
-  Select,
-  Textarea,
-} from "@/shared/components/ui";
-import { statusLabels } from "@/shared/i18n/domain-labels";
+import { useMemo, useState } from "react";
+import { ArrowLeftIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { LibrarySortControls } from "@/shared/components/library-sort-controls";
+import { SectionHeader } from "@/shared/components/page-elements";
+import { SelectionToolbar } from "@/shared/components/selection-toolbar";
+import { Button, Dialog, EmptyState } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { MessageKey } from "@/shared/i18n/zh";
-import type { Idea } from "@/shared/model/entities";
-import { parseTags } from "@/shared/model/tags";
+import type { Idea, IdeaList } from "@/shared/model/entities";
+import { sortIdeas, type IdeaSort } from "../model/idea-sorting";
+import { useIdeaLibrary } from "../view-models/use-idea-library";
+import type { IdeaInput } from "../view-models/use-mind-view-model";
 import { useMindViewModel } from "../view-models/use-mind-view-model";
+import { IdeaEvaluationDialog } from "./idea-evaluation-dialog";
+import { IdeaComposer, IdeaFields } from "./idea-form";
+import { IdeaGrid } from "./idea-grid";
+import { IdeaReader } from "./idea-reader";
+import {
+  ChooseIdeaListDialog,
+  IdeaListDialog,
+  IdeaSidebar,
+} from "./idea-list-ui";
+import { Panel } from "@/shared/components/controls";
 
-const methods: { value: Idea["method"]; label: MessageKey }[] = [
-  { value: "combine", label: "mind.combine" },
-  { value: "transfer", label: "mind.transfer" },
-  { value: "alternative", label: "mind.alternative" },
-  { value: "premise", label: "mind.premise" },
-  { value: "followUp", label: "mind.followUp" },
-  { value: "macro", label: "mind.macro" },
-  { value: "micro", label: "mind.micro" },
-];
-
-function ScoreEditor({
-  idea,
-  onChange,
-}: {
-  idea: Idea;
-  onChange: (scores: Idea["scores"]) => void;
-}) {
-  const { t } = useI18n();
-  const items: { key: keyof Idea["scores"]; label: MessageKey }[] = [
-    { key: "value", label: "mind.value" },
-    { key: "feasibility", label: "mind.feasibility" },
-    { key: "novelty", label: "mind.novelty" },
-    { key: "cost", label: "mind.cost" },
-    { key: "risk", label: "mind.risk" },
-  ];
-  return (
-    <div className="grid gap-2">
-      {items.map((item) => (
-        <label
-          key={item.key}
-          className="grid grid-cols-[80px_1fr_20px] items-center gap-2 text-xs text-zinc-500"
-        >
-          <span>{t(item.label)}</span>
-          <input
-            type="range"
-            min="1"
-            max="5"
-            value={idea.scores[item.key]}
-            onChange={(event) =>
-              onChange({
-                ...idea.scores,
-                [item.key]: Number(event.target.value),
-              })
-            }
-          />
-          <span>{idea.scores[item.key]}</span>
-        </label>
-      ))}
-    </div>
-  );
-}
+const inputFromIdea = (idea: Idea): IdeaInput => ({
+  title: idea.title,
+  definition: idea.definition || idea.content,
+  reason: idea.reason || "",
+  date: idea.date || idea.createdAt.slice(0, 10),
+  tags: idea.tags,
+});
 
 export function MindView() {
   const { t } = useI18n();
   const vm = useMindViewModel();
-  const [capture, setCapture] = useState("");
-  const [captureTags, setCaptureTags] = useState("");
-  const [input, setInput] = useState("");
-  const [method, setMethod] = useState<Idea["method"]>("combine");
-  const submitCapture = () => {
-    vm.addIdea(capture, "capture", parseTags(captureTags));
-    setCapture("");
-    setCaptureTags("");
+  const library = useIdeaLibrary();
+  const [viewingId, setViewingId] = useState<string | null>(null);
+  const [composing, setComposing] = useState(false);
+  const [evaluating, setEvaluating] = useState<Idea | null>(null);
+  const [editing, setEditing] = useState<Idea | null>(null);
+  const [editInput, setEditInput] = useState<IdeaInput | null>(null);
+  const [sortAscending, setSortAscending] = useState(false);
+  const sort: IdeaSort = sortAscending ? "dateAsc" : "dateDesc";
+  const [listDialog, setListDialog] = useState<"create" | "choose" | null>(
+    null,
+  );
+  const [editingList, setEditingList] = useState<IdeaList | null>(null);
+  const selectionMode = library.selectedIds.length > 0;
+  const viewing = vm.ideas.find((idea) => idea.id === viewingId) ?? null;
+  const sortedIdeas = useMemo(
+    () => sortIdeas(library.ideas, sort),
+    [library.ideas, sort],
+  );
+  const edit = (idea: Idea) => {
+    setEditing(idea);
+    setEditInput(inputFromIdea(idea));
   };
+  const remove = (idea: Idea) => {
+    if (window.confirm(t("common.confirmDelete"))) vm.deleteIdea(idea.id);
+  };
+  const saveEdit = () => {
+    if (!editing || !editInput) return;
+    vm.updateIdea(editing.id, editInput);
+    setEditing(null);
+    setEditInput(null);
+  };
+
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow={t("mind.eyebrow")}
-        title={t("mind.title")}
-        subtitle={t("mind.subtitle")}
-      />
-      <div className="grid gap-5 xl:grid-cols-2">
-        <Card>
-          <SectionHeader title={t("mind.quickCapture")} />
-          <Field label={t("mind.ideaContent")}>
-            <Textarea
-              value={capture}
-              onChange={(event) => setCapture(event.target.value)}
-              placeholder={t("mind.ideaContent")}
-            />
-          </Field>
-          <Field label={t("common.tags")}>
-            <Input
-              value={captureTags}
-              onChange={(event) => setCaptureTags(event.target.value)}
-            />
-          </Field>
-          <Button
-            className="mt-3"
-            disabled={!capture.trim()}
-            onClick={submitCapture}
-          >
-            <PlusIcon className="size-4" />
-            {t("common.add")}
+    <div className="h-full space-y-6">
+      {viewing ? (
+        <>
+          <Button variant="ghost" onClick={() => setViewingId(null)}>
+            <ArrowLeftIcon className="size-4" />
+            {t("mind.backToLibrary")}
           </Button>
-        </Card>
-        <Card>
-          <SectionHeader title={t("mind.lab")} />
-          <div className="grid gap-4">
-            <Field label={t("mind.method")}>
-              <Select
-                value={method}
-                onChange={(event) =>
-                  setMethod(event.target.value as Idea["method"])
-                }
-              >
-                {methods.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {t(item.label)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label={t("mind.input")}>
-              <Textarea
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                placeholder={t("mind.input")}
-              />
-            </Field>
-            <Button
-              disabled={!input.trim() || vm.busy}
-              onClick={() => void vm.explore(input, method)}
-            >
-              <SparklesIcon className="size-4" />
-              {t("mind.run")}
-            </Button>
-            {vm.candidate && (
-              <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-950 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-100">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
-                  <BeakerIcon className="size-4" />
-                  {t("mind.candidate")}
-                </div>
-                <p className="mt-3 text-sm leading-6">{vm.candidate}</p>
-                <p className="mt-3 text-xs opacity-70">
-                  {t("mind.basis")}: {vm.candidateInput}
-                </p>
-                <Button className="mt-4" onClick={vm.acceptCandidate}>
-                  {t("mind.accept")}
-                </Button>
-              </div>
-            )}
+          <IdeaReader
+            idea={viewing}
+            busy={vm.busy}
+            onSend={(message) => vm.continueIdea(viewing.id, message)}
+            onDeleteMessage={(messageId) =>
+              vm.deleteIdeaMessage(viewing.id, messageId)
+            }
+          />
+        </>
+      ) : (
+        <div className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-5 xl:grid-cols-[240px_minmax(0,1fr)] xl:grid-rows-1">
+          <div className="space-y-3">
+            <IdeaSidebar
+              library={library}
+              onCreate={() => setListDialog("create")}
+              onEdit={setEditingList}
+            />
           </div>
-        </Card>
-      </div>
-      <Card>
-        <SectionHeader title={t("mind.library")} />
-        {vm.ideas.length ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {vm.ideas.map((idea) => (
-              <article
-                key={idea.id}
-                className="rounded-xl border border-zinc-200 p-4 dark:border-zinc-800"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <Badge
-                    tone={
-                      idea.status === "converted"
-                        ? "success"
-                        : idea.status === "candidate"
-                          ? "info"
-                          : "neutral"
+          <Panel className="h-full">
+            <SectionHeader
+              title={
+                library.selectedList?.system
+                  ? t(`mind.list.${library.selectedList.system}`)
+                  : library.selectedList?.name || t("mind.library")
+              }
+              controls={
+                !selectionMode ? (
+                  <LibrarySortControls
+                    label={t("mind.sort")}
+                    value={sortAscending ? "createdAt:ascending" : "createdAt:descending"}
+                    options={[
+                      {
+                        value: "createdAt:ascending",
+                        label: t("mind.sortCreatedAscending"),
+                      },
+                      {
+                        value: "createdAt:descending",
+                        label: t("mind.sortCreatedDescending"),
+                      },
+                    ]}
+                    onChange={(value) =>
+                      setSortAscending(value === "createdAt:ascending")
                     }
-                  >
-                    {t(statusLabels[idea.status])}
-                  </Badge>
-                  <IconButton
-                    label={t("common.delete")}
-                    onClick={() =>
-                      window.confirm(t("common.confirmDelete")) &&
-                      vm.deleteIdea(idea.id)
-                    }
-                  >
-                    <TrashIcon className="size-4" />
-                  </IconButton>
-                </div>
-                <h3 className="mt-3 font-medium">{idea.title}</h3>
-                <p className="mt-2 line-clamp-3 text-sm leading-6 text-zinc-500">
-                  {idea.content}
-                </p>
-                <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-                  <ScoreEditor
-                    idea={idea}
-                    onChange={(scores) => vm.updateScores(idea.id, scores)}
                   />
-                </div>
+                ) : undefined
+              }
+              action={
+                !selectionMode ? (
+                  <Button
+                    className="whitespace-nowrap"
+                    onClick={() => setComposing(true)}
+                  >
+                    <PlusIcon className="size-4" />
+                    {t("dashboard.addIdea")}
+                  </Button>
+                ) : undefined
+              }
+            />
+            {selectionMode && (
+              <SelectionToolbar
+                label={t("mind.selectedCount").replace(
+                  "{count}",
+                  String(library.selectedIds.length),
+                )}
+                onCancel={() => library.setSelectedIds([])}
+              >
                 <Button
                   variant="secondary"
-                  className="mt-4 w-full"
-                  disabled={idea.status === "converted"}
-                  onClick={() => vm.convertToProject(idea)}
+                  onClick={() => setListDialog("choose")}
                 >
-                  {t("mind.toProject")}
-                  <ArrowRightIcon className="size-4" />
+                  {t("mind.addToList")}
                 </Button>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <EmptyState title={t("common.noData")} />
-        )}
-      </Card>
-      <Alert>{t("find.aiNotice")}</Alert>
+                <Button
+                  variant="secondary"
+                  disabled={library.selectedList?.system !== null}
+                  onClick={library.removeFromCurrentList}
+                >
+                  {t("mind.removeFromList")}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() =>
+                    window.confirm(t("common.confirmDelete")) &&
+                    library.deleteSelected()
+                  }
+                >
+                  {t("common.delete")}
+                </Button>
+              </SelectionToolbar>
+            )}
+            {sortedIdeas.length ? (
+              <IdeaGrid
+                library={library}
+                ideas={sortedIdeas}
+                selectionMode={selectionMode}
+                onOpen={(idea) => setViewingId(idea.id)}
+                onEdit={edit}
+                onDelete={remove}
+                onEvaluate={setEvaluating}
+                onConvert={vm.convertToProject}
+              />
+            ) : (
+              <EmptyState title={t("common.noData")} />
+            )}
+          </Panel>
+        </div>
+      )}
+      <Dialog
+        open={composing}
+        title={t("mind.quickCapture")}
+        closeLabel={t("common.close")}
+        onClose={() => setComposing(false)}
+      >
+        <IdeaComposer
+          lists={vm.libraryLists}
+          busy={vm.busy}
+          sourceCount={(id) => vm.sourcesForList(id).length}
+          onGenerate={vm.generateIdea}
+          onSave={(input, method, listId) =>
+            vm.saveIdea(
+              input,
+              method,
+              listId
+                ? vm.sourcesForList(listId).map((source) => source.id)
+                : [],
+            )
+          }
+          onSaved={() => setComposing(false)}
+        />
+      </Dialog>
+      {evaluating && (
+        <IdeaEvaluationDialog
+          key={evaluating.id}
+          idea={evaluating}
+          onClose={() => setEvaluating(null)}
+          onSave={(id, answers, kill) => {
+            vm.saveEvaluation(id, answers, kill);
+            setEvaluating(null);
+          }}
+        />
+      )}
+      <Dialog
+        open={!!editing}
+        title={t("mind.edit")}
+        closeLabel={t("common.close")}
+        onClose={() => setEditing(null)}
+      >
+        {editInput && <IdeaFields value={editInput} onChange={setEditInput} />}
+        <div className="mt-5 flex justify-end gap-2">
+          <Button variant="secondary" onClick={() => setEditing(null)}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            disabled={!editInput?.title.trim() || !editInput.definition.trim()}
+            onClick={saveEdit}
+          >
+            {t("common.save")}
+          </Button>
+        </div>
+      </Dialog>
+      {listDialog === "create" && (
+        <IdeaListDialog
+          onClose={() => setListDialog(null)}
+          onSave={library.createList}
+        />
+      )}
+      {editingList && (
+        <IdeaListDialog
+          key={editingList.id}
+          list={editingList}
+          onClose={() => setEditingList(null)}
+          onSave={(input) => library.updateList(editingList.id, input)}
+        />
+      )}
+      {listDialog === "choose" && (
+        <ChooseIdeaListDialog
+          lists={library.lists.filter((item) => !item.system)}
+          onClose={() => setListDialog(null)}
+          onChoose={(id) => library.addToList(library.selectedIds, id)}
+        />
+      )}
     </div>
   );
 }

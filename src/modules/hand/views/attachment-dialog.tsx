@@ -1,8 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Button, Dialog, Field, Input, Textarea } from "@/shared/components/ui";
+import { useState } from "react";
+import { Alert, Button, Dialog, Field, Input, Textarea } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
+
+import type { AttachmentPathInput } from "../view-models/use-attachment-actions";
 
 export function AttachmentDialog({
   open,
@@ -11,36 +13,65 @@ export function AttachmentDialog({
 }: {
   open: boolean;
   onClose: () => void;
-  onSave: (file: File, description: string) => Promise<void>;
+  onSave: (file: AttachmentPathInput, description: string) => Promise<void>;
 }) {
   const { t } = useI18n();
   const [description, setDescription] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<AttachmentPathInput | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(false);
+
+  const chooseFile = async () => {
+    setSelecting(true);
+    try {
+      const picker = await fetch("/api/path-picker?kind=attachment", { method: "POST" });
+      if (picker.status === 204) return;
+      const picked = (await picker.json()) as { path?: string };
+      if (!picker.ok || !picked.path) throw new Error("Picker failed");
+      const response = await fetch("/api/attachments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: picked.path }),
+      });
+      const metadata = (await response.json()) as AttachmentPathInput;
+      if (!response.ok) throw new Error("File inspection failed");
+      setFile(metadata);
+    } finally {
+      setSelecting(false);
+    }
+  };
   const submit = async () => {
-    const file = fileRef.current?.files?.[0];
     if (!file) return;
-    await onSave(file, description);
-    onClose();
-    setDescription("");
+    setSaving(true);
+    setError(false);
+    try {
+      await onSave(file, description);
+      onClose();
+      setFile(null);
+      setDescription("");
+    } catch {
+      setError(true);
+    } finally {
+      setSaving(false);
+    }
   };
   return (
-    <Dialog
-      open={open}
-      title={t("hand.addAttachment")}
-      closeLabel={t("common.close")}
-      onClose={onClose}
-    >
+    <Dialog open={open} title={t("hand.addAttachment")} closeLabel={t("common.close")} onClose={onClose}>
       <div className="grid gap-4">
         <Field label={t("find.file")}>
-          <Input type="file" ref={fileRef} />
+          <div className="flex gap-2">
+            <Input value={file?.filePath ?? ""} readOnly placeholder={t("hand.chooseOriginalFile")} />
+            <Button variant="secondary" disabled={selecting} onClick={() => void chooseFile()}>
+              {t("common.browse")}
+            </Button>
+          </div>
         </Field>
         <Field label={t("hand.fileDescription")}>
-          <Textarea
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-          />
+          <Textarea value={description} onChange={(event) => setDescription(event.target.value)} />
         </Field>
-        <Button onClick={() => void submit()}>{t("common.save")}</Button>
+        {error && <Alert tone="danger">{t("hand.uploadFailed")}</Alert>}
+        <Button disabled={!file || saving} onClick={() => void submit()}>{t("common.save")}</Button>
       </div>
     </Dialog>
   );

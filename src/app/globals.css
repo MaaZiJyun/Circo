@@ -39,6 +39,74 @@ body {
   font-family: var(--font-sans);
 }
 
+.brand-wordmark {
+  font-family:
+    ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.background-music-avatar {
+  animation: background-music-avatar-spin 20s linear infinite;
+}
+
+@keyframes background-music-avatar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes summary-confetti-fall {
+  0% {
+    left: var(--celebration-x);
+    opacity: 0;
+    transform: translate3d(0, -2rem, 0) rotate(0deg);
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    left: var(--celebration-x);
+    opacity: 0;
+    transform: translate3d(var(--celebration-drift), 105vh, 0)
+      rotate(var(--celebration-rotation));
+  }
+}
+
+@keyframes summary-celebration-glow {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.5);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.65);
+  }
+}
+
+.summary-celebration-piece {
+  animation: summary-confetti-fall var(--celebration-duration) ease-in
+    var(--celebration-delay) forwards;
+}
+
+.summary-celebration-glow {
+  animation: summary-celebration-glow 1.5s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-celebration-piece,
+  .summary-celebration-glow {
+    display: none;
+  }
+}
+
+table thead th {
+  white-space: nowrap;
+}
+
 button,
 a,
 input,

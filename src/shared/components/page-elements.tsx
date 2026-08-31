@@ -31,15 +31,24 @@ export function PageHeader({
 
 export function SectionHeader({
   title,
+  controls,
   action,
 }: {
   title: string;
+  controls?: React.ReactNode;
   action?: React.ReactNode;
 }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-4">
-      <h2 className="text-base font-semibold">{title}</h2>
-      {action}
+    <div className="mb-4 flex min-w-0 items-center gap-4">
+      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-visible">
+        <h2 className="shrink-0 whitespace-nowrap text-base font-semibold">
+          {title}
+        </h2>
+        {controls && (
+          <div className="flex shrink-0 items-center gap-2">{controls}</div>
+        )}
+      </div>
+      {action && <div className="ml-auto shrink-0">{action}</div>}
     </div>
   );
 }

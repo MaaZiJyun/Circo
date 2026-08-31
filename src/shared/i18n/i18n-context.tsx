@@ -63,12 +63,16 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       locale,
       setLocale,
       t: (key) => messages[key],
-      formatDate: (date) =>
-        new Intl.DateTimeFormat(locale, {
+      formatDate: (date) => {
+        if (!date) return "—";
+        const parsed = new Date(date);
+        if (Number.isNaN(parsed.getTime())) return "—";
+        return new Intl.DateTimeFormat(locale, {
           month: "short",
           day: "numeric",
           year: "numeric",
-        }).format(new Date(date)),
+        }).format(parsed);
+      },
       formatNumber: (number, options) =>
         new Intl.NumberFormat(locale, options).format(number),
     };

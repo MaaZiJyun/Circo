@@ -1,6 +1,8 @@
 export interface StorageConfig {
   databasePath: string;
   storageDirectory: string;
+  backgroundMusicDirectory: string;
+  modulesDirectory: string;
 }
 
 export function isStorageConfig(value: unknown): value is StorageConfig {
@@ -8,6 +10,10 @@ export function isStorageConfig(value: unknown): value is StorageConfig {
   const config = value as Partial<StorageConfig>;
   return (
     typeof config.databasePath === "string" &&
-    typeof config.storageDirectory === "string"
+    typeof config.storageDirectory === "string" &&
+    (config.backgroundMusicDirectory === undefined ||
+      typeof config.backgroundMusicDirectory === "string") &&
+    (config.modulesDirectory === undefined ||
+      typeof config.modulesDirectory === "string")
   );
 }

@@ -1,13 +1,13 @@
 import type { AppState } from "@/shared/model/app-state";
-
+import * as seeds from "./seed-project-lists";
 const stamp = "2026-08-11T08:00:00.000Z";
-
 export function createSeedState(): AppState {
   return {
     schemaVersion: 1,
     revision: 1,
     updatedAt: stamp,
     profile: { name: "Me", avatarDataUrl: "" },
+    messages: [],
     cycles: [
       {
         id: "cycle_aug",
@@ -49,7 +49,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
-    sessions: [
+    focus: [
       {
         id: "session_1",
         cycleId: "cycle_aug",
@@ -59,6 +59,8 @@ export function createSeedState(): AppState {
         title: "架构需求梳理",
         startedAt: "2026-08-10T01:00:00.000Z",
         endedAt: "2026-08-10T02:30:00.000Z",
+        duration: 90,
+        focusOn: "task_scope",
         minutes: 90,
         effective: true,
         focus: 4,
@@ -74,6 +76,8 @@ export function createSeedState(): AppState {
         title: "阅读多模态架构论文",
         startedAt: "2026-08-09T06:00:00.000Z",
         endedAt: "2026-08-09T07:00:00.000Z",
+        duration: 60,
+        focusOn: "",
         minutes: 60,
         effective: true,
         focus: 5,
@@ -132,6 +136,10 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
+    projectLists: seeds.seedProjects(stamp),
+    activityLists: seeds.seedActivityLists(stamp),
+    ideaLists: seeds.seedIdeas(stamp),
+    pointLists: seeds.seedPointLists(stamp),
     points: [],
     sources: [
       {
@@ -190,20 +198,7 @@ export function createSeedState(): AppState {
         updatedAt: stamp,
       },
     ],
-    ideas: [
-      {
-        id: "idea_decentral",
-        title: "去中心化多模态架构",
-        content: "将中心化融合节点改成可协商的分布式表示交换。",
-        status: "candidate",
-        method: "followUp",
-        sourceIds: ["source_multi"],
-        tags: ["架构", "去中心化"],
-        scores: { value: 4, feasibility: 3, novelty: 4, cost: 3, risk: 3 },
-        createdAt: stamp,
-        updatedAt: stamp,
-      },
-    ],
+    ideas: [seeds.seedIdea(stamp)],
     projects: [
       {
         id: "project_arch",
@@ -215,22 +210,32 @@ export function createSeedState(): AppState {
         status: "active",
         goalId: "goal_research",
         ideaIds: ["idea_decentral"],
+        listIds: [],
         tags: ["架构"],
+        score: 82,
         createdAt: stamp,
         updatedAt: stamp,
       },
     ],
-    tasks: [
+    activities: [
       {
         id: "task_scope",
         projectId: "project_arch",
         title: "定义原型范围",
+        description: "明确原型覆盖的核心场景和边界。",
+        startDate: "2026-08-09T22:00",
         dueDate: "2026-08-10",
         priority: "high",
         status: "done",
         estimatedMinutes: 120,
         actualMinutes: 90,
         milestone: true,
+        expectedOutput: "原型范围说明",
+        ...{ impact: 4, goal: 4, risk: 4, value: 4, delayLoss: 3, dependencyIds: [], complexity: 3, uncertainty: 3 },
+        importance: 16,
+        recurrence: null,
+        activityType: "task",
+        completedAt: stamp,
         createdAt: stamp,
         updatedAt: stamp,
       },
@@ -238,20 +243,30 @@ export function createSeedState(): AppState {
         id: "task_test",
         projectId: "project_arch",
         title: "验证核心闭环",
+        description: "验证从文献到项目的核心链路。",
+        startDate: "2026-08-17T20:00",
         dueDate: "2026-08-18",
         priority: "high",
         status: "doing",
         estimatedMinutes: 240,
         actualMinutes: 60,
         milestone: false,
+        expectedOutput: "验证记录",
+        ...{ impact: 4, goal: 4, risk: 4, value: 4, delayLoss: 3, dependencyIds: [], complexity: 3, uncertainty: 3 },
+        importance: 16,
+        recurrence: null,
+        activityType: "task",
         createdAt: stamp,
         updatedAt: stamp,
       },
     ],
+    activityConditions: [],
     logs: [
       {
         id: "log_1",
         projectId: "project_arch",
+        period: "day",
+        filePath: "project/project_arch/logs/log_1.md",
         taskId: "task_scope",
         type: "decision",
         content: "采用本地优先并保留可替换适配器。",

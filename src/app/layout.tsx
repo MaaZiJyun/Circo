@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AppProviders } from "@/shared/components/app-providers";
+import "katex/dist/katex.min.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="zh-CN" className="h-full antialiased" suppressHydrationWarning>
-      <body className="h-full overflow-hidden">
+      <body
+        className="h-full overflow-hidden"
+        suppressHydrationWarning
+      >
         <AppProviders>{children}</AppProviders>
       </body>
     </html>

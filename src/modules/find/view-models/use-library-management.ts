@@ -2,11 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { activeItems } from "@/shared/model/app-state";
-import type {
-  LibraryList,
-  ReferencePoint,
-  SourceRecord,
-} from "@/shared/model/entities";
+import type { LibraryList, SourceRecord } from "@/shared/model/entities";
 import { createId, now } from "@/shared/model/factories";
 import { useStore } from "@/shared/view-models/store-context";
 import { uploadSourceFile } from "../model/source-file-upload";
@@ -25,7 +21,7 @@ export type LibraryListInput = Pick<
   LibraryList,
   "name" | "note" | "tags" | "color"
 >;
-export type LiteratureSort = "addedAt" | "publicationDate" | "rating";
+export type LiteratureSort = "addedAt" | "publicationDate" | "title";
 export type SortDirection = "ascending" | "descending";
 
 export function useLibraryManagement() {
@@ -38,10 +34,6 @@ export function useLibraryManagement() {
     useState<SortDirection>("descending");
   const lists = useMemo(
     () => (state ? activeItems(state.libraryLists) : []),
-    [state],
-  );
-  const points = useMemo(
-    () => (state ? activeItems(state.points) : []),
     [state],
   );
   const allSources = useMemo(
@@ -66,10 +58,10 @@ export function useLibraryManagement() {
     const direction = sortDirection === "ascending" ? 1 : -1;
     return filtered.slice().sort((a, b) => {
       const comparison =
-        sortBy === "rating"
-          ? a.rating - b.rating
-          : sortBy === "publicationDate"
-            ? a.publicationDate.localeCompare(b.publicationDate)
+        sortBy === "publicationDate"
+          ? a.publicationDate.localeCompare(b.publicationDate)
+          : sortBy === "title"
+            ? a.title.localeCompare(b.title)
             : a.createdAt.localeCompare(b.createdAt);
       return comparison * direction;
     });
@@ -87,36 +79,6 @@ export function useLibraryManagement() {
   const replaceSourceFile = async (id: string, file: File) => {
     updateSource(id, await uploadSourceFile(file));
   };
-  const createPoint = (
-    point: Omit<ReferencePoint, "id" | "createdAt" | "updatedAt">,
-  ) => {
-    const stamp = now();
-    mutate((current) => ({
-      ...current,
-      points: [
-        ...current.points,
-        { ...point, id: createId("point"), createdAt: stamp, updatedAt: stamp },
-      ],
-    }));
-  };
-  const updatePoint = (id: string, change: Partial<ReferencePoint>) => {
-    mutate((current) => ({
-      ...current,
-      points: current.points.map((item) =>
-        item.id === id ? { ...item, ...change, updatedAt: now() } : item,
-      ),
-    }));
-  };
-  const deletePoint = (id: string) => {
-    const stamp = now();
-    mutate((current) => ({
-      ...current,
-      points: current.points.map((item) =>
-        item.id === id ? { ...item, deletedAt: stamp, updatedAt: stamp } : item,
-      ),
-    }));
-  };
-
   const createList = (input: LibraryListInput) => {
     const stamp = now();
     const list: LibraryList = {
@@ -217,6 +179,7 @@ export function useLibraryManagement() {
     mutate((current) => ({
       ...current,
       sources: current.sources.filter((item) => !ids.includes(item.id)),
+      points: current.points.filter((item) => !ids.includes(item.sourceId)),
       annotations: current.annotations.filter(
         (item) => !ids.includes(item.sourceId),
       ),
@@ -252,7 +215,6 @@ export function useLibraryManagement() {
 
   return {
     lists,
-    points,
     sources,
     allSources,
     recentSources,
@@ -273,9 +235,6 @@ export function useLibraryManagement() {
     toggleSelected,
     updateSource,
     replaceSourceFile,
-    createPoint,
-    updatePoint,
-    deletePoint,
     createList,
     updateList,
     deleteList,

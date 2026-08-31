@@ -10,17 +10,25 @@ export interface GrowthMetrics {
 }
 
 export function calculateMetrics(state: AppState): GrowthMetrics {
-  const sessions = activeItems(state.sessions);
-  const totalMinutes = sessions.reduce(
-    (total, item) => total + item.minutes,
+  const focus = activeItems(state.focus);
+  const totalMinutes = focus.reduce(
+    (total, item) => total + item.duration,
     0,
   );
-  const effectiveMinutes = sessions
+  const effectiveMinutes = focus
     .filter((item) => item.effective)
-    .reduce((total, item) => total + item.minutes, 0);
-  const dueTasks = activeItems(state.tasks).filter(
-    (item) => item.dueDate <= new Date().toISOString().slice(0, 10),
-  );
+    .reduce((total, item) => total + item.duration, 0);
+  const dueTasks = Array.from(
+    new Map(
+      activeItems(state.activities).map((item) => [
+        item.id,
+        item,
+      ]),
+    ).values(),
+  ).filter((item) => {
+    const due = Date.parse(item.dueDate);
+    return Number.isFinite(due) && due <= Date.now();
+  });
   const completedTasks = dueTasks.filter((item) => item.status === "done");
 
   return {

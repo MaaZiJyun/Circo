@@ -1,7 +1,11 @@
 "use client";
 
 import type { SourceRecord } from "@/shared/model/entities";
-import type { ReferencePoint } from "@/shared/model/entities";
+import type {
+  PointList,
+  ReferencePoint,
+  ReferencePointInput,
+} from "@/shared/model/entities";
 import { uploadSourceFile } from "../model/source-file-upload";
 import { LiteratureReader } from "./literature-reader";
 
@@ -9,16 +13,22 @@ export function ActiveLiteratureReader({
   source,
   onBack,
   onUpdate,
-  pointCount,
+  points,
+  pointLists,
   onCreatePoint,
+  onUpdatePoint,
+  onDeletePoint,
 }: {
   source: SourceRecord;
   onBack: () => void;
   onUpdate: (change: Partial<SourceRecord>) => void;
-  pointCount: number;
+  points: ReferencePoint[];
+  pointLists: PointList[];
   onCreatePoint: (
     point: Omit<ReferencePoint, "id" | "createdAt" | "updatedAt">,
   ) => void;
+  onUpdatePoint: (id: string, change: ReferencePointInput) => void;
+  onDeletePoint: (id: string) => void;
 }) {
   const saveMarkdown = async (content: string) => {
     if (source.markdownToken) {
@@ -69,7 +79,13 @@ export function ActiveLiteratureReader({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(previousFiles),
     });
-    return converted.content ?? "";
+    return {
+      content: converted.content ?? "",
+      warning:
+        converted.conversionStatus === "degraded"
+          ? converted.conversionMessage
+          : undefined,
+    };
   };
   return (
     <LiteratureReader
@@ -78,8 +94,11 @@ export function ActiveLiteratureReader({
       onSave={saveMarkdown}
       onConvert={convertPdf}
       onUpdate={onUpdate}
-      pointCount={pointCount}
+      points={points}
+      pointLists={pointLists}
       onCreatePoint={onCreatePoint}
+      onUpdatePoint={onUpdatePoint}
+      onDeletePoint={onDeletePoint}
     />
   );
 }

@@ -16,6 +16,7 @@
 # local application storage
 /data/
 /storage/
+/macos
 
 # next.js
 /.next/
@@ -23,6 +24,11 @@
 
 # production
 /build
+/dist/
+/.build-cache/
+
+# optional local macOS app wrapper
+/macos/
 
 # misc
 .DS_Store

@@ -16,7 +16,12 @@ export async function PUT(request: Request) {
     const value: unknown = await request.json();
     if (!isStorageConfig(value))
       return Response.json({ error: "Invalid storage config." }, { status: 422 });
-    return Response.json(saveStorageConfig(value));
+    return Response.json(
+      saveStorageConfig({
+        ...value,
+        backgroundMusicDirectory: getStorageConfig().backgroundMusicDirectory,
+      }),
+    );
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to save paths.";
     return Response.json({ error: message }, { status: 400 });

@@ -14,8 +14,9 @@ import type { useLibraryManagement } from "../view-models/use-library-management
 import {
   ContextMenu,
   ContextMenuItem,
+  MoveToTrashContextMenuItem,
   type MenuPosition,
-} from "./context-menu";
+} from "@/shared/components/context-menu";
 import { readDraggedLiterature } from "./library-drag";
 
 export function LibrarySidebar({
@@ -39,7 +40,7 @@ export function LibrarySidebar({
     pressTimer.current = null;
   };
   const openMenu = (list: LibraryList, position: MenuPosition) => {
-    if (!list.system) setMenu({ list, position });
+    setMenu({ list, position });
   };
   const resolveDropTarget = (event: React.DragEvent) =>
     document
@@ -84,7 +85,7 @@ export function LibrarySidebar({
         library.setDraggedIds([]);
         setDropTargetId(null);
       }}
-      className="rounded-2xl border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-950"
+      className="rounded-2xl border border-zinc-200 bg-white p-3 shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
     >
       <div className="mb-3 flex items-center justify-between px-2">
         <h2 className="font-semibold">{t("find.lists")}</h2>
@@ -115,7 +116,7 @@ export function LibrarySidebar({
               <button
                 onClick={() => library.setActiveListId(list.id)}
                 onPointerDown={(event) => {
-                  if (event.button !== 0 || list.system) return;
+                  if (event.button !== 0) return;
                   cancelPress();
                   pressTimer.current = setTimeout(
                     () =>
@@ -134,34 +135,32 @@ export function LibrarySidebar({
                   cancelPress();
                   openMenu(list, { x: event.clientX, y: event.clientY });
                 }}
-                className={`relative flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl px-3 text-left text-sm ${active ? "bg-zinc-950 text-white dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-200 dark:hover:bg-zinc-900"}`}
+                className={`relative flex min-h-10 w-full min-w-0 items-center gap-2 rounded-xl px-3 text-left text-sm transition-colors ${active ? "bg-zinc-950 text-white shadow-sm dark:bg-zinc-50 dark:text-zinc-950" : "hover:bg-zinc-100 dark:hover:bg-zinc-900"}`}
                 style={{
                   backgroundColor:
                     dropTargetId === list.id ? `${list.color}26` : undefined,
                 }}
               >
-                {list.system === "recent" ? (
-                  <ClockIcon className="size-4 shrink-0" />
-                ) : list.system === "marked" ? (
-                  <FlagIcon className="size-4 shrink-0" />
-                ) : (
-                  <FolderIcon
-                    className={`size-4 shrink-0 ${!active && list.system === "default" ? "text-zinc-700 dark:text-zinc-300" : ""}`}
-                    style={{
-                      color: !active && !list.system ? list.color : undefined,
-                    }}
-                  />
-                )}
-                <span className="truncate">
+                <span className="shrink-0">
+                  {list.system === "recent" ? (
+                    <ClockIcon className="size-4" />
+                  ) : list.system === "marked" ? (
+                    <FlagIcon className="size-4" />
+                  ) : (
+                    <FolderIcon
+                      className={`size-4 ${!active && list.system === "default" ? "text-zinc-700 dark:text-zinc-300" : ""}`}
+                      style={{
+                        color: !active && !list.system ? list.color : undefined,
+                      }}
+                    />
+                  )}
+                </span>
+                <span
+                  className={`truncate ${hasUnread ? "font-semibold" : "font-normal"}`}
+                >
                   {list.system ? t(`find.list.${list.system}`) : list.name}
                 </span>
                 <span className="ml-auto text-xs opacity-60">{count}</span>
-                {hasUnread && (
-                  <span
-                    className="absolute right-1 top-1 size-2 rounded-full bg-red-500 shadow-sm ring-2 ring-zinc-50 dark:ring-zinc-950"
-                    aria-label={t("find.unread")}
-                  />
-                )}
               </button>
             </div>
           );
@@ -175,6 +174,7 @@ export function LibrarySidebar({
       {menu && (
         <ContextMenu position={menu.position} onClose={() => setMenu(null)}>
           <ContextMenuItem
+            disabled={Boolean(menu.list.system)}
             onClick={() => {
               onEdit(menu.list);
               setMenu(null);
@@ -182,16 +182,15 @@ export function LibrarySidebar({
           >
             {t("common.edit")}
           </ContextMenuItem>
-          <ContextMenuItem
-            danger
-            onClick={() => {
+          <MoveToTrashContextMenuItem
+            label={t("find.deleteList")}
+            disabled={Boolean(menu.list.system)}
+            onMoveToTrash={() => {
               if (window.confirm(t("find.confirmDeleteList")))
                 library.deleteList(menu.list.id);
               setMenu(null);
             }}
-          >
-            {t("find.deleteList")}
-          </ContextMenuItem>
+          />
         </ContextMenu>
       )}
     </aside>

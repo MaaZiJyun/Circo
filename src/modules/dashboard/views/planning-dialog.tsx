@@ -1,0 +1,373 @@
+"use client";
+
+import { useState } from "react";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import type { ActivityInput } from "@/modules/hand/view-models/use-hand-view-model";
+import type { ActivityConditionDraft } from "@/shared/model/activity-conditions";
+import { Button } from "@/shared/components/ui";
+import { CreateDailyTaskDialog } from "@/modules/me/views/daily-task-dialogs";
+import type { DailyTaskInput } from "@/modules/me/model/daily-task-input";
+import { useI18n } from "@/shared/i18n/i18n-context";
+import { activeItems } from "@/shared/model/app-state";
+import type { ActivityRecord } from "@/shared/model/entities";
+import type { DailyPlanItem, FutureMessage } from "@/shared/model/message";
+import { addDays, createId, now, startDateFromDue } from "@/shared/model/factories";
+import { priorityFromImportance } from "@/shared/model/task-normalization";
+import { taskImportance } from "@/shared/model/task-importance";
+import { setTaskParents } from "@/shared/model/task-hierarchy";
+import { deleteRecurringTasks, type RecurringDeleteMode } from "@/shared/model/task-recurrence";
+import { useStore } from "@/shared/view-models/store-context";
+import { archiveTask } from "@/shared/model/task-archive";
+import { replaceActivityConditions } from "@/shared/model/activity-conditions";
+import {
+  dayMinutes,
+  PlanBasket,
+  ProjectTaskPool,
+  IndependentTaskPool,
+} from "./planning-panels";
+import {
+  PlanningTaskActions,
+  type PlanningTaskMenu,
+} from "./planning-task-actions";
+
+export function PlanningDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
+  const { state, mutate } = useStore();
+  const planDate = addDays(new Date(), 1);
+  const existing = state?.messages.find(
+    (message) => !message.deletedAt && message.dailyPlan?.date === planDate,
+  );
+  const [selected, setSelected] = useState<DailyPlanItem[]>(
+    existing?.dailyPlan?.items ?? [],
+  );
+  const [expanded, setExpanded] = useState<string[]>([]);
+  const [creatingIndependent, setCreatingIndependent] = useState(false);
+  const [taskMenu, setTaskMenu] = useState<PlanningTaskMenu>(null);
+  if (!state) return null;
+  const projects = activeItems(state.projects);
+  const activities = activeItems(state.activities);
+  const independentTasks = activities.filter(
+    (task) => !task.projectId && task.status !== "done",
+  );
+  const totalMinutes = selected.reduce(
+    (sum, item) => sum + item.estimatedMinutes,
+    0,
+  );
+  const plannedItems = selected.slice().sort(comparePlanDeadline);
+  const selectedIds = new Set(
+    selected.map((item) => item.id),
+  );
+  const toggle = (item: DailyPlanItem) => {
+    if (selectedIds.has(item.id))
+      setSelected((current) =>
+        current.filter((entry) => entry.id !== item.id),
+      );
+    else if (totalMinutes + item.estimatedMinutes <= dayMinutes)
+      setSelected((current) => [...current, item]);
+  };
+  const createIndependent = (
+    input: DailyTaskInput,
+    conditionDrafts: ActivityConditionDraft[] = [],
+  ) => {
+    const stamp = now();
+    const task: ActivityRecord = {
+      id: createId("task"),
+      title: input.title.trim(),
+      description: input.description,
+      startDate: startDateFromDue(input.dueAt, input.estimatedMinutes),
+      dueDate: input.dueAt,
+      estimatedMinutes: input.estimatedMinutes,
+      expectedOutput: input.expectedOutput,
+      importance: taskImportance(input),
+      impact: input.impact,
+      goal: input.goal,
+      risk: input.risk,
+      value: input.value,
+      delayLoss: input.delayLoss,
+      dependencyIds: input.dependencyIds,
+      complexity: input.complexity,
+      uncertainty: input.uncertainty,
+      recurrence: input.recurrence,
+      priority: priorityFromImportance(taskImportance(input)),
+      status: "todo",
+      activityType: "task",
+      actualMinutes: 0,
+      milestone: input.milestone,
+      createdAt: stamp,
+      updatedAt: stamp,
+    };
+    mutate((current) => ({
+      ...current,
+      activities: [...current.activities, task],
+      activityConditions: [
+        ...current.activityConditions,
+        ...replaceActivityConditions([], task.id, conditionDrafts),
+      ],
+    }));
+    if (totalMinutes + task.estimatedMinutes <= dayMinutes)
+      setSelected((current) => [
+        ...current,
+        {
+          id: task.id,
+          kind: "task",
+          title: task.title,
+          description: task.description,
+          estimatedMinutes: task.estimatedMinutes,
+          expectedOutput: task.expectedOutput,
+          importance: task.importance,
+          dueAt: task.dueDate,
+          sourceTaskId: task.id,
+        },
+      ]);
+  };
+  const duplicateIndependent = (task: ActivityRecord) => {
+    const stamp = now();
+    const duplicate: ActivityRecord = {
+      ...task,
+      id: createId("task"),
+      dueDate: "",
+      status: "todo",
+      activityType: "task",
+      actualMinutes: 0,
+      completedAt: undefined,
+      createdAt: stamp,
+      updatedAt: stamp,
+      deletedAt: undefined,
+      archivedAt: undefined,
+    };
+    mutate((current) => ({ ...current, activities: [...current.activities, duplicate] }));
+  };
+  const removeIndependent = (task: ActivityRecord, mode: RecurringDeleteMode = "series") => {
+    const stamp = now();
+    mutate((current) => ({
+      ...current,
+      activities: task.archivedAt
+        ? current.activities
+        : deleteRecurringTasks(current.activities, task.id, mode, stamp).activities,
+    }));
+    setSelected((current) =>
+      current.filter((item) => item.id !== task.id),
+    );
+  };
+  const updateIndependent = (
+    task: ActivityRecord,
+    input: ActivityInput,
+    conditionDrafts?: ActivityConditionDraft[],
+  ) => {
+    const stamp = now();
+    const estimated = input.estimatedMinutes;
+    mutate((current) => ({
+      ...current,
+      activities: current.activities.map((item) =>
+        item.id === task.id && !item.archivedAt
+          ? {
+              ...item,
+              ...input,
+              estimatedMinutes: estimated,
+              importance: taskImportance(input),
+              priority: priorityFromImportance(taskImportance(input)),
+              updatedAt: stamp,
+            }
+          : item,
+      ),
+      ...(conditionDrafts
+        ? {
+            activityConditions: replaceActivityConditions(
+              current.activityConditions,
+              task.id,
+              conditionDrafts,
+            ),
+          }
+        : {}),
+    }));
+    setSelected((current) => {
+      const previous = current.find((item) => item.id === task.id);
+      if (!previous) return current;
+      const withoutPrevious = current.filter((item) => item.id !== task.id);
+      const otherMinutes = withoutPrevious.reduce(
+        (sum, item) => sum + item.estimatedMinutes,
+        0,
+      );
+      if (otherMinutes + estimated > dayMinutes)
+        return withoutPrevious;
+      return [
+        ...withoutPrevious,
+        {
+          ...previous,
+          title: input.title.trim(),
+          description: input.description,
+          dueAt: input.dueDate,
+          estimatedMinutes: estimated,
+          expectedOutput: input.expectedOutput,
+          importance: taskImportance(input),
+        },
+      ];
+    });
+  };
+  const createSubtask = (
+    parent: ActivityRecord,
+    input: ActivityInput,
+    conditionDrafts: ActivityConditionDraft[] = [],
+  ) => {
+    const stamp = now();
+    const task: ActivityRecord = {
+      id: createId("task"),
+      projectId: parent.projectId,
+      parentId: parent.id,
+      ...input,
+      estimatedMinutes: input.estimatedMinutes,
+      importance: taskImportance(input),
+      priority: priorityFromImportance(taskImportance(input)),
+      status: "todo",
+      activityType: input.activityType ?? "task",
+      actualMinutes: 0,
+      completedAt: undefined,
+      createdAt: stamp,
+      updatedAt: stamp,
+    };
+    mutate((current) => ({
+      ...current,
+      activities: [...current.activities, task],
+      activityConditions: [
+        ...current.activityConditions,
+        ...replaceActivityConditions([], task.id, conditionDrafts),
+      ],
+    }));
+  };
+  const setTaskParent = (ids: string[], parentId: string | null) => {
+    mutate((current) => ({
+      ...current,
+      activities: setTaskParents(
+        current.activities,
+        ids.filter((id) => !current.activities.find((task) => task.id === id)?.archivedAt),
+        parentId,
+        now(),
+      ),
+    }));
+  };
+  const confirm = () => {
+    const stamp = now();
+    const message: FutureMessage = {
+      ...existing,
+      id: existing?.id ?? createId("message_plan"),
+      subject: t("planning.messageSubject").replace("{date}", planDate),
+      body: planBody(plannedItems, planDate, totalMinutes, t),
+      recipient: "futureSelf",
+      deliveryMode: "scheduled",
+      deliverAt: `${planDate}T00:00:00`,
+      references: plannedItems.flatMap((item) =>
+        item.sourceTaskId
+          ? [{ kind: "task" as const, id: item.sourceTaskId, label: item.title }]
+          : [],
+      ),
+      attachments: [],
+      systemGenerated: true,
+      messageType: "dailyPlan",
+      dailyPlan: { date: planDate, items: plannedItems },
+      createdAt: existing?.createdAt ?? stamp,
+      updatedAt: stamp,
+    };
+    mutate((current) => ({
+      ...current,
+      messages: existing
+        ? current.messages.map((item) =>
+            item.id === existing.id ? message : item,
+          )
+        : [...current.messages, message],
+    }));
+    onClose();
+  };
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/55 p-4">
+      <section className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50">
+        <header className="flex items-center justify-between border-b border-zinc-200 px-5 py-4 dark:border-zinc-800">
+          <div>
+            <h2 className="text-lg font-semibold">{t("planning.title")}</h2>
+            <p className="text-xs text-zinc-500">{planDate}</p>
+          </div>
+          <button aria-label={t("common.close")} onClick={onClose}>
+            <XMarkIcon className="size-5" />
+          </button>
+        </header>
+        <div className="grid min-h-0 flex-1 lg:grid-cols-[minmax(300px,0.9fr)_minmax(420px,1.3fr)]">
+          <PlanBasket
+            items={plannedItems}
+            totalMinutes={totalMinutes}
+            onRemove={toggle}
+            onCreate={() => setCreatingIndependent(true)}
+          />
+          <div className="grid min-h-0 grid-rows-2 border-t border-zinc-200 lg:border-l lg:border-t-0 dark:border-zinc-800">
+            <ProjectTaskPool
+              projects={projects}
+              activities={activities}
+              expanded={expanded}
+              onExpanded={setExpanded}
+              selectedIds={selectedIds}
+              totalMinutes={totalMinutes}
+              onContextMenu={(task, x, y) => setTaskMenu({ task, position: { x, y } })}
+              onSetParent={setTaskParent}
+              onToggle={toggle}
+            />
+            <IndependentTaskPool
+              activities={independentTasks}
+              planDate={planDate}
+              selectedIds={selectedIds}
+              totalMinutes={totalMinutes}
+              onContextMenu={(task, x, y) =>
+                setTaskMenu({ task, position: { x, y } })
+              }
+              onSetParent={setTaskParent}
+              onToggle={toggle}
+            />
+          </div>
+        </div>
+        <footer className="flex justify-end gap-2 border-t border-zinc-200 p-4 dark:border-zinc-800">
+          <Button variant="secondary" onClick={onClose}>
+            {t("common.cancel")}
+          </Button>
+          <Button disabled={!selected.length} onClick={confirm}>
+            {t("planning.confirm")}
+          </Button>
+        </footer>
+      </section>
+      <CreateDailyTaskDialog
+        open={creatingIndependent}
+        title={t("planning.createIndependent")}
+        plannedDate={planDate}
+        onClose={() => setCreatingIndependent(false)}
+        onSave={createIndependent}
+      />
+      <PlanningTaskActions
+        menu={taskMenu}
+        onClose={() => setTaskMenu(null)}
+        onUpdate={updateIndependent}
+        activityConditions={state.activityConditions}
+        onDuplicate={duplicateIndependent}
+        onRemove={removeIndependent}
+        onCreate={createSubtask}
+        onArchive={(task) => mutate((current) => archiveTask(current, task.id, now()))}
+      />
+    </div>
+  );
+}
+
+function comparePlanDeadline(left: DailyPlanItem, right: DailyPlanItem) {
+  if (!left.dueAt) return right.dueAt ? 1 : 0;
+  if (!right.dueAt) return -1;
+  return left.dueAt.localeCompare(right.dueAt);
+}
+
+function planBody(
+  items: DailyPlanItem[],
+  date: string,
+  minutes: number,
+  t: ReturnType<typeof useI18n>["t"],
+) {
+  return [
+    t("planning.messageIntro").replace("{date}", date),
+    "",
+    ...items.map((item) => `• ${item.title} · ${item.estimatedMinutes} min`),
+    "",
+    t("planning.messageTotal").replace("{minutes}", String(minutes)),
+  ].join("\n");
+}

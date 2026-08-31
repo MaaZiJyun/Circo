@@ -16,6 +16,7 @@ import type {
   CollectionName,
 } from "@/shared/model/app-state";
 import { isAppState } from "@/shared/model/app-state";
+import { deadlineTime, taskStatusAt } from "@/shared/model/task-status";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -27,6 +28,8 @@ interface StoreValue {
   mutate: (updater: (current: AppState) => AppState) => void;
   softDelete: (collection: CollectionName, id: string) => void;
   restoreItem: (collection: CollectionName, id: string) => void;
+  purgeItem: (collection: CollectionName, id: string) => void;
+  purgeDeletedItems: (collections: readonly CollectionName[]) => void;
   restoreBackup: (value: unknown) => Promise<boolean>;
   createArchive: () => Promise<Blob>;
   restoreArchive: (file: File) => Promise<boolean>;
@@ -47,6 +50,21 @@ function changeDeletion(
     item.id === id ? { ...item, deletedAt, updatedAt } : item,
   );
   return { ...state, [collection]: nextItems, updatedAt };
+}
+
+function synchronizeTaskStatuses(mutate: StoreValue["mutate"]) {
+  const currentTime = Date.now();
+  const stamp = new Date(currentTime).toISOString();
+  mutate((current) => ({
+    ...current,
+    activities: current.activities.map((task) => {
+      if (task.deletedAt || task.archivedAt) return task;
+      const status = taskStatusAt(task, currentTime);
+      return status === task.status
+        ? task
+        : { ...task, status, updatedAt: stamp };
+    }),
+  }));
 }
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
@@ -135,6 +153,33 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     },
     [mutate],
   );
+  const purgeItem = useCallback(
+    (collection: CollectionName, id: string) => {
+      mutate((current) => ({
+        ...current,
+        [collection]: (current[collection] as AppEntity[]).filter(
+          (item) => item.id !== id,
+        ),
+      }));
+    },
+    [mutate],
+  );
+  const purgeDeletedItems = useCallback(
+    (collections: readonly CollectionName[]) => {
+      mutate((current) =>
+        collections.reduce<AppState>(
+          (next, collection) => ({
+            ...next,
+            [collection]: (next[collection] as AppEntity[]).filter(
+              (item) => !item.deletedAt,
+            ),
+          }),
+          current,
+        ),
+      );
+    },
+    [mutate],
+  );
 
   const restoreBackup = useCallback(async (value: unknown) => {
     if (!isAppState(value)) return false;
@@ -154,13 +199,50 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const form = new FormData();
     form.set("file", file);
     const response = await fetch("/api/backup", { method: "POST", body: form });
-    if (!response.ok) return false;
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: unknown;
+      } | null;
+      setError(
+        typeof payload?.error === "string"
+          ? payload.error
+          : "Unable to restore backup.",
+      );
+      setStatus("error");
+      return false;
+    }
     const restored: unknown = await response.json();
     if (!isAppState(restored)) return false;
     setState(restored);
+    setError(null);
     setStatus("saved");
     return true;
   }, []);
+
+  useEffect(() => {
+    if (!state) return;
+    const currentTime = Date.now();
+    const changed = state.activities.some(
+      (task) =>
+        !task.deletedAt && !task.archivedAt && task.status !== taskStatusAt(task, currentTime),
+    );
+    if (changed) {
+      const timer = window.setTimeout(() => synchronizeTaskStatuses(mutate), 0);
+      return () => window.clearTimeout(timer);
+    }
+    const nextDeadline = state.activities.reduce<number | undefined>((next, task) => {
+      if (task.deletedAt || task.status === "done") return next;
+      const deadline = deadlineTime(task.dueDate);
+      if (!Number.isFinite(deadline) || deadline <= currentTime) return next;
+      return next === undefined || deadline < next ? deadline : next;
+    }, undefined);
+    if (nextDeadline === undefined) return;
+    const timer = window.setTimeout(
+      () => synchronizeTaskStatuses(mutate),
+      Math.min(nextDeadline - currentTime + 50, 2_147_483_647),
+    );
+    return () => window.clearTimeout(timer);
+  }, [mutate, state]);
 
   const value = useMemo(
     () => ({
@@ -171,6 +253,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       mutate,
       softDelete,
       restoreItem,
+      purgeItem,
+      purgeDeletedItems,
       restoreBackup,
       createArchive,
       restoreArchive,
@@ -183,6 +267,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       mutate,
       softDelete,
       restoreItem,
+      purgeItem,
+      purgeDeletedItems,
       restoreBackup,
       createArchive,
       restoreArchive,

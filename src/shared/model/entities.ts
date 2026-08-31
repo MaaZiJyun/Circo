@@ -1,12 +1,17 @@
-export type EntityKind = "goal" | "source" | "idea" | "project" | "artifact";
-
+export type EntityKind = "goal" | "source" | "point" | "idea" | "project" | "artifact";
+import type { TaskRecurrence } from "./task-recurrence-types";
+import type { TaskImportanceDimensions } from "./task-importance-types";
+import type { TaskUrgencyInputs } from "./task-urgency-types";
+import type { TaskEffortInputs } from "./task-effort-types";
+export type { TaskRecurrence } from "./task-recurrence-types";
+export type { TaskImportanceDimensions } from "./task-importance-types";
+export type { PointList, ReferencePoint, ReferencePointInput } from "./reference-point";
 export interface BaseEntity {
   id: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
 }
-
 export interface Cycle extends BaseEntity {
   name: string;
   startDate: string;
@@ -27,17 +32,20 @@ export interface Goal extends BaseEntity {
   status: "notStarted" | "active" | "completed";
 }
 
-export interface WorkSession extends BaseEntity {
-  cycleId: string;
+export interface FocusRecord extends BaseEntity {
+  startedAt: string;
+  endedAt: string;
+  duration: number;
+  focusOn: string;
+  /** Legacy fields retained while old focus records are migrated. */
+  cycleId?: string;
   goalId?: string;
   projectId?: string;
   taskId?: string;
   title: string;
-  startedAt: string;
-  endedAt: string;
-  minutes: number;
-  effective: boolean;
-  focus: number;
+  minutes?: number;
+  effective?: boolean;
+  focus?: number;
   output: string;
   note: string;
 }
@@ -82,7 +90,7 @@ export interface SourceRecord extends BaseEntity {
   readingCompletedAt?: string;
   studyDurationMinutes: number;
   readingReview: LiteratureReview;
-  conversionStatus: "ready" | "processing" | "failed";
+  conversionStatus: "ready" | "processing" | "degraded" | "failed";
   conversionMessage: string;
 }
 
@@ -107,16 +115,25 @@ export interface LibraryList extends BaseEntity {
   system: "default" | "recent" | "marked" | null;
 }
 
-export interface ReferencePoint extends BaseEntity {
-  sourceId: string;
-  type: "text" | "image";
-  content: string;
-  contentPath: string;
-  date: string;
-  author: string;
+export interface ProjectList extends BaseEntity {
+  name: string;
   note: string;
-  page: number;
-  location: { x: number; y: number; width: number; height: number };
+  color: string;
+  system: "default" | "recent" | null;
+}
+
+export interface ActivityList extends BaseEntity {
+  name: string;
+  note: string;
+  color: string;
+  system: "default" | "formal" | "casual" | "archived" | null;
+}
+
+export interface IdeaList extends BaseEntity {
+  name: string;
+  note: string;
+  color: string;
+  system: "default" | "recent" | null;
 }
 
 export interface Annotation extends BaseEntity {
@@ -126,12 +143,25 @@ export interface Annotation extends BaseEntity {
   kind: "positive" | "negative" | "neutral";
   reason: string;
 }
-
 export interface Idea extends BaseEntity {
   title: string;
   content: string;
+  definition: string;
+  reason: string;
+  date: string;
   status:
-    "inbox" | "exploring" | "candidate" | "converted" | "paused" | "archived";
+    | "inbox"
+    | "spark"
+    | "exploring"
+    | "explore"
+    | "validate"
+    | "candidate"
+    | "converted"
+    | "promoted"
+    | "park"
+    | "rejected"
+    | "paused"
+    | "archived";
   method:
     | "capture"
     | "combine"
@@ -142,7 +172,9 @@ export interface Idea extends BaseEntity {
     | "macro"
     | "micro";
   sourceIds: string[];
+  listIds: string[];
   tags: string[];
+  chatMessages?: IdeaChatMessage[];
   scores: {
     value: number;
     feasibility: number;
@@ -150,6 +182,23 @@ export interface Idea extends BaseEntity {
     cost: number;
     risk: number;
   };
+  evaluation?: IdeaEvaluation;
+}
+export type IdeaChatMessage = { id: string; role: "user" | "assistant"; content: string; createdAt: string };
+export type IdeaDimension =
+  "value" | "relevance" | "feasibility" | "testability" | "opportunity";
+
+export interface IdeaEvaluation {
+  answers: number[];
+  killCondition: string;
+  totalScore: number;
+  dimensionScores: Record<IdeaDimension, number>;
+  level: "strong" | "promising" | "uncertain" | "weak" | "poor";
+  gateFailures: IdeaDimension[];
+  strength: string;
+  weakness: string;
+  nextStep: string;
+  evaluatedAt: string;
 }
 
 export interface ProjectRecord extends BaseEntity {
@@ -162,24 +211,65 @@ export interface ProjectRecord extends BaseEntity {
     "concept" | "planning" | "active" | "paused" | "completed" | "archived";
   goalId?: string;
   ideaIds: string[];
+  listIds: string[];
   tags: string[];
+  score: number;
 }
 
-export interface TaskRecord extends BaseEntity {
-  projectId: string;
+export type ActivityType = "task" | "event" | "routine";
+
+export interface ActivityRecord extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
+  projectId?: string;
+  listIds?: string[];
   parentId?: string;
+  /** Activity classification; omitted on legacy records and treated as task. */
+  activityType?: ActivityType;
   title: string;
+  description: string;
+  startDate: string;
   dueDate: string;
   priority: "low" | "medium" | "high";
-  status: "todo" | "doing" | "done";
+  status: "todo" | "doing" | "done" | "overdue";
   estimatedMinutes: number;
   actualMinutes: number;
   milestone: boolean;
+  expectedOutput: string;
+  importance: number;
+  recurrence: TaskRecurrence | null;
+  recurrenceSourceId?: string;
+  actualStartedAt?: string;
+  completedAt?: string;
+  /** An archived activity is immutable and remains in the task collection. */
+  archivedAt?: string;
+}
+
+export interface ActivityCondition {
+  id: string;
+  activityId: string;
+  condition: string;
+  satisfiedAt?: string;
+}
+
+export interface DailyTask extends BaseEntity, TaskImportanceDimensions, TaskUrgencyInputs, TaskEffortInputs {
+  date: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  dueAt: string;
+  completedAt?: string;
+  estimatedMinutes: number;
+  actualMinutes: number;
+  expectedOutput: string;
+  importance: number;
+  sourceTaskId?: string;
+  projectId?: string;
 }
 
 export interface ProjectLog extends BaseEntity {
   projectId: string;
   taskId?: string;
+  period: "day" | "week" | "month" | "year";
+  filePath: string;
   type: "progress" | "decision" | "problem" | "conclusion";
   content: string;
   nextStep: string;
@@ -192,7 +282,8 @@ export interface Attachment extends BaseEntity {
   projectId: string;
   logId?: string;
   name: string;
-  fileToken: string;
+  filePath: string;
+  fileToken?: string;
   mimeType: string;
   size: number;
   description: string;

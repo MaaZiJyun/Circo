@@ -1,16 +1,14 @@
 "use client";
 
 import { forwardRef } from "react";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import type {
   ButtonHTMLAttributes,
   InputHTMLAttributes,
-  SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
-
-export const focusRing =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-950 focus-visible:ring-offset-2 dark:focus-visible:ring-zinc-50 dark:focus-visible:ring-offset-zinc-950";
+import { focusRing } from "./focus-ring";
+export { focusRing } from "./focus-ring";
+export { Select } from "./select";
 
 const textInputTypes = new Set([
   "email",
@@ -49,16 +47,90 @@ export function Button({
 
 export function IconButton({
   label,
+  size = "md",
+  tone = "neutral",
   className = "",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  label: string;
+  size?: "xs" | "sm" | "md";
+  tone?: "neutral" | "danger";
+}) {
+  const sizeClass =
+    size === "xs"
+      ? "size-6 rounded-md"
+      : size === "sm"
+        ? "size-7 rounded-full"
+        : "size-10 rounded-lg";
+  const toneClass =
+    tone === "danger"
+      ? "hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
+      : "hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50";
   return (
     <button
       aria-label={label}
       title={label}
-      className={`inline-flex size-10 items-center justify-center rounded-lg text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-950 dark:hover:bg-zinc-900 dark:hover:text-zinc-50 ${focusRing} ${className}`}
+      className={`inline-flex items-center justify-center text-zinc-500 transition-colors ${toneClass} ${sizeClass} ${focusRing} ${className}`}
       {...props}
     />
+  );
+}
+
+export function Switch({
+  checked,
+  disabled = false,
+  onChange,
+  className = "",
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full border p-0.5 transition-colors duration-200 ${focusRing} ${checked ? "border-green-500 bg-green-500" : "border-zinc-200 bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950"} ${className}`}
+      onClick={() => onChange(!checked)}
+    >
+      <span
+        aria-hidden="true"
+        className={`size-6 rounded-full shadow-sm transition-transform duration-200 ${checked ? "translate-x-5 bg-white" : "translate-x-0 bg-white dark:bg-zinc-400"}`}
+      />
+    </button>
+  );
+}
+
+export function Checkbox({
+  checked,
+  disabled = false,
+  onChange,
+  className = "",
+  "aria-label": ariaLabel,
+}: {
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+  className?: string;
+  "aria-label"?: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="checkbox"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      disabled={disabled}
+      className={`inline-grid size-4 shrink-0 place-items-center rounded-full border border-zinc-700 bg-white transition-colors dark:border-white dark:bg-zinc-950 ${focusRing} disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      onClick={() => onChange(!checked)}
+    >
+      {checked && (
+        <span className="size-2 rounded-full bg-zinc-950 dark:bg-white" />
+      )}
+    </button>
   );
 }
 
@@ -86,24 +158,6 @@ export function Textarea({
       className={`textfield-cursor min-h-28 w-full resize-y rounded-lg border border-zinc-200 bg-white px-3 py-2.5 text-sm leading-6 text-zinc-950 placeholder:text-zinc-400 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 ${focusRing} ${className}`}
       {...props}
     />
-  );
-}
-
-export function Select({
-  className = "",
-  ...props
-}: SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <span className="relative block w-full">
-      <select
-        className={`peer min-h-11 w-full appearance-none rounded-lg border border-zinc-200 bg-white py-2 pl-3 pr-10 text-sm text-zinc-950 transition-colors hover:border-zinc-300 disabled:opacity-50 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50 dark:hover:border-zinc-700 ${focusRing} ${className}`}
-        {...props}
-      />
-      <ChevronDownIcon
-        className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-zinc-400 peer-disabled:opacity-40"
-        aria-hidden="true"
-      />
-    </span>
   );
 }
 
@@ -137,6 +191,22 @@ export function Card({
   return (
     <section
       className={`rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-950 ${className}`}
+    >
+      {children}
+    </section>
+  );
+}
+
+export function Panel({
+  className = "",
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className={`bg-white dark:bg-zinc-950 ${className}`}
     >
       {children}
     </section>

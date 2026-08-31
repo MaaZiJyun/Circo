@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Button,
+  Checkbox,
   Dialog,
   Field,
   Input,
@@ -10,18 +11,25 @@ import {
   Textarea,
 } from "@/shared/components/ui";
 import { useI18n } from "@/shared/i18n/i18n-context";
-import type { ReferencePoint, SourceRecord } from "@/shared/model/entities";
+import type {
+  PointList,
+  ReferencePoint,
+  SourceRecord,
+} from "@/shared/model/entities";
+import { PointTypeControl } from "./point-type-control";
 
 type PointInput = Omit<ReferencePoint, "id" | "createdAt" | "updatedAt">;
 
 export function ReferencePointDialog({
   point,
   sources,
+  lists,
   onClose,
   onSave,
 }: {
   point?: ReferencePoint;
   sources: SourceRecord[];
+  lists: PointList[];
   onClose: () => void;
   onSave: (point: PointInput) => void;
 }) {
@@ -42,10 +50,27 @@ export function ReferencePointDialog({
   );
   const [note, setNote] = useState(point?.note ?? "");
   const [page, setPage] = useState(String(point?.page ?? 1));
+  const [listIds, setListIds] = useState(point?.listIds ?? []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
   const submit = async () => {
+    if (point) {
+      onSave({
+        sourceId: point.sourceId,
+        type: point.type,
+        content: point.content,
+        contentPath: point.contentPath,
+        date: point.date,
+        author: point.author,
+        note: note.trim(),
+        page: point.page,
+        location: point.location,
+        listIds,
+      });
+      onClose();
+      return;
+    }
     if (
       !sourceId ||
       !date ||
@@ -58,9 +83,8 @@ export function ReferencePointDialog({
     setSaving(true);
     setError("");
     try {
-      let contentPath = type === "image" ? (point?.contentPath ?? "") : "";
-      let savedContent =
-        type === "image" ? (point?.content ?? "") : content.trim();
+      let contentPath = "";
+      let savedContent = type === "image" ? "" : content.trim();
       if (type === "image" && image) {
         const form = new FormData();
         form.set("file", image);
@@ -88,7 +112,8 @@ export function ReferencePointDialog({
         author: author.trim(),
         note: note.trim(),
         page: Math.max(1, Number(page) || 1),
-        location: point?.location ?? { x: 0, y: 0, width: 0, height: 0 },
+        location: { x: 0, y: 0, width: 0, height: 0 },
+        listIds,
       });
       onClose();
     } catch (cause) {
@@ -106,97 +131,154 @@ export function ReferencePointDialog({
       onClose={onClose}
     >
       <div className="grid gap-4">
-        <Field label={t("find.source")}>
-          <Select
-            value={sourceId}
-            onChange={(event) => {
-              const nextId = event.target.value;
-              setSourceId(nextId);
-              if (!point)
-                setAuthor(
-                  sources.find((item) => item.id === nextId)?.authors ?? "",
-                );
-            }}
-          >
-            {sources.map((source) => (
-              <option key={source.id} value={source.id}>
-                {source.title}
-              </option>
-            ))}
-          </Select>
-        </Field>
-        <Field label={t("find.pointType")}>
-          <Select
-            value={type}
-            onChange={(event) =>
-              setType(event.target.value as "text" | "image")
-            }
-          >
-            <option value="text">{t("find.pointType.text")}</option>
-            <option value="image">{t("find.pointType.image")}</option>
-          </Select>
-        </Field>
-        {type === "text" ? (
-          <Field label={t("common.content")}>
-            <Textarea
-              className="min-h-36"
-              value={content}
-              onChange={(event) => setContent(event.target.value)}
+        {point ? (
+          <>
+            <Field label={t("find.pointNote")}>
+              <Textarea
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+              />
+            </Field>
+            <PointListChoices
+              lists={lists}
+              selectedIds={listIds}
+              onChange={setListIds}
             />
-          </Field>
+            <Button onClick={() => void submit()}>{t("common.save")}</Button>
+          </>
         ) : (
-          <Field
-            label={t("find.pointImage")}
-            hint={
-              point?.contentPath && !image
-                ? t("find.currentImageKept")
-                : undefined
-            }
-          >
-            <Input
-              type="file"
-              accept="image/png,image/jpeg"
-              onChange={(event) => setImage(event.target.files?.[0] ?? null)}
+          <>
+            <Field label={t("find.source")}>
+              <Select
+                value={sourceId}
+                onChange={(event) => {
+                  const nextId = event.target.value;
+                  setSourceId(nextId);
+                  setAuthor(
+                    sources.find((item) => item.id === nextId)?.authors ?? "",
+                  );
+                }}
+              >
+                {sources.map((source) => (
+                  <option key={source.id} value={source.id}>
+                    {source.title}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <PointTypeControl value={type} onChange={setType} />
+            {type === "text" ? (
+              <Field label={t("common.content")}>
+                <Textarea
+                  className="min-h-36"
+                  value={content}
+                  onChange={(event) => setContent(event.target.value)}
+                />
+              </Field>
+            ) : (
+              <Field label={t("find.pointImage")}>
+                <Input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={(event) =>
+                    setImage(event.target.files?.[0] ?? null)
+                  }
+                />
+              </Field>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <Field label={t("common.date")}>
+                <Input
+                  type="date"
+                  value={date}
+                  onChange={(event) => setDate(event.target.value)}
+                />
+              </Field>
+              <Field label={t("find.page")}>
+                <Input
+                  type="number"
+                  min="1"
+                  value={page}
+                  onChange={(event) => setPage(event.target.value)}
+                />
+              </Field>
+            </div>
+            <Field label={t("find.authors")}>
+              <Input
+                value={author}
+                onChange={(event) => setAuthor(event.target.value)}
+              />
+            </Field>
+            <Field label={t("find.pointNote")}>
+              <Textarea
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+              />
+            </Field>
+            <PointListChoices
+              lists={lists}
+              selectedIds={listIds}
+              onChange={setListIds}
             />
-          </Field>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <Button
+              disabled={saving || !sources.length}
+              onClick={() => void submit()}
+            >
+              {saving ? t("common.saving") : t("common.save")}
+            </Button>
+          </>
         )}
-        <div className="grid grid-cols-2 gap-3">
-          <Field label={t("common.date")}>
-            <Input
-              type="date"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
-            />
-          </Field>
-          <Field label={t("find.page")}>
-            <Input
-              type="number"
-              min="1"
-              value={page}
-              onChange={(event) => setPage(event.target.value)}
-            />
-          </Field>
-        </div>
-        <Field label={t("find.authors")}>
-          <Input
-            value={author}
-            onChange={(event) => setAuthor(event.target.value)}
-          />
-        </Field>
-        <Field label={t("find.pointNote")}>
-          <Textarea
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-          />
-        </Field>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <Button
-          disabled={saving || !sources.length}
-          onClick={() => void submit()}
-        >
-          {saving ? t("common.saving") : t("common.save")}
-        </Button>
       </div>
     </Dialog>
+  );
+}
+
+function PointListChoices({
+  lists,
+  selectedIds,
+  onChange,
+}: {
+  lists: PointList[];
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const { t } = useI18n();
+  const customLists = lists.filter((list) => !list.system);
+  return (
+    <fieldset className="min-w-0">
+      <legend className="mb-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+        {t("find.pointLists")}
+      </legend>
+      <div className="grid max-h-44 gap-1 overflow-y-auto rounded-xl border border-zinc-200 p-2 dark:border-zinc-800">
+        {customLists.map((list) => (
+          <label
+            key={list.id}
+            className="flex min-h-10 cursor-pointer items-center gap-3 rounded-lg px-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-900"
+          >
+            <Checkbox
+              checked={selectedIds.includes(list.id)}
+              onChange={(checked) =>
+                onChange(
+                  checked
+                    ? [...selectedIds, list.id]
+                    : selectedIds.filter((id) => id !== list.id),
+                )
+              }
+            />
+            <span
+              className="size-3 shrink-0 rounded-full"
+              style={{ backgroundColor: list.color }}
+            />
+            <span className="truncate">{list.name}</span>
+          </label>
+        ))}
+        {!customLists.length && (
+          <p className="px-2 py-3 text-sm text-zinc-500">
+            {t("find.noCustomLists")}
+          </p>
+        )}
+      </div>
+    </fieldset>
   );
 }
