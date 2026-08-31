@@ -38,7 +38,7 @@ uv pip install -U "mineru[all]"
 mineru --version
 ```
 
-翻译模型和 MinerU 是可选的外部模块，不再放入 `.app`。在 Settings → Modules
+翻译模型和 MinerU 是可选的外部模块，不随主应用代码一同提供。在 Settings → Modules
 选择 `Circo-modules` 目录后即可使用，修改目录无需重启。开发模式未配置模块目录时，
 仍可通过 `MINERU_COMMAND=/absolute/path/to/mineru` 临时指定 MinerU。
 
@@ -96,7 +96,7 @@ src/
 
 所有受控源文件必须小于或等于 300 行。详细规范见 [开发要求](docs/DEVELOPMENT_REQUIREMENTS.md)，产品需求见 [SRS](docs/SRS.md)。
 
-## 启动
+## 启动 Web 应用
 
 一条命令初始化数据库并启动完整开发环境：
 
@@ -106,13 +106,7 @@ npm run dev:all
 
 浏览器打开 [http://localhost:1204](http://localhost:1204)。应用为单用户、无账号、本地运行模式。
 
-macOS 也可以构建无地址栏、自带 Node.js 与 production server 的独立 WebView 应用：
-
-```bash
-npm run app:macos
-```
-
-生成文件为 `dist/Circo.app`，分享文件为 `dist/Circo-macOS-arm64.zip`。接收方不需要工程文件、Node.js 或 npm，说明见 [macOS 桌面应用](docs/MACOS_APP.md)。
+开发服务器支持热更新；保存代码后直接刷新浏览器或等待页面自动更新，无需重新构建。
 
 也可以分步启动：
 
@@ -121,6 +115,23 @@ npm install
 npm run db:init
 npm run dev
 ```
+
+生产环境使用标准 Next.js Web 服务：
+
+```bash
+npm run build
+npm run start
+```
+
+## 可选的 macOS 应用
+
+日常开发默认使用上述 Web 模式。需要生成无地址栏、自带 Node.js 与 production server 的独立 macOS 应用时，再执行：
+
+```bash
+npm run app:macos
+```
+
+生成文件为 `dist/Circo.app`，分享文件为 `dist/Circo-macOS-arm64.zip`。完整要求和签名说明见 [macOS 桌面应用](docs/MACOS_APP.md)。
 
 ## 数据
 
